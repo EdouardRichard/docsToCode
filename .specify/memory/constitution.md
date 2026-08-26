@@ -1,9 +1,11 @@
 <!--
 Sync Impact Report
-- Version change: template -> 1.0.0
+- Version change: 1.0.0 -> 1.1.0
 - Added principles: explicit knowledge scope; evidence before inference; untrusted
   content isolation; deterministic control; versioned indexes; client-compatible
   MCP; evaluation-driven evolution
+- Modified principle: Client-Compatible Read-Only MCP now includes ChatGPT App
+  (Codex), DeepSeek Harness, and Claude Code
 - Added sections: Architecture Constraints; Specification and Delivery Workflow
 - Removed sections: none
 - Deferred items: none
@@ -47,11 +49,11 @@ MUST NOT share an index version. All derived indexes MUST be rebuildable from th
 source object and version metadata.
 
 ### VI. Client-Compatible Read-Only MCP
-The baseline MCP surface MUST remain read-only and usable by both Claude Code and
-DeepSeek Harness through `search_knowledge` and `get_evidence`. A Tool response
-MUST contain directly usable core evidence and MUST NOT depend on Resources or
-Tasks support. `structuredContent` is canonical; compatibility text MUST be
-deterministically derived from it.
+The baseline MCP surface MUST remain read-only and usable by ChatGPT App (Codex),
+DeepSeek Harness, and Claude Code through `search_knowledge` and `get_evidence`.
+A Tool response MUST contain directly usable core evidence and MUST NOT depend on
+Resources or Tasks support. `structuredContent` is canonical; compatibility text
+MUST be deterministically derived from it.
 
 ### VII. Evaluation-Driven Evolution
 Cross-project leakage MUST be zero. MCP schema validity and evidence source
@@ -104,4 +106,4 @@ Every `/speckit-plan` and `/speckit-analyze` review MUST verify constitutional
 compliance. Exceptions MUST be documented in the relevant Feature `research.md`
 with an expiry or removal condition; silent exceptions are prohibited.
 
-**Version**: 1.0.0 | **Ratified**: 2026-08-26 | **Last Amended**: 2026-08-26
+**Version**: 1.1.0 | **Ratified**: 2026-08-26 | **Last Amended**: 2026-08-26

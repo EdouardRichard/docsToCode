@@ -6,7 +6,7 @@
 
 **Status**: Draft
 
-**Input**: User description: "建立首个端到端闭环，让单用户通过 Web 管理项目与公共知识，上传 Markdown 和 Java 材料，并让 Claude Code 与 DeepSeek Harness 通过只读 MCP 获得可追溯的项目证据。"
+**Input**: User description: "建立首个端到端闭环，让单用户通过 Web 管理项目与公共知识，上传 Markdown 和 Java 材料，并让 ChatGPT App（原 Codex）、DeepSeek Harness 与 Claude Code 通过只读 MCP 获得可追溯的项目证据。"
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -29,11 +29,11 @@
 
 ### User Story 2 - 外部 Agent 获取项目证据 (Priority: P1)
 
-用户在 Claude Code 或 DeepSeek Harness 中工作时，外部 Agent 可以针对一个或多个显式项目查询知识，并获得可直接使用、来源可定位的证据。
+用户在 ChatGPT App（原 Codex）、DeepSeek Harness 或 Claude Code 中工作时，外部 Agent 可以针对一个或多个显式项目查询知识，并获得可直接使用、来源可定位的证据。
 
 **Why this priority**: 这是系统对用户的核心价值，也是验证知识管理、检索与 MCP 能否形成闭环的最短路径。
 
-**Independent Test**: 分别从 Claude Code 和 DeepSeek Harness 调用主检索 Tool，验证相同查询获得符合契约的证据，并能定位到原始 Markdown 章节或 Java 文件与符号。
+**Independent Test**: 分别从 ChatGPT App、DeepSeek Harness 和 Claude Code 调用主检索 Tool，验证相同查询获得符合契约的证据，并能定位到原始 Markdown 章节或 Java 文件与符号。
 
 **Acceptance Scenarios**:
 
@@ -111,7 +111,7 @@
 - **FR-019**: 证据展开 MUST 验证项目证据属于请求作用域；公共证据 MUST 验证其来自该项目查询允许的公共检索路径。
 - **FR-020**: 已撤销、删除或未发布版本的证据 MUST NOT 被其他版本内容静默替代。
 - **FR-021**: 规范结果 MUST 以可校验的结构化内容返回；兼容文本 MUST 由同一规范结果确定性生成。
-- **FR-022**: 两个核心检索能力 MUST 能被 Claude Code 和 DeepSeek Harness 调用，且核心流程 MUST NOT 依赖 Resources 或 Tasks。
+- **FR-022**: 两个核心检索能力 MUST 能被 ChatGPT App、DeepSeek Harness 和 Claude Code 调用，且核心流程 MUST NOT 依赖 Resources 或 Tasks。
 - **FR-023**: 同一后端 MUST 隔离不同 Agent、不同会话和并发请求的运行状态。
 - **FR-024**: 系统 MUST 建立可重复执行的固定评测集，并记录首个 Dense 检索基线。
 - **FR-025**: 系统 MUST 记录每次检索的请求标识、知识作用域、完成状态和证据引用，以支持问题回溯。
@@ -136,7 +136,7 @@
 - **SC-002**: 验收测试集中的所有项目检索均不返回显式作用域之外的项目证据。
 - **SC-003**: 验收测试集中的所有成功证据均可定位到确定的知识源版本和内容位置。
 - **SC-004**: 验收测试集中的所有 Tool 成功响应均通过其规范输出 Schema 校验。
-- **SC-005**: Claude Code 与 DeepSeek Harness 均能完成主检索和证据展开的端到端调用。
+- **SC-005**: ChatGPT App、DeepSeek Harness 与 Claude Code 均能完成主检索和证据展开的端到端调用。
 - **SC-006**: 包含测试凭据的验收材料中，真实凭据值不会出现在检索索引或 MCP 证据正文，配置字段名和结构仍可检索。
 - **SC-007**: 删除或清空一个知识域后，新的检索不再返回该域的已删除内容，其他知识域结果不受影响。
 - **SC-008**: 同一后端在并发验收场景中不会发生请求状态、证据或项目作用域串扰。

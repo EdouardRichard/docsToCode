@@ -1,11 +1,12 @@
 # docsToCode
 
-面向 Claude Code 与 DeepSeek Harness 的多项目 RAG MCP 增强系统规划仓库。
+面向 ChatGPT App（原 Codex）、DeepSeek Harness 与 Claude Code 的多项目 RAG MCP 增强系统规划仓库。
 
 当前仓库处于规格设计阶段，包含：
 
 - 已批准的系统设计蓝图
 - GitHub Spec Kit v1.0.1 脚手架
+- ChatGPT/Codex、DeepSeek Harness、Claude Code 与 Cursor 的项目级 specKit 技能
 - 项目 Constitution
 - 首个纵向 Feature：`001-minimum-rag-mcp-loop`
 

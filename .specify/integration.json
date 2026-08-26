@@ -2,10 +2,20 @@
   "version": "1.0.1",
   "integration_state_schema": 1,
   "installed_integrations": [
-    "cursor-agent"
+    "cursor-agent",
+    "codex",
+    "claude"
   ],
   "integration_settings": {
     "cursor-agent": {
+      "script": "py",
+      "invoke_separator": "-"
+    },
+    "codex": {
+      "script": "py",
+      "invoke_separator": "-"
+    },
+    "claude": {
       "script": "py",
       "invoke_separator": "-"
     }

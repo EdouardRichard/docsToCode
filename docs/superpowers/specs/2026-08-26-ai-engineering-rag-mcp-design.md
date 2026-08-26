@@ -6,7 +6,7 @@
 
 ## 1. 系统定位
 
-本系统是面向单用户、多项目工作场景的 RAG 增强服务。它通过 MCP 向 Claude Code 与 DeepSeek Harness 等外部 Agent 提供与当前项目贴合、来源可定位的检索证据。
+本系统是面向单用户、多项目工作场景的 RAG 增强服务。它通过 MCP 向 ChatGPT App（原 Codex）、DeepSeek Harness 与 Claude Code 等外部 Agent 提供与当前项目贴合、来源可定位的检索证据。
 
 外部 Agent 负责需求文档、详细设计、代码、测试用例及其他业务产物的生成。本系统不生成这些最终产物，也不对产出物执行质量门禁。
 
@@ -364,6 +364,7 @@ LangGraph 管理状态机和节点流转，LangChain 提供模型、Prompt 和 R
 
 ### 16.1 目标客户端
 
+- ChatGPT App（原 Codex，主要开发端）。
 - Claude Code。
 - DeepSeek Harness。
 
@@ -494,10 +495,11 @@ DeepSeek V4-Flash 用于后端 Agent 和复杂语义判断。它不是 Embedding
 
 本系统不追求亚秒级检索。需求、设计和编码辅助场景可以接受几十秒级高质量检索。
 
-三个 Agent 均保留，不因理论超时提前合并。实际优化依据 Claude Code 与 DeepSeek Harness 的真实评测。
+三个 Agent 均保留，不因理论超时提前合并。实际优化依据 ChatGPT App、Claude Code 与 DeepSeek Harness 的真实评测。
 
 每个目标 Host 使用独立的超时配置：
 
+- ChatGPT App 使用宿主提供的 MCP Tool 超时策略。
 - Claude Code 使用其 MCP Tool 超时配置。
 - DeepSeek Harness 使用 `toolCallTimeoutMs`。
 - 服务端节点超时和总超时必须小于目标 Host 配置。
@@ -518,7 +520,7 @@ DeepSeek V4-Flash 用于后端 Agent 和复杂语义判断。它不是 Embedding
 
 ### 21.1 并发请求
 
-同一后端服务支持多个 Claude Code、DeepSeek Harness 和同一 Agent 的多个会话并发访问：
+同一后端服务支持多个 ChatGPT App、Claude Code、DeepSeek Harness 和同一 Agent 的多个会话并发访问：
 
 - 不保存全局活动项目或隐式会话状态。
 - 每个请求独立携带 `project_scope`。
@@ -625,7 +627,7 @@ Reader 所需的 Chunk 正文、父级上下文和来源定位必须位于共享
    - BGE-M3 Dense 索引。
    - 确定性证据装箱。
    - `search_knowledge` 与 `get_evidence`。
-   - Claude Code、DeepSeek Harness 和基础评测闭环。
+   - ChatGPT App、Claude Code、DeepSeek Harness 和基础评测闭环。
 2. **002 Hybrid Retrieval Precision**
    - Qdrant BM25/Sparse、融合和 BGE Reranker。
    - 与 001 Dense 基线进行质量和延迟对照。
@@ -668,7 +670,7 @@ BM25、Rerank、Graph 和三 Agent 等增强只有在固定评测集上证明收
 
 ### 24.4 目标 Host 真实任务评估
 
-在 Claude Code 与 DeepSeek Harness 中分别执行：
+在 ChatGPT App、Claude Code 与 DeepSeek Harness 中分别执行：
 
 - 基于老系统生成需求说明。
 - 根据现有接口形成详细设计。
@@ -693,7 +695,7 @@ BM25、Rerank、Graph 和三 Agent 等增强只有在固定评测集上证明收
 
 - 用户可以通过 Web 管理端创建知识库，并上传 Markdown 文档和 Java 源代码。
 - 入库状态和失败原因可见。
-- Claude Code 与 DeepSeek Harness 均能调用 `search_knowledge`。
+- ChatGPT App、Claude Code 与 DeepSeek Harness 均能调用 `search_knowledge`。
 - 外部 Agent 能获得带来源定位的核心证据。
 - 外部 Agent 能通过 `get_evidence` 展开详细内容。
 - 多项目并行使用时不发生隐式活动项目污染。
