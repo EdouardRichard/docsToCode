@@ -7,8 +7,14 @@ export interface CreateProjectInput {
   repo_path?: string;
 }
 
-export function listProjects(): Promise<Project[]> {
-  return get<Project[]>('/api/projects');
+export interface ProjectListResponse {
+  items: Project[];
+  total: number;
+}
+
+export async function listProjects(): Promise<Project[]> {
+  const response = await get<ProjectListResponse>('/api/projects');
+  return response.items;
 }
 
 export function getProject(id: string): Promise<Project> {
