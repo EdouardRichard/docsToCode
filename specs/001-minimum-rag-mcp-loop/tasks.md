@@ -386,5 +386,5 @@ Every task above modifies ≤ 2 files. Most modify exactly 1 file. The only exce
 - [x] T059 [US4] 接线删除/清空的派生数据异步清理：`delete_knowledge_source`/`clear_knowledge_scope` 后台任务调用 `QdrantStore.delete_points_by_source/delete_points_by_scope` + 删除 PG chunks per FR-012/US-4 (partial)
   - AC: 删除源后 Qdrant 该 source_id 的 points 被移除、PG chunks 删除/归档；清空 scope 后该 scope 全部 points/chunks 清理；其他 scope 不受影响；幂等
 
-- [ ] T060 [US1] 统一管理面前后端契约：`frontend/src/api/knowledgeSources.ts` 路径对齐后端 `/api/knowledge-sources?scope_id=`，列表响应解包 `{items,total}`，补充 `deleteSource`/`clearScope` 函数并接线 `ProjectDetailPage` per FR-001/US-4 (contradicts)
+- [x] T060 [US1] 统一管理面前后端契约：`frontend/src/api/knowledgeSources.ts` 路径对齐后端 `/api/knowledge-sources?scope_id=`，列表响应解包 `{items,total}`，补充 `deleteSource`/`clearScope` 函数并接线 `ProjectDetailPage` per FR-001/US-4 (contradicts)
   - AC: 前端列表/上传/reprocess 请求路径与后端一致且 200；列表正确渲染 `items`；删除按钮调用 DELETE 成功；清空按钮调用 clear 成功

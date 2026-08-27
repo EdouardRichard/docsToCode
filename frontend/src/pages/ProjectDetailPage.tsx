@@ -13,11 +13,11 @@ import {
   Spin,
   Typography,
 } from 'antd';
-import { InboxOutlined, ReloadOutlined, DeleteOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { InboxOutlined, ReloadOutlined, DeleteOutlined, ArrowLeftOutlined, ClearOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import type { KnowledgeSource } from '../types';
 import { getProject } from '../api/projects';
-import { listKnowledgeSources, uploadKnowledgeSource, reprocessSource } from '../api/knowledgeSources';
+import { listKnowledgeSources, uploadKnowledgeSource, reprocessSource, deleteSource, clearScope } from '../api/knowledgeSources';
 import { useSSE } from '../hooks/useSSE';
 import type { Project } from '../types';
 
@@ -108,6 +108,27 @@ export default function ProjectDetailPage() {
     }
   };
 
+  const handleDeleteSource = async (sourceId: string) => {
+    try {
+      await deleteSource(sourceId);
+      message.success('Source deleted');
+      fetchSources();
+    } catch (err) {
+      message.error(`Delete failed: ${(err as Error).message}`);
+    }
+  };
+
+  const handleClearScope = async () => {
+    if (!project) return;
+    try {
+      await clearScope(project.knowledge_scope_id);
+      message.success('Knowledge scope cleared');
+      fetchSources();
+    } catch (err) {
+      message.error(`Clear scope failed: ${(err as Error).message}`);
+    }
+  };
+
   const columns: ColumnsType<KnowledgeSource> = [
     {
       title: 'Filename',
@@ -167,11 +188,8 @@ export default function ProjectDetailPage() {
           </Button>
           <Popconfirm
             title="Delete this source?"
-            description="This will mark the source as deleted."
-            onConfirm={() => {
-              // TODO: implement delete source API when available
-              message.info('Delete source not yet implemented');
-            }}
+            description="This will delete the source and its indexed data."
+            onConfirm={() => handleDeleteSource(record.source_id)}
             okText="Yes"
             cancelText="No"
           >
@@ -225,7 +243,22 @@ export default function ProjectDetailPage() {
         </Descriptions>
       </Card>
 
-      <Card title="Knowledge Sources">
+      <Card
+        title="Knowledge Sources"
+        extra={
+          <Popconfirm
+            title="Clear all knowledge in this project?"
+            description="This deletes all sources and their indexed data."
+            onConfirm={handleClearScope}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Button size="small" danger icon={<ClearOutlined />}>
+              Clear Scope
+            </Button>
+          </Popconfirm>
+        }
+      >
         <Table
           rowKey="source_id"
           columns={columns}
