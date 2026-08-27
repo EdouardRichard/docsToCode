@@ -88,6 +88,144 @@ def _schedule_ingestion(source_id: int) -> None:
         logger.warning("No running event loop; skipping background ingestion")
 
 
+# ---------------------------------------------------------------------------
+# Deletion / clear derived-data cleanup (FR-012 / US-4)
+# ---------------------------------------------------------------------------
+
+
+async def _purge_source_derived_data(
+    session: AsyncSession,
+    source_id: int,
+    qdrant_store: "QdrantStore | None" = None,
+) -> None:
+    """Delete Qdrant points and PG chunks for a deleted source.
+
+    Args:
+        session: Async SQLAlchemy session (caller commits the transaction).
+        source_id: Source whose derived data is purged.
+        qdrant_store: Optional QdrantStore override for testing; defaults to
+            the process-wide singleton.
+
+    Idempotent: with no chunk rows there is nothing to remove, and Qdrant
+    failures are logged but never block the PG chunk deletion.
+    """
+    from sqlalchemy import delete as sa_delete
+    from sqlalchemy import select
+
+    from rag_mcp.models.chunk import Chunk
+
+    # Collect affected index_versions BEFORE deleting the chunk rows.
+    result = await session.execute(
+        select(Chunk.index_version).where(Chunk.source_id == source_id).distinct()
+    )
+    index_versions = list(result.scalars().all())
+
+    store = qdrant_store if qdrant_store is not None else _get_qdrant_store()
+    for index_version in index_versions:
+        collection = f"chunks_dense_{index_version}"
+        try:
+            store.delete_points_by_source(collection, source_id)
+        except Exception:  # noqa: BLE001 - Qdrant outage must not block PG cleanup
+            logger.exception(
+                "Failed to purge Qdrant points for source %s (collection %s)",
+                source_id,
+                collection,
+            )
+
+    await session.execute(sa_delete(Chunk).where(Chunk.source_id == source_id))
+
+
+async def _purge_scope_derived_data(
+    session: AsyncSession,
+    scope_id: int,
+    qdrant_store: "QdrantStore | None" = None,
+) -> None:
+    """Delete Qdrant points and PG chunks for every source in a cleared scope.
+
+    Args:
+        session: Async SQLAlchemy session (caller commits the transaction).
+        scope_id: Knowledge scope whose derived data is purged.
+        qdrant_store: Optional QdrantStore override for testing.
+    """
+    from sqlalchemy import delete as sa_delete
+    from sqlalchemy import select
+
+    from rag_mcp.models.chunk import Chunk
+
+    result = await session.execute(
+        select(Chunk.index_version)
+        .where(Chunk.knowledge_scope_id == scope_id)
+        .distinct()
+    )
+    index_versions = list(result.scalars().all())
+
+    store = qdrant_store if qdrant_store is not None else _get_qdrant_store()
+    for index_version in index_versions:
+        collection = f"chunks_dense_{index_version}"
+        try:
+            store.delete_points_by_scope(collection, scope_id)
+        except Exception:  # noqa: BLE001
+            logger.exception(
+                "Failed to purge Qdrant points for scope %s (collection %s)",
+                scope_id,
+                collection,
+            )
+
+    await session.execute(
+        sa_delete(Chunk).where(Chunk.knowledge_scope_id == scope_id)
+    )
+
+
+async def _run_source_cleanup(source_id: int) -> None:
+    """Background task: purge derived data for a deleted source."""
+    from rag_mcp.db import get_session_factory
+
+    factory = get_session_factory()
+    try:
+        async with factory() as session:
+            await _purge_source_derived_data(session, source_id)
+            await session.commit()
+    except Exception:  # noqa: BLE001
+        logger.exception("Derived-data cleanup failed for source %s", source_id)
+
+
+async def _run_scope_cleanup(scope_id: int) -> None:
+    """Background task: purge derived data for a cleared scope."""
+    from rag_mcp.db import get_session_factory
+
+    factory = get_session_factory()
+    try:
+        async with factory() as session:
+            await _purge_scope_derived_data(session, scope_id)
+            await session.commit()
+    except Exception:  # noqa: BLE001
+        logger.exception("Derived-data cleanup failed for scope %s", scope_id)
+
+
+def _schedule_derived_data_cleanup(kind: str, target_id: int) -> None:
+    """Schedule derived-data cleanup as a fire-and-forget background task.
+
+    ``kind`` is ``"source"`` or ``"scope"``. Disabled when
+    ``INGESTION_BACKGROUND=false`` (tests) so cleanup stays deterministic.
+    """
+    if not get_settings().ingestion_background:
+        logger.info(
+            "Background cleanup disabled; %s %s derived data not purged",
+            kind,
+            target_id,
+        )
+        return
+    try:
+        loop = asyncio.get_running_loop()
+        if kind == "source":
+            loop.create_task(_run_source_cleanup(target_id))
+        else:
+            loop.create_task(_run_scope_cleanup(target_id))
+        logger.info("Scheduled %s derived-data cleanup for %s", kind, target_id)
+    except RuntimeError:
+        logger.warning("No running event loop; skipping %s cleanup", kind)
+
+
 def _detect_format(filename: str) -> str | None:
     """Detect file format from extension. Returns 'markdown', 'java', or None."""
     ext = Path(filename).suffix.lower()
@@ -314,9 +452,8 @@ async def delete_knowledge_source(
     await session.flush()
     await session.commit()
 
-    # Step 2: Async cleanup would happen here in production
-    # (remove Qdrant points, archive PG chunks)
-    # For 001 demo, the status change is sufficient to stop retrieval
+    # Step 2: Asynchronously purge derived data (Qdrant points + PG chunks)
+    _schedule_derived_data_cleanup("source", source_id)
 
 
 @router.post("/scopes/{scope_id}/clear", status_code=202)
@@ -359,5 +496,8 @@ async def clear_knowledge_scope(
 
     await session.flush()
     await session.commit()
+
+    # Asynchronously purge derived data (Qdrant points + PG chunks)
+    _schedule_derived_data_cleanup("scope", scope_id)
 
     return {"message": "Scope clearing initiated", "scope_id": str(scope_id)}
