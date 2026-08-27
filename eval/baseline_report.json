@@ -1,0 +1,337 @@
+{
+  "report_type": "dense_retrieval_baseline",
+  "generated_at": "2026-08-27T04:36:44.284372+00:00",
+  "config": {
+    "embedding_model": "BAAI/bge-m3",
+    "qdrant_collection": "chunks_dense_bge-m3_v1",
+    "top_k": 5,
+    "dataset_path": "D:\\Project_new\\docsToCode\\eval\\eval_dataset.json",
+    "num_queries": 11
+  },
+  "metrics": {
+    "num_queries": 11,
+    "top_k": 5,
+    "recall_at_k": {
+      "mean": 1.0,
+      "min": 1.0,
+      "max": 1.0
+    },
+    "mrr": {
+      "mean": 0.9090909090909091,
+      "min": 0.5,
+      "max": 1.0
+    },
+    "ndcg_at_k": {
+      "mean": 0.9328963188311742,
+      "min": 0.6309297535714575,
+      "max": 1.0
+    },
+    "latency_ms": {
+      "p50": 138.45060000130616,
+      "p95": 185.14940000022762,
+      "mean": 124.50394545455559,
+      "min": 72.0272999988083,
+      "max": 212.8033000008145
+    }
+  },
+  "per_query_results": [
+    {
+      "query_index": 0,
+      "query": "Find the definition of com.example.service.UserService.",
+      "project_scope": [
+        "351193748123680768"
+      ],
+      "expected_evidence_ids": [
+        "351194693498830848"
+      ],
+      "retrieved_evidence_ids": [
+        "351194693498830848",
+        "351194693498830850",
+        "351194693498830851",
+        "351194693498830852",
+        "351194693498830849"
+      ],
+      "scores": [
+        0.5638318,
+        0.49755403,
+        0.4343332,
+        0.4190141,
+        0.41572762
+      ],
+      "latency_ms": 212.8033000008145,
+      "status": "ok"
+    },
+    {
+      "query_index": 1,
+      "query": "What is the purpose of com.example.service.UserService#DB_PASSWORD?",
+      "project_scope": [
+        "351193748123680768"
+      ],
+      "expected_evidence_ids": [
+        "351194693498830849"
+      ],
+      "retrieved_evidence_ids": [
+        "351194693498830849",
+        "351194693498830848",
+        "351194361830047744",
+        "351193825345011712",
+        "351194693498830850"
+      ],
+      "scores": [
+        0.63132393,
+        0.6199944,
+        0.54872966,
+        0.54872966,
+        0.4977479
+      ],
+      "latency_ms": 138.77529999990657,
+      "status": "ok"
+    },
+    {
+      "query_index": 2,
+      "query": "Show me the implementation of com.example.service.UserService#repository.",
+      "project_scope": [
+        "351193748123680768"
+      ],
+      "expected_evidence_ids": [
+        "351194693498830850"
+      ],
+      "retrieved_evidence_ids": [
+        "351194693498830850",
+        "351194693498830848",
+        "351194693498830851",
+        "351194693498830852",
+        "351194693498830849"
+      ],
+      "scores": [
+        0.6369271,
+        0.6217958,
+        0.51501554,
+        0.4953874,
+        0.47324246
+      ],
+      "latency_ms": 138.45060000130616,
+      "status": "ok"
+    },
+    {
+      "query_index": 3,
+      "query": "What does com.example.service.UserService#findById do?",
+      "project_scope": [
+        "351193748123680768"
+      ],
+      "expected_evidence_ids": [
+        "351194693498830851"
+      ],
+      "retrieved_evidence_ids": [
+        "351194693498830851",
+        "351194693498830848",
+        "351194693498830852",
+        "351194693498830850",
+        "351194693498830849"
+      ],
+      "scores": [
+        0.6522032,
+        0.6322503,
+        0.53230536,
+        0.45831445,
+        0.44223082
+      ],
+      "latency_ms": 138.3358999992197,
+      "status": "ok"
+    },
+    {
+      "query_index": 4,
+      "query": "Explain the code at com.example.service.UserService#getActiveUsers.",
+      "project_scope": [
+        "351193748123680768"
+      ],
+      "expected_evidence_ids": [
+        "351194693498830852"
+      ],
+      "retrieved_evidence_ids": [
+        "351194693498830852",
+        "351194693498830848",
+        "351194693498830851",
+        "351193825345011712",
+        "351194361830047744"
+      ],
+      "scores": [
+        0.7410897,
+        0.6330942,
+        0.5005491,
+        0.49996883,
+        0.49996883
+      ],
+      "latency_ms": 141.26180000130262,
+      "status": "ok"
+    },
+    {
+      "query_index": 5,
+      "query": "Find the definition of com.example.service.UserService#validateToken.",
+      "project_scope": [
+        "351193748123680768"
+      ],
+      "expected_evidence_ids": [
+        "351194693498830853"
+      ],
+      "retrieved_evidence_ids": [
+        "351194693498830848",
+        "351194693498830853",
+        "351194361830047744",
+        "351193825345011712",
+        "351194693498830850"
+      ],
+      "scores": [
+        0.6151389,
+        0.6132928,
+        0.5275306,
+        0.5275306,
+        0.46905667
+      ],
+      "latency_ms": 157.49549999964074,
+      "status": "ok"
+    },
+    {
+      "query_index": 6,
+      "query": "Show me the section # extra.",
+      "project_scope": [
+        "351207349697904640"
+      ],
+      "expected_evidence_ids": [
+        "351207503075213312"
+      ],
+      "retrieved_evidence_ids": [
+        "351207503075213312",
+        "351207355020476417",
+        "351207355020476416"
+      ],
+      "scores": [
+        0.7660169,
+        0.56330985,
+        0.41287702
+      ],
+      "latency_ms": 140.0911000000633,
+      "status": "ok"
+    },
+    {
+      "query_index": 7,
+      "query": "Show me the section # Test Content.",
+      "project_scope": [
+        "351221148429582336"
+      ],
+      "expected_evidence_ids": [
+        "351221149851451392"
+      ],
+      "retrieved_evidence_ids": [
+        "351221149851451392"
+      ],
+      "scores": [
+        0.6973516
+      ],
+      "latency_ms": 77.3324000001594,
+      "status": "ok"
+    },
+    {
+      "query_index": 8,
+      "query": "Explain the content of # Test Content.",
+      "project_scope": [
+        "351222351527936000"
+      ],
+      "expected_evidence_ids": [
+        "351222352886890496"
+      ],
+      "retrieved_evidence_ids": [
+        "351222352886890496"
+      ],
+      "scores": [
+        0.7158757
+      ],
+      "latency_ms": 72.0272999988083,
+      "status": "ok"
+    },
+    {
+      "query_index": 9,
+      "query": "What does # Test Content describe?",
+      "project_scope": [
+        "351222576757866496"
+      ],
+      "expected_evidence_ids": [
+        "351222582172712960"
+      ],
+      "retrieved_evidence_ids": [
+        "351222582172712960"
+      ],
+      "scores": [
+        0.6359795
+      ],
+      "latency_ms": 79.34739999836893,
+      "status": "ok"
+    },
+    {
+      "query_index": 10,
+      "query": "Explain the content of # Test Content.",
+      "project_scope": [
+        "351222872145920000"
+      ],
+      "expected_evidence_ids": [
+        "351222946129248256"
+      ],
+      "retrieved_evidence_ids": [
+        "351222873420988416",
+        "351222946129248256"
+      ],
+      "scores": [
+        0.7158757,
+        0.7158757
+      ],
+      "latency_ms": 73.62280000052124,
+      "status": "ok"
+    }
+  ],
+  "reproducibility": {
+    "reproducible": false,
+    "tolerance": 0.01,
+    "checks": [
+      {
+        "metric": "recall_at_k.mean",
+        "run_1": 1.0,
+        "run_2": 1.0,
+        "relative_delta": 0.0,
+        "tolerance": 0.01,
+        "passed": true
+      },
+      {
+        "metric": "mrr.mean",
+        "run_1": 0.909091,
+        "run_2": 0.909091,
+        "relative_delta": 0.0,
+        "tolerance": 0.01,
+        "passed": true
+      },
+      {
+        "metric": "ndcg_at_k.mean",
+        "run_1": 0.932896,
+        "run_2": 0.932896,
+        "relative_delta": 0.0,
+        "tolerance": 0.01,
+        "passed": true
+      },
+      {
+        "metric": "latency_ms.p50",
+        "run_1": 138.4506,
+        "run_2": 131.383,
+        "relative_delta": 0.051048,
+        "tolerance": 0.01,
+        "passed": false
+      },
+      {
+        "metric": "latency_ms.p95",
+        "run_1": 185.1494,
+        "run_2": 141.97585,
+        "relative_delta": 0.233182,
+        "tolerance": 0.01,
+        "passed": false
+      }
+    ]
+  }
+}

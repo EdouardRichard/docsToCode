@@ -1,0 +1,101 @@
+[
+  {
+    "query": "Find the definition of com.example.service.UserService.",
+    "project_scope": [
+      "351193748123680768"
+    ],
+    "expected_evidence_ids": [
+      "351194693498830848"
+    ]
+  },
+  {
+    "query": "What is the purpose of com.example.service.UserService#DB_PASSWORD?",
+    "project_scope": [
+      "351193748123680768"
+    ],
+    "expected_evidence_ids": [
+      "351194693498830849"
+    ]
+  },
+  {
+    "query": "Show me the implementation of com.example.service.UserService#repository.",
+    "project_scope": [
+      "351193748123680768"
+    ],
+    "expected_evidence_ids": [
+      "351194693498830850"
+    ]
+  },
+  {
+    "query": "What does com.example.service.UserService#findById do?",
+    "project_scope": [
+      "351193748123680768"
+    ],
+    "expected_evidence_ids": [
+      "351194693498830851"
+    ]
+  },
+  {
+    "query": "Explain the code at com.example.service.UserService#getActiveUsers.",
+    "project_scope": [
+      "351193748123680768"
+    ],
+    "expected_evidence_ids": [
+      "351194693498830852"
+    ]
+  },
+  {
+    "query": "Find the definition of com.example.service.UserService#validateToken.",
+    "project_scope": [
+      "351193748123680768"
+    ],
+    "expected_evidence_ids": [
+      "351194693498830853"
+    ]
+  },
+  {
+    "query": "Show me the section # extra.",
+    "project_scope": [
+      "351207349697904640"
+    ],
+    "expected_evidence_ids": [
+      "351207503075213312"
+    ]
+  },
+  {
+    "query": "Show me the section # Test Content.",
+    "project_scope": [
+      "351221148429582336"
+    ],
+    "expected_evidence_ids": [
+      "351221149851451392"
+    ]
+  },
+  {
+    "query": "Explain the content of # Test Content.",
+    "project_scope": [
+      "351222351527936000"
+    ],
+    "expected_evidence_ids": [
+      "351222352886890496"
+    ]
+  },
+  {
+    "query": "What does # Test Content describe?",
+    "project_scope": [
+      "351222576757866496"
+    ],
+    "expected_evidence_ids": [
+      "351222582172712960"
+    ]
+  },
+  {
+    "query": "Explain the content of # Test Content.",
+    "project_scope": [
+      "351222872145920000"
+    ],
+    "expected_evidence_ids": [
+      "351222946129248256"
+    ]
+  }
+]

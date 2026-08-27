@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-engineering-rag-mcp.local/schemas/001/mcp-search-input.schema.json",
+  "title": "search_knowledge Input Schema",
+  "description": "主检索Tool的输入参数定义。Agent必须提供查询和显式项目作用域。",
+  "type": "object",
+  "properties": {
+    "query": {
+      "type": "string",
+      "description": "自然语言查询或事实性问题",
+      "minLength": 1,
+      "maxLength": 2000
+    },
+    "project_scope": {
+      "type": "array",
+      "description": "显式项目作用域列表。至少一个项目引用（稳定ID、别名或仓库路径）。不提供时系统拒绝全库搜索。",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1,
+      "maxItems": 10
+    },
+    "task_context": {
+      "type": "object",
+      "description": "可选的任务上下文，帮助系统理解当前工作阶段",
+      "properties": {
+        "current_file": {
+          "type": "string",
+          "description": "当前正在编辑的文件路径"
+        },
+        "current_symbol": {
+          "type": "string",
+          "description": "当前关注的符号名称"
+        },
+        "work_phase": {
+          "type": "string",
+          "enum": ["requirements", "design", "implementation", "testing", "review"],
+          "description": "当前工作阶段"
+        },
+        "additional_context": {
+          "type": "string",
+          "description": "额外的上下文信息",
+          "maxLength": 4000
+        }
+      },
+      "additionalProperties": false
+    },
+    "top_k": {
+      "type": "integer",
+      "description": "返回的最大证据条数。默认5，最大20。",
+      "default": 5,
+      "minimum": 1,
+      "maximum": 20
+    }
+  },
+  "required": ["query", "project_scope"],
+  "additionalProperties": false
+}

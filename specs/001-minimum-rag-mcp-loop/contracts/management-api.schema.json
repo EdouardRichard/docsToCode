@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-engineering-rag-mcp.local/schemas/001/management-api.schema.json",
+  "title": "REST Management API Contract",
+  "description": "Web管理端REST API的端点和数据结构定义。管理面与MCP检索面使用独立路由和契约。",
+  "type": "object",
+  "properties": {
+    "endpoints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "method": { "type": "string", "enum": ["GET", "POST", "PUT", "DELETE"] },
+          "path": { "type": "string" },
+          "description": { "type": "string" },
+          "request_body": { "type": "string", "description": "引用其他schema或内联描述" },
+          "response_body": { "type": "string" }
+        },
+        "required": ["method", "path", "description"]
+      }
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "ProjectCreate": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "alias": { "type": "string", "maxLength": 100 },
+        "repo_path": { "type": "string", "maxLength": 500 }
+      },
+      "required": ["name"],
+      "additionalProperties": false
+    },
+    "ProjectResponse": {
+      "type": "object",
+      "properties": {
+        "project_id": { "type": "string" },
+        "name": { "type": "string" },
+        "alias": { "type": "string" },
+        "repo_path": { "type": "string" },
+        "knowledge_scope_id": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["project_id", "name", "knowledge_scope_id", "created_at", "updated_at"],
+      "additionalProperties": false
+    },
+    "KnowledgeSourceResponse": {
+      "type": "object",
+      "properties": {
+        "source_id": { "type": "string" },
+        "filename": { "type": "string" },
+        "format": { "type": "string", "enum": ["markdown", "java"] },
+        "size_bytes": { "type": "integer" },
+        "content_hash": { "type": "string" },
+        "status": { "type": "string", "enum": ["uploaded", "processing", "published", "failed", "deleted"] },
+        "processing_error": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["source_id", "filename", "format", "size_bytes", "content_hash", "status", "created_at", "updated_at"],
+      "additionalProperties": false
+    },
+    "ProcessingRunResponse": {
+      "type": "object",
+      "properties": {
+        "run_id": { "type": "string" },
+        "source_id": { "type": "string" },
+        "run_type": { "type": "string", "enum": ["initial", "retry"] },
+        "status": { "type": "string", "enum": ["pending", "running", "completed", "failed"] },
+        "started_at": { "type": "string", "format": "date-time" },
+        "completed_at": { "type": "string", "format": "date-time" },
+        "error_message": { "type": "string" },
+        "stages": { "type": "array" }
+      },
+      "required": ["run_id", "source_id", "run_type", "status"],
+      "additionalProperties": false
+    },
+    "SSEEvent": {
+      "type": "object",
+      "description": "SSE推送的事件格式",
+      "properties": {
+        "event": { "type": "string", "enum": ["processing_progress", "publish_progress", "delete_progress", "error"] },
+        "data": {
+          "type": "object",
+          "properties": {
+            "source_id": { "type": "string" },
+            "run_id": { "type": "string" },
+            "stage": { "type": "string" },
+            "progress": { "type": "number", "minimum": 0, "maximum": 1 },
+            "message": { "type": "string" }
+          }
+        }
+      },
+      "required": ["event", "data"],
+      "additionalProperties": false
+    }
+  }
+}

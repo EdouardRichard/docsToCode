@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-engineering-rag-mcp.local/schemas/001/mcp-search-output.schema.json",
+  "title": "search_knowledge Output Schema",
+  "description": "主检索Tool的输出结构。structuredContent是唯一规范数据源，TextContent由其确定性序列化产生。",
+  "type": "object",
+  "properties": {
+    "completion_status": {
+      "type": "string",
+      "enum": ["complete", "partial", "no_evidence", "failed"],
+      "description": "检索完成状态。complete=有可靠证据且覆盖充分；partial=有部分证据但存在明确缺口；no_evidence=系统正常执行但未找到可靠证据；failed=系统异常无法形成有效响应。"
+    },
+    "evidence": {
+      "type": "array",
+      "description": "核心证据列表，按相关性排序",
+      "items": {
+        "type": "object",
+        "description": "单条证据的结构化表示",
+        "properties": {
+          "evidence_id": { "type": "string", "description": "证据唯一标识" },
+          "content_excerpt": { "type": "string", "description": "精简的证据摘录，不超过500字符", "maxLength": 500 },
+          "source_version": { "type": "integer", "minimum": 1, "description": "知识源版本号" },
+          "source_position": { "type": "string", "description": "来源位置路径" },
+          "knowledge_scope_id": { "type": "string", "pattern": "^[0-9]+$", "minLength": 1, "description": "知识域标识（Snowflake ID字符串形式）" },
+          "knowledge_scope_type": { "type": "string", "enum": ["project", "public"], "description": "知识域类型" },
+          "relevance_score": { "type": "number", "minimum": 0, "maximum": 1, "description": "相关性分数" }
+        },
+        "required": ["evidence_id", "content_excerpt", "source_version", "source_position", "knowledge_scope_id", "knowledge_scope_type", "relevance_score"],
+        "additionalProperties": false
+      }
+    },
+    "gaps": {
+      "type": "array",
+      "description": "明确的证据缺口说明（仅partial状态时非空）",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "缺口描述"
+          },
+          "suggested_action": {
+            "type": "string",
+            "description": "建议的后续操作"
+          }
+        },
+        "required": ["description"],
+        "additionalProperties": false
+      }
+    },
+    "error": {
+      "type": "object",
+      "description": "错误信息（failed或项目引用解析失败时存在）",
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "SYSTEM_ERROR",
+            "MISSING_PROJECT_SCOPE",
+            "AMBIGUOUS_PROJECT_REF",
+            "INVALID_PROJECT_REF",
+            "INDEX_UNAVAILABLE"
+          ],
+          "description": "错误码。AMBIGUOUS_PROJECT_REF表示项目引用匹配到多个候选，需调用方明确指定。"
+        },
+        "message": {
+          "type": "string",
+          "description": "人类可读的错误描述"
+        },
+        "candidates": {
+          "type": "array",
+          "description": "当code为AMBIGUOUS_PROJECT_REF时，返回匹配到的候选项目列表",
+          "items": {
+            "type": "object",
+            "properties": {
+              "project_id": {
+                "type": "string",
+                "description": "项目稳定ID（Snowflake ID字符串形式）"
+              },
+              "name": {
+                "type": "string",
+                "description": "项目名称"
+              },
+              "alias": {
+                "type": "string",
+                "description": "项目别名（如有）"
+              },
+              "repo_path": {
+                "type": "string",
+                "description": "仓库路径（如有）"
+              }
+            },
+            "required": ["project_id", "name"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": ["code", "message"],
+      "additionalProperties": false
+    },
+    "request_id": {
+      "type": "string",
+      "description": "本次检索请求的唯一标识，用于问题回溯"
+    }
+  },
+  "required": ["completion_status", "evidence", "request_id"],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": { "properties": { "completion_status": { "const": "partial" } } },
+      "then": { "required": ["gaps"] }
+    },
+    {
+      "if": { "properties": { "completion_status": { "const": "failed" } } },
+      "then": { "required": ["error"] }
+    },
+    {
+      "if": { "properties": { "completion_status": { "const": "no_evidence" } } },
+      "then": {
+        "properties": {
+          "evidence": { "maxItems": 0 }
+        }
+      }
+    }
+  ]
+}

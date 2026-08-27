@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-engineering-rag-mcp.local/schemas/001/mcp-get-evidence.schema.json",
+  "title": "get_evidence Input/Output Schema",
+  "description": "证据展开Tool的输入参数和输出结构定义。",
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "object",
+      "description": "get_evidence输入参数",
+      "properties": {
+        "evidence_id": {
+          "type": "string",
+          "description": "从search_knowledge返回的证据ID"
+        },
+        "project_scope": {
+          "type": "array",
+          "description": "显式项目作用域列表，必须包含该证据所属的项目",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "maxItems": 10
+        }
+      },
+      "required": ["evidence_id", "project_scope"],
+      "additionalProperties": false
+    },
+    "output": {
+      "type": "object",
+      "description": "get_evidence输出结构",
+      "properties": {
+        "evidence_id": {
+          "type": "string",
+          "description": "证据唯一标识"
+        },
+        "full_content": {
+          "type": "string",
+          "description": "完整的Chunk内容"
+        },
+        "parent_context": {
+          "type": "string",
+          "description": "父级章节、类或模块的上下文内容（如有）"
+        },
+        "source_version": {
+          "type": "integer",
+          "description": "知识源版本号"
+        },
+        "source_position": {
+          "type": "string",
+          "description": "来源位置路径"
+        },
+        "knowledge_scope_id": {
+          "type": "string",
+          "description": "知识域标识"
+        },
+        "knowledge_scope_type": {
+          "type": "string",
+          "enum": ["project", "public"],
+          "description": "知识域类型"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["available", "unavailable", "scope_mismatch"],
+          "description": "证据状态。available=正常返回；unavailable=版本已撤销或删除；scope_mismatch=证据不属于请求的项目作用域"
+        },
+        "error": {
+          "type": "object",
+          "description": "错误信息（仅status非available时存在）",
+          "properties": {
+            "code": { "type": "string" },
+            "message": { "type": "string" }
+          },
+          "required": ["code", "message"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["evidence_id", "status"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["input", "output"],
+  "additionalProperties": false
+}
