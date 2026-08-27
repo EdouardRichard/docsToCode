@@ -173,3 +173,26 @@ class QdrantStore:
                 ]
             ),
         )
+
+    def delete_points_by_version(self, collection: str, version_id: int) -> None:
+        """Delete all points belonging to a specific knowledge version.
+
+        Used when a version is superseded after reprocessing (FR-009): the old
+        version's points must be removed so they do not linger as orphans.
+
+        Args:
+            collection: Collection name.
+            version_id: Knowledge version ID whose points should be deleted.
+        """
+        self._client.delete(
+            collection_name=collection,
+            points_selector=Filter(
+                must=[
+                    # Payload values are stored as strings (see ingestion upsert),
+                    # so the match value must be the string form.
+                    FieldCondition(
+                        key="version_id", match=MatchValue(value=str(version_id))
+                    )
+                ]
+            ),
+        )

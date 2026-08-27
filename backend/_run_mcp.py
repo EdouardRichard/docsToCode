@@ -16,6 +16,12 @@ def main():
         embedding_provider=provider,
         qdrant_store=qdrant,
     )
+
+    # Warm the embedding model before serving so the first search_knowledge
+    # call does not exceed the client's request timeout (bge-m3 lazy load).
+    print("Warming up embedding model (bge-m3) — may take ~30-60s ...")
+    provider.warmup()
+
     print(f"MCP server running on 127.0.0.1:8080 (Streamable HTTP)")
     server.run(transport="streamable-http")
 

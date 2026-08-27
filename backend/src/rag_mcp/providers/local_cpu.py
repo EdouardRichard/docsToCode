@@ -46,6 +46,15 @@ class LocalCPUEmbeddingProvider(EmbeddingProvider):
             )
         return self._model
 
+    def warmup(self) -> None:
+        """Eagerly load the model so the first request does not block/time out.
+
+        bge-m3 is a ~2GB model; loading it lazily on first use makes the first
+        ``search_knowledge`` call exceed the client's request timeout. Call this
+        at server startup (after the event loop is ready) to front-load the cost.
+        """
+        self._ensure_model()
+
     def get_dimension(self) -> int:
         """Return embedding vector dimensionality (1024 for bge-m3)."""
         model = self._ensure_model()

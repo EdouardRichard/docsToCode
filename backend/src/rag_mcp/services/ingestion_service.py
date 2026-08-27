@@ -522,6 +522,11 @@ class IngestionService:
                 "Superseded version %d (id=%s) in scope %s",
                 old_version.version_number, old_version.version_id, scope_id,
             )
+            # FR-009: the old version stays searchable until the new version is
+            # written; now that the switch is happening, purge the superseded
+            # version's derived data (Qdrant points + PG chunks) so it does not
+            # linger as orphaned/stale data.
+            await self._cleanup_version_derived_data(old_version.version_id)
 
         # Publish the new version
         version.status = "published"
@@ -531,4 +536,36 @@ class IngestionService:
         logger.info(
             "Published version %d (id=%s) in scope %s",
             version.version_number, version.version_id, scope_id,
+        )
+
+    async def _cleanup_version_derived_data(self, version_id: int) -> None:
+        """Purge a superseded version's Qdrant points and PG chunks.
+
+        Called from ``_publish_version`` after a version is marked superseded.
+        Idempotent and tolerant of Qdrant failures (which must never block the
+        PG chunk deletion).
+        """
+        from sqlalchemy import delete as sa_delete
+        from sqlalchemy import select
+
+        from rag_mcp.models.chunk import Chunk
+
+        result = await self._session.execute(
+            select(Chunk.index_version).where(Chunk.version_id == version_id).distinct()
+        )
+        index_versions = list(result.scalars().all())
+
+        for index_version in index_versions:
+            collection = f"chunks_dense_{index_version}"
+            try:
+                self._qdrant_store.delete_points_by_version(collection, version_id)
+            except Exception:  # noqa: BLE001 - Qdrant outage must not block PG cleanup
+                logger.exception(
+                    "Failed to purge Qdrant points for version %s (collection %s)",
+                    version_id,
+                    collection,
+                )
+
+        await self._session.execute(
+            sa_delete(Chunk).where(Chunk.version_id == version_id)
         )
