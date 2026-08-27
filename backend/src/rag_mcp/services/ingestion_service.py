@@ -55,6 +55,42 @@ def _derive_index_version(embedding_model: str) -> str:
     return f"{short_name}_v1"
 
 
+def backfill_parent_chunk_ids(chunk_dicts: list[dict[str, Any]]) -> None:
+    """Backfill ``parent_chunk_id`` for each chunk in-place (FR-007 / US-3).
+
+    Two-pass traversal over the parser output:
+
+    1. Build a ``position_path -> chunk_id`` map from each chunk's own
+       position path (``section_path`` for Markdown, ``symbol_path`` for Java).
+    2. Resolve each chunk's explicit parent reference (``parent_section_path``
+       for Markdown, ``parent_symbol_path`` for Java) against that map, and set
+       ``parent_chunk_id`` to the matched parent's id.
+
+    A chunk keeps no ``parent_chunk_id`` when its parent reference is empty,
+    unresolvable, or equal to its own path. This makes the ``get_evidence``
+    parent-context path triggerable for hierarchical chunks.
+    """
+    path_to_id: dict[str, int] = {}
+    for chunk in chunk_dicts:
+        position_path = (
+            chunk.get("section_path") or chunk.get("symbol_path") or ""
+        )
+        if position_path:
+            path_to_id[position_path] = chunk["chunk_id"]
+
+    for chunk in chunk_dicts:
+        parent_path = (
+            chunk.get("parent_section_path")
+            or chunk.get("parent_symbol_path")
+            or ""
+        )
+        if not parent_path:
+            continue
+        parent_id = path_to_id.get(parent_path)
+        if parent_id is not None and parent_id != chunk["chunk_id"]:
+            chunk["parent_chunk_id"] = parent_id
+
+
 class IngestionService:
     """Orchestrates document ingestion into the RAG knowledge base.
 
@@ -172,6 +208,9 @@ class IngestionService:
                 chunk_dict["chunk_id"] = generate_id()
                 if "token_count" not in chunk_dict or chunk_dict["token_count"] <= 0:
                     chunk_dict["token_count"] = _estimate_tokens(chunk_dict["content_text"])
+
+            # Backfill parent_chunk_id via two-pass traversal (FR-007 / US-3)
+            backfill_parent_chunk_ids(chunk_dicts)
             stages.append({
                 "stage": "chunking",
                 "status": "completed",
@@ -241,7 +280,7 @@ class IngestionService:
                     source_id=source_id,
                     version_id=version_id,
                     knowledge_scope_id=scope_id,
-                    parent_chunk_id=None,  # Top-level chunks; hierarchy handled later
+                    parent_chunk_id=chunk_dict.get("parent_chunk_id"),
                     content_text=chunk_dict["content_text"],
                     position_path=position_path,
                     chunk_type=chunk_dict["chunk_type"],
