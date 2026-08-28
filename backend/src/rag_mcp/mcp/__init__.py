@@ -18,7 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from rag_mcp.config import get_settings
 from rag_mcp.indexing.qdrant_client import QdrantStore
-from rag_mcp.providers.base import EmbeddingProvider
+from rag_mcp.providers.base import EmbeddingProvider, RerankerProvider
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +51,7 @@ def create_mcp_server(
     session_factory: Callable[[], Any] | None = None,
     qdrant_store: QdrantStore | None = None,
     embedding_provider: EmbeddingProvider | None = None,
+    reranker: RerankerProvider | None = None,
 ) -> FastMCP:
     """Create and configure the MCP server with all RAG tools.
 
@@ -61,6 +62,8 @@ def create_mcp_server(
             QDRANT_URL in settings.
         embedding_provider: Embedding provider for query vectorization.
             Must be provided externally (no default implementation bundled).
+        reranker: Optional Cross-Encoder reranker for hybrid retrieval (002).
+            If None, hybrid path skips rerank (RRF results only).
 
     Returns:
         Configured FastMCP server instance ready to serve requests.
@@ -100,6 +103,7 @@ def create_mcp_server(
         session_factory=session_factory,
         qdrant_store=qdrant_store,
         embedding_provider=embedding_provider,
+        reranker=reranker,
     )
 
     register_get_evidence_tool(

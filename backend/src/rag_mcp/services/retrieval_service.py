@@ -19,15 +19,30 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from rag_mcp.config import get_settings
+from rag_mcp.fusion.rrf import rrf_fuse
 from rag_mcp.indexing.qdrant_client import QdrantStore
+from rag_mcp.indexing.sparse_encoder import BM25SparseEncoder
 from rag_mcp.models.chunk import Chunk
 from rag_mcp.models.knowledge_version import KnowledgeVersion
 from rag_mcp.models.project import Project
 from rag_mcp.models.retrieval_run import RetrievalRun
-from rag_mcp.providers.base import EmbeddingProvider
+from rag_mcp.providers.base import EmbeddingProvider, RerankerProvider
 from rag_mcp.utils.snowflake import generate_id
 
 logger = logging.getLogger(__name__)
+
+# Module-level cache for BM25SparseEncoder instances (T036, FR-015/SC-005).
+# Key: sorted tuple of scope_ids. Value: fitted BM25SparseEncoder.
+# Hash-based term IDs ensure cached encoder produces compatible IDs with
+# stored sparse vectors. Cache is process-scoped; restart rebuilds it.
+_sparse_encoder_cache: dict[tuple[int, ...], "BM25SparseEncoder"] = {}
+
+
+def invalidate_sparse_encoder_cache() -> None:
+    """Clear the sparse encoder cache (call after ingestion publishes new data)."""
+    global _sparse_encoder_cache
+    _sparse_encoder_cache.clear()
+    logger.info("Sparse encoder cache invalidated")
 
 
 class RetrievalService:
@@ -47,10 +62,12 @@ class RetrievalService:
         session: AsyncSession,
         qdrant_store: QdrantStore,
         embedding_provider: EmbeddingProvider,
+        reranker: RerankerProvider | None = None,
     ) -> None:
         self._session = session
         self._qdrant_store = qdrant_store
         self._embedding_provider = embedding_provider
+        self._reranker = reranker
         self._settings = get_settings()
 
     # ------------------------------------------------------------------
@@ -95,6 +112,9 @@ class RetrievalService:
                     completion_status="failed",
                     evidence_count=0,
                     duration_ms=duration_ms,
+                    retrieval_mode="dense",
+                    subpath_timings=None,
+                    evidence_ref_ids=[],
                 )
                 return {
                     "completion_status": "failed",
@@ -112,6 +132,9 @@ class RetrievalService:
                     completion_status="failed",
                     evidence_count=0,
                     duration_ms=duration_ms,
+                    retrieval_mode="dense",
+                    subpath_timings=None,
+                    evidence_ref_ids=[],
                 )
                 return {
                     "completion_status": "failed",
@@ -126,17 +149,28 @@ class RetrievalService:
             # 2. Embed the query
             query_vector = await self._embedding_provider.embed_query(query)
 
-            # 3. Determine collection name from embedding model
-            index_version = self._derive_index_version()
-            collection_name = f"chunks_dense_{index_version}"
+            # 3. Hybrid or Dense recall based on version capabilities (FR-013)
+            #    Only lexical_ready versions participate in the Sparse path.
+            subpath_timings: dict | None = None
+            retrieval_mode = "dense"
 
-            # 4. Search Qdrant with scope filter (published versions only)
-            raw_results = self._qdrant_store.search(
-                collection=collection_name,
-                vector=query_vector,
-                scope_ids=resolved_ids,
-                limit=top_k * 2,  # Over-fetch for per-source guard
+            hybrid_result = await self._try_hybrid_recall(
+                query, query_vector, resolved_ids, top_k * 2,
             )
+            failed_paths: list[str] = []
+            if hybrid_result is not None:
+                raw_results, subpath_timings, failed_paths = hybrid_result
+                retrieval_mode = "hybrid"
+            else:
+                # Dense-only path (001 behavior, backward compat)
+                index_version = self._derive_index_version()
+                collection_name = f"chunks_dense_{index_version}"
+                raw_results = self._qdrant_store.search(
+                    collection=collection_name,
+                    vector=query_vector,
+                    scope_ids=resolved_ids,
+                    limit=top_k * 2,  # Over-fetch for per-source guard
+                )
 
             # 5. Filter to published versions only
             filtered_results = await self._filter_published_versions(raw_results)
@@ -160,19 +194,32 @@ class RetrievalService:
                 total_available=len(filtered_results),
             )
 
+            # 9b. If hybrid sub-paths failed, status is partial (FR-016)
+            if failed_paths:
+                completion_status = "partial"
+
             # 10. Build gaps for partial status
             gaps: list[dict[str, str]] = []
             if completion_status == "partial":
                 gaps = self._infer_gaps(evidence_items, top_k)
+                for fp in failed_paths:
+                    gaps.append({
+                        "description": f"Retrieval sub-path failed: {fp}",
+                        "suggested_action": "Check service health and retry.",
+                    })
 
             # 11. Record RetrievalRun audit trail
             duration_ms = int((time.monotonic() - start_time) * 1000)
+            evidence_ref_ids = [e["evidence_id"] for e in evidence_items]
             await self._record_retrieval_run(
                 query=query,
                 project_scopes=project_scopes,
                 completion_status=completion_status,
                 evidence_count=len(evidence_items),
                 duration_ms=duration_ms,
+                retrieval_mode=retrieval_mode,
+                subpath_timings=subpath_timings,
+                evidence_ref_ids=evidence_ref_ids,
             )
 
             # 12. Assemble response
@@ -203,6 +250,9 @@ class RetrievalService:
                     completion_status="failed",
                     evidence_count=0,
                     duration_ms=duration_ms,
+                    retrieval_mode="dense",
+                    subpath_timings=None,
+                    evidence_ref_ids=[],
                 )
             except Exception:
                 logger.error("Failed to record retrieval run for failed search", exc_info=True)
@@ -526,6 +576,225 @@ class RetrievalService:
 
         return gaps
 
+    async def _has_lexical_ready_versions(self, scope_ids: list[int]) -> bool:
+        """Check if any published version in the given scopes has lexical_ready.
+
+        FR-013: only lexical_ready versions participate in the Sparse path.
+        """
+        result = await self._session.execute(
+            select(KnowledgeVersion.version_id).where(
+                KnowledgeVersion.knowledge_scope_id.in_(scope_ids),
+                KnowledgeVersion.status == "published",
+                KnowledgeVersion.capabilities["lexical_ready"].astext == "true",
+            ).limit(1)
+        )
+        return result.scalar_one_or_none() is not None
+
+    async def _try_hybrid_recall(
+        self,
+        query: str,
+        query_vector: list[float],
+        scope_ids: list[int],
+        limit: int,
+    ) -> tuple[list[dict[str, Any]], dict, list[str]] | None:
+        """Attempt hybrid Dense+Sparse recall + RRF fusion + Rerank.
+
+        Returns (raw_results, subpath_timings, failed_paths) if hybrid is
+        available, or None if no lexical_ready versions or hybrid collection
+        missing (caller falls back to dense-only path).
+
+        FR-013: only lexical_ready versions participate in the Sparse path.
+        FR-008: both Dense and Sparse enforce scope+version filter.
+        FR-016: partial degradation on sparse/rerank failure.
+        FR-005: rerank only processes <= rerank_budget candidates.
+        """
+        # Check for lexical_ready published versions (FR-013)
+        if not await self._has_lexical_ready_versions(scope_ids):
+            return None
+
+        # Determine hybrid collection name
+        index_version = self._derive_index_version()
+        collection_name = f"chunks_hybrid_{index_version}"
+
+        # Check hybrid collection exists
+        if not self._qdrant_store.collection_exists(collection_name):
+            logger.debug(
+                "Hybrid collection %s does not exist, falling back to dense",
+                collection_name,
+            )
+            return None
+
+        # Build sparse encoder from published chunk texts in the resolved scopes
+        encoder = await self._build_sparse_encoder(scope_ids)
+        if encoder is None:
+            return None
+
+        # Encode query for sparse retrieval (IDF-weighted, FR-025)
+        sparse_query = encoder.encode(query)
+        if not sparse_query["indices"]:
+            # Query has no in-vocab terms -> sparse path adds nothing
+            logger.debug("Query has no in-vocab sparse terms, falling back to dense")
+            return None
+
+        # Dense + Sparse parallel recall (FR-002, both enforce scope filter FR-008)
+        t_recall_start = time.monotonic()
+        dense_results, sparse_results = self._qdrant_store.query_hybrid(
+            collection=collection_name,
+            dense_vector=query_vector,
+            sparse_vector=sparse_query,
+            scope_ids=scope_ids,
+            version_id=None,
+            limit=limit,
+        )
+        recall_elapsed = (time.monotonic() - t_recall_start) * 1000
+
+        # RRF fusion (FR-003, deterministic tie-breaker FR-017)
+        t_fusion_start = time.monotonic()
+        fused = rrf_fuse(dense_results, sparse_results, k=60)
+        fusion_elapsed = (time.monotonic() - t_fusion_start) * 1000
+
+        # Build chunk_id -> result map from both dense and sparse results
+        result_map: dict[str, dict[str, Any]] = {}
+        for r in dense_results + sparse_results:
+            payload = r.get("payload") or {}
+            chunk_id = str(payload.get("chunk_id", r.get("id", "")))
+            if chunk_id and chunk_id not in result_map:
+                result_map[chunk_id] = r
+
+        # Convert fused candidates to raw_results format (sorted by fused score)
+        raw_results: list[dict[str, Any]] = []
+        for cand in fused:
+            r = result_map.get(cand.chunk_id)
+            if r is not None:
+                raw_results.append({
+                    "id": r.get("id"),
+                    "score": cand.fused_score,
+                    "payload": r.get("payload", {}),
+                })
+
+        failed_paths: list[str] = []
+
+        # Rerank (FR-004/FR-005): only if reranker is configured and results exist
+        rerank_elapsed = 0.0
+        if self._reranker is not None and raw_results:
+            rerank_budget = self._settings.hybrid_retrieval.rerank_budget
+            # Trim to rerank budget (FR-005, blueprint §18.5)
+            rerank_input = raw_results[:rerank_budget]
+
+            # Fetch chunk content_text for rerank (query+passage pairs)
+            chunk_ids: list[int] = []
+            for r in rerank_input:
+                cid = r.get("payload", {}).get("chunk_id")
+                if cid is not None:
+                    try:
+                        chunk_ids.append(int(cid))
+                    except (ValueError, TypeError):
+                        pass
+
+            content_map = await self._fetch_chunk_content(chunk_ids)
+
+            candidates = [
+                {
+                    "chunk_id": str(r.get("payload", {}).get("chunk_id", "")),
+                    "content_text": content_map.get(
+                        int(r.get("payload", {}).get("chunk_id", 0)), ""
+                    ),
+                    "fused_score": r.get("score", 0.0),
+                }
+                for r in rerank_input
+            ]
+
+            try:
+                t_rerank_start = time.monotonic()
+                reranked = await self._reranker.rerank(
+                    query, candidates, top_k=limit,
+                )
+                rerank_elapsed = (time.monotonic() - t_rerank_start) * 1000
+
+                # Rebuild raw_results from reranked order
+                reranked_map: dict[str, dict[str, Any]] = {}
+                for r in reranked:
+                    cid = str(r.get("chunk_id", ""))
+                    if cid:
+                        reranked_map[cid] = r
+
+                new_raw: list[dict[str, Any]] = []
+                for r in reranked:
+                    cid = str(r.get("chunk_id", ""))
+                    orig = result_map.get(cid, {})
+                    new_raw.append({
+                        "id": orig.get("id"),
+                        "score": r.get("rerank_score", r.get("fused_score", 0.0)),
+                        "payload": orig.get("payload", {}),
+                    })
+                raw_results = new_raw
+
+            except Exception as rerank_exc:
+                logger.warning("Rerank failed, using RRF results: %s", rerank_exc)
+                failed_paths.append("rerank_failed")
+
+        subpath_timings = {
+            "dense_recall_ms": round(recall_elapsed, 2),
+            "sparse_recall_ms": round(recall_elapsed, 2),  # parallel
+            "fusion_ms": round(fusion_elapsed, 4),
+            "rerank_ms": round(rerank_elapsed, 2),
+            "total_ms": round(recall_elapsed + fusion_elapsed + rerank_elapsed, 2),
+        }
+
+        logger.info(
+            "Hybrid recall: dense=%d sparse=%d fused=%d rerank=%dms, failed=%s, timings=%s",
+            len(dense_results), len(sparse_results), len(raw_results),
+            rerank_elapsed, failed_paths, subpath_timings,
+        )
+
+        return raw_results, subpath_timings, failed_paths
+
+    async def _fetch_chunk_content(self, chunk_ids: list[int]) -> dict[int, str]:
+        """Fetch content_text for chunks by ID (for rerank query+passage pairs)."""
+        if not chunk_ids:
+            return {}
+        result = await self._session.execute(
+            select(Chunk.chunk_id, Chunk.content_text).where(
+                Chunk.chunk_id.in_(chunk_ids)
+            )
+        )
+        return {row[0]: row[1] for row in result.all()}
+
+    async def _build_sparse_encoder(self, scope_ids: list[int]) -> BM25SparseEncoder | None:
+        """Build or retrieve a cached BM25SparseEncoder for the given scopes.
+
+        Uses a module-level cache keyed by sorted scope_ids to avoid a full DB
+        scan + fit() on every hybrid search call (T036, FR-015/SC-005).
+
+        Hash-based term IDs ensure the cached encoder produces compatible IDs
+        with stored sparse vectors regardless of when it was built.
+        """
+        cache_key = tuple(sorted(scope_ids))
+        cached = _sparse_encoder_cache.get(cache_key)
+        if cached is not None:
+            logger.debug("Sparse encoder cache hit for scopes %s", cache_key)
+            return cached
+
+        logger.debug("Sparse encoder cache miss for scopes %s — building", cache_key)
+        result = await self._session.execute(
+            select(Chunk.content_text)
+            .join(KnowledgeVersion, Chunk.version_id == KnowledgeVersion.version_id)
+            .where(
+                Chunk.knowledge_scope_id.in_(scope_ids),
+                KnowledgeVersion.status == "published",
+            )
+            .order_by(Chunk.chunk_id)
+        )
+        texts = [row[0] for row in result.all()]
+        if not texts:
+            return None
+
+        encoder = BM25SparseEncoder()
+        encoder.fit(texts)
+        _sparse_encoder_cache[cache_key] = encoder
+        logger.info("Sparse encoder cached for scopes %s (%d terms)", cache_key, encoder.vocab_size)
+        return encoder
+
     async def _record_retrieval_run(
         self,
         query: str,
@@ -533,6 +802,9 @@ class RetrievalService:
         completion_status: str,
         evidence_count: int,
         duration_ms: int,
+        retrieval_mode: str = "dense",
+        subpath_timings: dict | None = None,
+        evidence_ref_ids: list[str] | None = None,
     ) -> None:
         """Record an append-only RetrievalRun audit entry."""
         try:
@@ -543,6 +815,9 @@ class RetrievalService:
                 completion_status=completion_status,
                 evidence_count=evidence_count,
                 duration_ms=duration_ms,
+                retrieval_mode=retrieval_mode,
+                subpath_timings=subpath_timings,
+                evidence_ref_ids=evidence_ref_ids or [],
             )
             self._session.add(run)
             await self._session.flush()

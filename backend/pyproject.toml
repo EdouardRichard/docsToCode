@@ -36,6 +36,9 @@ dependencies = [
     "tree-sitter-java>=0.23.0",
     "markdown-it-py>=3.0.0",
 
+    # CJK tokenization (002 hybrid retrieval)
+    "jieba>=0.42.1",
+
     # Utilities
     "snowflake-id>=0.1.0",
     "pydantic>=2.10.0",

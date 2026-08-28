@@ -232,15 +232,34 @@ class IngestionService:
                 "details": {"model": embedding_model, "vectors": len(embeddings)},
             })
 
-            # 8. Determine index_version
-            index_version = _derive_index_version(embedding_model)
-            collection_name = f"chunks_dense_{index_version}"
+            # 7b. Build sparse vectors (BM25 + jieba CJK, FR-001/FR-025)
+            stage_start = datetime.now(timezone.utc)
+            from rag_mcp.indexing.sparse_encoder import BM25SparseEncoder
 
-            # 9. Ensure Qdrant collection exists
+            sparse_encoder = BM25SparseEncoder()
+            sparse_encoder.fit(texts)  # Fit on chunk texts (vocab frozen after)
+            sparse_vectors = [sparse_encoder.encode(t) for t in texts]
+            stages.append({
+                "stage": "sparse_index",
+                "status": "completed",
+                "started_at": stage_start.isoformat(),
+                "completed_at": datetime.now(timezone.utc).isoformat(),
+                "details": {
+                    "encoder": "bm25_jieba",
+                    "vectors": len(sparse_vectors),
+                    "tokenizer": "jieba_precise",
+                },
+            })
+
+            # 8. Determine index_version and collection name
+            index_version = _derive_index_version(embedding_model)
+            collection_name = f"chunks_hybrid_{index_version}"
+
+            # 9. Ensure Qdrant hybrid collection exists (Dense + Sparse named vectors)
             dimension = self._embedding_provider.get_dimension()
             if not self._qdrant_store.collection_exists(collection_name):
-                logger.info("Creating Qdrant collection: %s (dim=%d)", collection_name, dimension)
-                self._qdrant_store.create_collection(collection_name, dimension)
+                logger.info("Creating Qdrant hybrid collection: %s (dim=%d)", collection_name, dimension)
+                self._qdrant_store.create_hybrid_collection(collection_name, dimension)
 
             # 10–11. Create KnowledgeVersion, Chunks, and Qdrant points
             #   Write order per data-model §7.2:
@@ -259,7 +278,7 @@ class IngestionService:
                 version_id=version_id,
                 knowledge_scope_id=scope_id,
                 version_number=version_number,
-                capabilities={"dense_ready": True},
+                capabilities={"dense_ready": True, "lexical_ready": True},
                 status="draft",
                 created_at=datetime.now(timezone.utc),
             )
@@ -300,33 +319,35 @@ class IngestionService:
                 len(chunk_records), source_id, version_number,
             )
 
-            # Upsert points to Qdrant
-            points: list[PointStruct] = []
+            # Upsert hybrid points to Qdrant (Dense + Sparse on same Point, FR-001/FR-002)
             for i, chunk_dict in enumerate(chunk_dicts):
-                point = PointStruct(
-                    id=chunk_dict["chunk_id"],
-                    vector=embeddings[i],
-                    payload={
-                        "knowledge_scope_id": str(scope_id),
-                        "source_id": str(source_id),
-                        "version_id": str(version_id),
-                        "chunk_id": str(chunk_dict["chunk_id"]),
-                        "chunk_type": chunk_dict["chunk_type"],
-                        "position_path": chunk_dict.get("section_path", "")
-                            if source.format == "markdown"
-                            else chunk_dict.get("symbol_path", ""),
-                        "start_line": chunk_dict["start_line"],
-                        "end_line": chunk_dict["end_line"],
-                        "index_version": index_version,
-                        "embedding_model": embedding_model,
-                    },
+                position_path = (
+                    chunk_dict.get("section_path", "")
+                    if source.format == "markdown"
+                    else chunk_dict.get("symbol_path", "")
                 )
-                points.append(point)
-
-            self._qdrant_store.upsert_points(collection_name, points)
+                payload = {
+                    "knowledge_scope_id": str(scope_id),
+                    "source_id": str(source_id),
+                    "version_id": str(version_id),
+                    "chunk_id": str(chunk_dict["chunk_id"]),
+                    "chunk_type": chunk_dict["chunk_type"],
+                    "position_path": position_path,
+                    "start_line": chunk_dict["start_line"],
+                    "end_line": chunk_dict["end_line"],
+                    "index_version": index_version,
+                    "embedding_model": embedding_model,
+                }
+                self._qdrant_store.upsert_hybrid(
+                    collection=collection_name,
+                    point_id=chunk_dict["chunk_id"],
+                    dense_vector=embeddings[i],
+                    sparse_vector=sparse_vectors[i],
+                    payload=payload,
+                )
             logger.info(
-                "Upserted %d points to Qdrant collection %s",
-                len(points), collection_name,
+                "Upserted %d hybrid points to Qdrant collection %s",
+                len(chunk_dicts), collection_name,
             )
 
             # 12. Publish the new version — only after PG + Qdrant succeed
@@ -556,7 +577,7 @@ class IngestionService:
         index_versions = list(result.scalars().all())
 
         for index_version in index_versions:
-            collection = f"chunks_dense_{index_version}"
+            collection = f"chunks_hybrid_{index_version}"
             try:
                 self._qdrant_store.delete_points_by_version(collection, version_id)
             except Exception:  # noqa: BLE001 - Qdrant outage must not block PG cleanup

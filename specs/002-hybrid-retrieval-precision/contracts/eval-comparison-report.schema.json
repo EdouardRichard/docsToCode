@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-engineering-rag-mcp.local/schemas/002/eval-comparison-report.schema.json",
+  "title": "Evaluation Comparison Report Schema (002)",
+  "description": "对照评测报告契约。在同一固定评测集上记录 001 Dense 基线与 002 混合检索的指标逐项增量、逐查询排名变化与可解释分数（FR-019/FR-020/FR-024/SC-007）。非延迟指标在 1% 容差内可重复（SC-006）；延迟指标标注环境敏感。复用 common.schema.json 共享定义。",
+  "type": "object",
+  "properties": {
+    "report_type": { "type": "string", "const": "hybrid_retrieval_comparison" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "config": {
+      "type": "object",
+      "description": "评测配置：嵌入模型、Reranker、Qdrant 集合、融合算法与参数、候选预算、评测集路径与查询数",
+      "properties": {
+        "embedding_model": { "type": "string" },
+        "reranker_model": { "type": "string" },
+        "dense_collection": { "type": "string" },
+        "hybrid_collection": { "type": "string" },
+        "fusion_algorithm": { "type": "string", "enum": ["rrf", "dbsf"] },
+        "rrf_k": { "type": "integer", "minimum": 1 },
+        "rerank_budget": { "type": "integer", "minimum": 1 },
+        "dataset_path": { "type": "string" },
+        "num_queries": { "type": "integer", "minimum": 1 }
+      },
+      "required": ["embedding_model", "reranker_model", "hybrid_collection", "fusion_algorithm", "dataset_path", "num_queries"],
+      "additionalProperties": false
+    },
+    "baseline_metrics": {
+      "type": "object",
+      "description": "001 Dense 基线指标（同会话重跑，保证延迟增量公平，FR-024）",
+      "properties": {
+        "recall_at_k": { "$ref": "#/$defs/metricBlock" },
+        "mrr": { "$ref": "#/$defs/metricBlock" },
+        "ndcg_at_k": { "$ref": "#/$defs/metricBlock" },
+        "latency_ms": { "$ref": "#/$defs/latencyBlock" }
+      },
+      "required": ["recall_at_k", "mrr", "ndcg_at_k", "latency_ms"],
+      "additionalProperties": false
+    },
+    "hybrid_metrics": {
+      "type": "object",
+      "description": "002 混合检索指标",
+      "properties": {
+        "recall_at_k": { "$ref": "#/$defs/metricBlock" },
+        "mrr": { "$ref": "#/$defs/metricBlock" },
+        "ndcg_at_k": { "$ref": "#/$defs/metricBlock" },
+        "latency_ms": { "$ref": "#/$defs/latencyBlock" }
+      },
+      "required": ["recall_at_k", "mrr", "ndcg_at_k", "latency_ms"],
+      "additionalProperties": false
+    },
+    "deltas": {
+      "type": "object",
+      "description": "混合相对基线的逐项增量（hybrid - baseline）",
+      "properties": {
+        "mrr_mean_delta": { "type": "number" },
+        "ndcg_mean_delta": { "type": "number" },
+        "recall_mean_delta": { "type": "number" },
+        "latency_p50_delta_ms": { "type": "number" },
+        "latency_p95_delta_ms": { "type": "number" }
+      },
+      "required": ["mrr_mean_delta", "ndcg_mean_delta", "recall_mean_delta"],
+      "additionalProperties": false
+    },
+    "hard_constraints": {
+      "type": "object",
+      "description": "硬性验收指标结果（必须全通过才可进入默认路径，FR-021）",
+      "properties": {
+        "cross_project_leakage_events": { "type": "integer", "minimum": 0 },
+        "schema_validity_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "source_locatability_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "all_passed": { "type": "boolean" }
+      },
+      "required": ["cross_project_leakage_events", "schema_validity_rate", "source_locatability_rate", "all_passed"],
+      "additionalProperties": false
+    },
+    "per_query_comparison": {
+      "type": "array",
+      "description": "逐查询对照：基线排名 vs 混合排名 + 各路分数，使排名变化可解释（SC-007）",
+      "items": {
+        "type": "object",
+        "properties": {
+          "query_index": { "type": "integer", "minimum": 0 },
+          "query": { "type": "string" },
+          "project_scope": { "$ref": "./common.schema.json#/definitions/KnowledgeScopeId" },
+          "expected_evidence_ids": {
+            "type": "array",
+            "items": { "$ref": "./common.schema.json#/definitions/EvidenceId" }
+          },
+          "baseline_rank": {
+            "type": ["integer", "null"],
+            "minimum": 1,
+            "description": "Dense 基线中期望证据的排名；未命中为 null"
+          },
+          "hybrid_rank": {
+            "type": ["integer", "null"],
+            "minimum": 1,
+            "description": "混合检索中期望证据的排名；未命中为 null"
+          },
+          "baseline_dense_score": { "type": ["number", "null"] },
+          "hybrid_dense_score": { "type": ["number", "null"] },
+          "hybrid_sparse_score": { "type": ["number", "null"] },
+          "hybrid_fused_score": { "type": ["number", "null"] },
+          "hybrid_rerank_score": { "type": ["number", "null"] },
+          "rank_improved": { "type": "boolean", "description": "混合排名是否优于基线排名" }
+        },
+        "required": ["query_index", "query", "expected_evidence_ids", "baseline_rank", "hybrid_rank", "rank_improved"],
+        "additionalProperties": false
+      }
+    },
+    "reproducibility": {
+      "type": "object",
+      "description": "可重复性检查（SC-006）：非延迟指标在 1% 相对容差内一致；延迟指标标注环境敏感",
+      "properties": {
+        "non_latency_reproducible": { "type": "boolean" },
+        "tolerance": { "type": "number" },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "metric": { "type": "string" },
+              "run_1": { "type": "number" },
+              "run_2": { "type": "number" },
+              "relative_delta": { "type": "number" },
+              "tolerance": { "type": "number" },
+              "passed": { "type": "boolean" },
+              "env_sensitive": { "type": "boolean", "description": "是否为环境敏感指标（延迟），不作为否决项" }
+            },
+            "required": ["metric", "run_1", "run_2", "relative_delta", "tolerance", "passed"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": ["non_latency_reproducible", "tolerance", "checks"],
+      "additionalProperties": false
+    },
+    "enters_default_path": {
+      "type": "boolean",
+      "description": "是否满足进入默认检索路径条件：MRR/nDCG 可度量收益 + 硬性指标全通过（FR-021 / 宪法原则 X）"
+    }
+  },
+  "required": ["report_type", "generated_at", "config", "baseline_metrics", "hybrid_metrics", "deltas", "hard_constraints", "per_query_comparison", "enters_default_path"],
+  "additionalProperties": false,
+  "$defs": {
+    "metricBlock": {
+      "type": "object",
+      "properties": {
+        "mean": { "type": "number" },
+        "min": { "type": "number" },
+        "max": { "type": "number" }
+      },
+      "required": ["mean", "min", "max"],
+      "additionalProperties": false
+    },
+    "latencyBlock": {
+      "type": "object",
+      "properties": {
+        "p50": { "type": "number" },
+        "p95": { "type": "number" },
+        "mean": { "type": "number" },
+        "min": { "type": "number" },
+        "max": { "type": "number" }
+      },
+      "required": ["p50", "p95", "mean"],
+      "additionalProperties": false
+    }
+  }
+}

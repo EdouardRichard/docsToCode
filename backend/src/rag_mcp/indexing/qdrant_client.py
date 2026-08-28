@@ -14,6 +14,8 @@ from qdrant_client.models import (
     Filter,
     MatchValue,
     PointStruct,
+    SparseVector,
+    SparseVectorParams,
     VectorParams,
 )
 
@@ -196,3 +198,201 @@ class QdrantStore:
                 ]
             ),
         )
+
+    # ------------------------------------------------------------------
+    # 002 Hybrid collection methods (Dense + Sparse named vectors)
+    # ------------------------------------------------------------------
+
+    def _build_scope_version_filter(
+        self,
+        scope_ids: list[int] | None = None,
+        version_id: int | None = None,
+    ) -> Filter | None:
+        """Build a Qdrant filter for scope and version (shared by search methods).
+
+        Payload values are stored as strings (see ingestion upsert), so filter
+        match values must be the string form of scope/version IDs.
+        """
+        must_conditions: list[FieldCondition] = []
+        should_conditions: list[FieldCondition] = []
+
+        if scope_ids:
+            if len(scope_ids) == 1:
+                must_conditions.append(
+                    FieldCondition(
+                        key="knowledge_scope_id",
+                        match=MatchValue(value=str(scope_ids[0])),
+                    )
+                )
+            else:
+                for sid in scope_ids:
+                    should_conditions.append(
+                        FieldCondition(
+                            key="knowledge_scope_id",
+                            match=MatchValue(value=str(sid)),
+                        )
+                    )
+
+        if version_id is not None:
+            must_conditions.append(
+                FieldCondition(key="version_id", match=MatchValue(value=str(version_id)))
+            )
+
+        if must_conditions or should_conditions:
+            return Filter(
+                must=must_conditions if must_conditions else None,
+                should=should_conditions if should_conditions else None,
+            )
+        return None
+
+    def create_hybrid_collection(self, name: str, dimension: int) -> None:
+        """Create a collection with Dense + Sparse named vectors (002).
+
+        Args:
+            name: Collection name (e.g., 'chunks_hybrid_bge-m3_v1').
+            dimension: Dense vector dimensionality (1024 for bge-m3).
+        """
+        self._client.create_collection(
+            collection_name=name,
+            vectors_config={
+                "dense": VectorParams(size=dimension, distance=Distance.COSINE),
+            },
+            sparse_vectors_config={
+                "sparse": SparseVectorParams(),
+            },
+        )
+        for field in ["knowledge_scope_id", "version_id", "source_id", "chunk_type", "index_version"]:
+            self._client.create_payload_index(
+                collection_name=name,
+                field_name=field,
+                field_schema="keyword",
+            )
+
+    def upsert_hybrid(
+        self,
+        collection: str,
+        point_id: int,
+        dense_vector: list[float],
+        sparse_vector: dict[str, list],
+        payload: dict[str, Any],
+    ) -> None:
+        """Upsert a point with both Dense and Sparse named vectors (002).
+
+        Dense and Sparse vectors share the same Point and Payload (data-model §5.2).
+
+        Args:
+            collection: Collection name.
+            point_id: Point ID (chunk_id as u64).
+            dense_vector: Dense embedding vector.
+            sparse_vector: Sparse vector {indices: [int], values: [float]}.
+            payload: Point payload (scope, version, chunk metadata).
+        """
+        point = PointStruct(
+            id=point_id,
+            vector={
+                "dense": dense_vector,
+                "sparse": SparseVector(
+                    indices=sparse_vector["indices"],
+                    values=sparse_vector["values"],
+                ),
+            },
+            payload=payload,
+        )
+        self._client.upsert(collection_name=collection, points=[point])
+
+    def search_sparse(
+        self,
+        collection: str,
+        sparse_vector: dict[str, list],
+        scope_ids: list[int] | None = None,
+        version_id: int | None = None,
+        limit: int = 5,
+    ) -> list[dict[str, Any]]:
+        """Search using the sparse named vector with payload filters (002).
+
+        Args:
+            collection: Collection name.
+            sparse_vector: Sparse query vector {indices: [int], values: [float]}.
+            scope_ids: Optional knowledge_scope_id values to filter by.
+            version_id: Optional version_id to filter by.
+            limit: Maximum number of results.
+
+        Returns:
+            List of dicts with id, score, and payload.
+        """
+        query_filter = self._build_scope_version_filter(scope_ids, version_id)
+
+        response = self._client.query_points(
+            collection_name=collection,
+            query=SparseVector(
+                indices=sparse_vector["indices"],
+                values=sparse_vector["values"],
+            ),
+            using="sparse",
+            query_filter=query_filter,
+            limit=limit,
+            with_payload=True,
+        )
+
+        return [
+            {"id": p.id, "score": p.score, "payload": p.payload or {}}
+            for p in response.points
+        ]
+
+    def query_hybrid(
+        self,
+        collection: str,
+        dense_vector: list[float],
+        sparse_vector: dict[str, list],
+        scope_ids: list[int] | None = None,
+        version_id: int | None = None,
+        limit: int = 5,
+    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+        """Query both Dense and Sparse named vectors with scope+version filter (002).
+
+        Both Dense and Sparse searches enforce the same scope+version filter
+        (FR-008: cross-project leakage is zero).
+
+        Args:
+            collection: Collection name.
+            dense_vector: Dense query vector.
+            sparse_vector: Sparse query vector {indices, values}.
+            scope_ids: Optional knowledge_scope_id values to filter by.
+            version_id: Optional version_id to filter by.
+            limit: Maximum number of results per retriever.
+
+        Returns:
+            Tuple of (dense_results, sparse_results), each a list of dicts.
+        """
+        query_filter = self._build_scope_version_filter(scope_ids, version_id)
+
+        dense_response = self._client.query_points(
+            collection_name=collection,
+            query=dense_vector,
+            using="dense",
+            query_filter=query_filter,
+            limit=limit,
+            with_payload=True,
+        )
+        dense_results = [
+            {"id": p.id, "score": p.score, "payload": p.payload or {}}
+            for p in dense_response.points
+        ]
+
+        sparse_response = self._client.query_points(
+            collection_name=collection,
+            query=SparseVector(
+                indices=sparse_vector["indices"],
+                values=sparse_vector["values"],
+            ),
+            using="sparse",
+            query_filter=query_filter,
+            limit=limit,
+            with_payload=True,
+        )
+        sparse_results = [
+            {"id": p.id, "score": p.score, "payload": p.payload or {}}
+            for p in sparse_response.points
+        ]
+
+        return dense_results, sparse_results

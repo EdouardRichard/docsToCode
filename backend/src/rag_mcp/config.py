@@ -43,6 +43,25 @@ class RetrievalConfig:
 
 
 @dataclass(frozen=True)
+class HybridRetrievalConfig:
+    """Hybrid retrieval (002) parameters: sparse recall, RRF fusion, rerank.
+
+    Defaults follow research.md §1.2/§1.3:
+    - rrf_k=60 (classic RRF constant)
+    - rerank_budget=20 (blueprint §18.5 candidate cap)
+    - sparse_query_timeout_ms=5_000 (sparse sub-path guard)
+    - fusion_algorithm='rrf' (DBSF reserved as configurable alternative)
+    - reranker_model='BAAI/bge-reranker-v2-m3' (blueprint §18.2 default)
+    """
+
+    rrf_k: int = 60
+    rerank_budget: int = 20
+    sparse_query_timeout_ms: int = 5_000
+    fusion_algorithm: str = "rrf"
+    reranker_model: str = "BAAI/bge-reranker-v2-m3"
+
+
+@dataclass(frozen=True)
 class IngestionConfig:
     """Ingestion pipeline parameters."""
 
@@ -107,6 +126,7 @@ class Settings:
 
     # Sub-configs
     retrieval: RetrievalConfig = field(default_factory=RetrievalConfig)
+    hybrid_retrieval: HybridRetrievalConfig = field(default_factory=HybridRetrievalConfig)
     ingestion: IngestionConfig = field(default_factory=IngestionConfig)
 
 

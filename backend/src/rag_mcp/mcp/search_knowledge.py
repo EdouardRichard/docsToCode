@@ -18,7 +18,7 @@ from mcp.server.fastmcp import FastMCP
 
 from rag_mcp.config import get_settings
 from rag_mcp.indexing.qdrant_client import QdrantStore
-from rag_mcp.providers.base import EmbeddingProvider
+from rag_mcp.providers.base import EmbeddingProvider, RerankerProvider
 from rag_mcp.services.retrieval_service import RetrievalService
 
 logger = logging.getLogger(__name__)
@@ -29,6 +29,7 @@ def register_search_knowledge_tool(
     session_factory: Any,
     qdrant_store: QdrantStore,
     embedding_provider: EmbeddingProvider,
+    reranker: RerankerProvider | None = None,
 ) -> None:
     """Register the search_knowledge tool on the MCP server.
 
@@ -37,6 +38,7 @@ def register_search_knowledge_tool(
         session_factory: Callable that returns an AsyncSession.
         qdrant_store: Qdrant vector store client.
         embedding_provider: Embedding provider for query vectorization.
+        reranker: Optional Cross-Encoder reranker for hybrid retrieval (002).
     """
 
     @mcp_server.tool(
@@ -88,6 +90,7 @@ def register_search_knowledge_tool(
                     session=session,
                     qdrant_store=qdrant_store,
                     embedding_provider=embedding_provider,
+                    reranker=reranker,
                 )
                 result = await service.search(
                     query=query.strip(),

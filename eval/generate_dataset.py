@@ -60,18 +60,40 @@ _SYMBOL_TEMPLATES = [
     "What is the purpose of {path}?",
 ]
 
+# Chinese query templates (FR-025 CJK support)
+_SYMBOL_TEMPLATES_ZH = [
+    "查找{path}方法的定义",
+    "{path}的作用是什么",
+    "解释{path}的实现逻辑",
+    "{path}方法做了什么",
+]
+
+_SECTION_TEMPLATES_ZH = [
+    "{path}描述了什么内容",
+    "解释{path}部分",
+    "{path}的用途是什么",
+]
+
 
 def _generate_query_for_chunk(chunk: Chunk) -> str:
     """Generate a natural-language query targeting a specific chunk.
 
     Uses simple heuristic templates based on chunk_type and position_path.
+    Includes Chinese templates for CJK support (FR-025).
     """
     path = chunk.position_path or "unknown"
 
+    # Check if content contains CJK characters
+    has_cjk = any("\u4e00" <= ch <= "\u9fff" for ch in (chunk.content_text or ""))
+
     if chunk.chunk_type == "symbol":
         templates = _SYMBOL_TEMPLATES
+        if has_cjk:
+            templates = templates + _SYMBOL_TEMPLATES_ZH
     else:
         templates = _SECTION_TEMPLATES
+        if has_cjk:
+            templates = templates + _SECTION_TEMPLATES_ZH
 
     # Deterministic template selection based on chunk_id for reproducibility
     template_idx = chunk.chunk_id % len(templates)

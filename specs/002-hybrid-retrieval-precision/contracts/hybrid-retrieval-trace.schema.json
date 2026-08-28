@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-engineering-rag-mcp.local/schemas/002/hybrid-retrieval-trace.schema.json",
+  "title": "Hybrid Retrieval Trace Schema (internal, 002)",
+  "description": "002 混合检索内部链路追踪结构。记录单次混合检索的 Dense/Sparse 召回、RRF 融合、Cross-Encoder Rerank 各子路径耗时与逐候选分数，供对照评测报告与问题回溯使用。此为内部契约，不进入对外 MCP 响应（宪法原则 IV / FR-020 / FR-022）。复用 common.schema.json 共享定义。",
+  "type": "object",
+  "properties": {
+    "request_id": { "$ref": "./common.schema.json#/definitions/RequestId" },
+    "retrieval_mode": { "$ref": "./common.schema.json#/definitions/RetrievalMode" },
+    "knowledge_scope_ids": {
+      "type": "array",
+      "description": "本次检索解析得到的知识域标识列表",
+      "items": { "$ref": "./common.schema.json#/definitions/KnowledgeScopeId" },
+      "minItems": 1
+    },
+    "completion_status": { "$ref": "./common.schema.json#/definitions/CompletionStatus" },
+    "subpath_timings": {
+      "type": "object",
+      "description": "混合检索各子路径耗时（毫秒）。hybrid 模式必填。",
+      "properties": {
+        "dense_recall_ms": { "type": "number", "minimum": 0 },
+        "sparse_recall_ms": { "type": "number", "minimum": 0 },
+        "fusion_ms": { "type": "number", "minimum": 0 },
+        "rerank_ms": { "type": "number", "minimum": 0 },
+        "total_ms": { "type": "number", "minimum": 0 }
+      },
+      "required": ["dense_recall_ms", "sparse_recall_ms", "fusion_ms", "rerank_ms", "total_ms"],
+      "additionalProperties": false
+    },
+    "failed_paths": {
+      "type": "array",
+      "description": "失败或超时的子路径标识（仅 partial 状态非空）。取值如 sparse_recall_failed、rerank_failed。",
+      "items": { "type": "string" }
+    },
+    "fused_candidates": {
+      "type": "array",
+      "description": "RRF 融合后的候选列表（按融合分数降序）。每条保留来源检索器与各路分数，使排名变化可解释（FR-020 / SC-007）。",
+      "items": {
+        "type": "object",
+        "properties": {
+          "chunk_id": { "$ref": "./common.schema.json#/definitions/ChunkId" },
+          "knowledge_scope_id": { "$ref": "./common.schema.json#/definitions/KnowledgeScopeId" },
+          "source_retrievers": {
+            "type": "array",
+            "description": "命中该候选的检索器列表",
+            "items": { "type": "string", "enum": ["dense", "sparse"] },
+            "minItems": 1
+          },
+          "dense_score": {
+            "type": ["number", "null"],
+            "description": "Dense 相似度分数（cosine ∈ [0,1]）；仅 Dense 命中时有值"
+          },
+          "sparse_score": {
+            "type": ["number", "null"],
+            "description": "Sparse BM25 分数（词频权重）；仅 Sparse 命中时有值"
+          },
+          "dense_rank": {
+            "type": ["integer", "null"],
+            "minimum": 1,
+            "description": "Dense ranked list 中的排名（1-based）；未命中为 null"
+          },
+          "sparse_rank": {
+            "type": ["integer", "null"],
+            "minimum": 1,
+            "description": "Sparse ranked list 中的排名（1-based）；未命中为 null"
+          },
+          "fused_score": {
+            "type": "number",
+            "description": "RRF 融合分数 Σ 1/(k + rank)"
+          },
+          "rerank_score": {
+            "type": ["number", "null"],
+            "description": "Cross-Encoder Rerank 分数；Rerank 后填充，Rerank 未执行或失败为 null"
+          },
+          "final_rank": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "最终返回排序中的排名（1-based）"
+          }
+        },
+        "required": ["chunk_id", "knowledge_scope_id", "source_retrievers", "fused_score", "final_rank"],
+        "additionalProperties": false
+      }
+    },
+    "rerank_budget": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "本次 Rerank 候选预算护栏值（FR-015），不超过配置上限"
+    },
+    "evidence_ref_ids": {
+      "type": "array",
+      "description": "最终返回的证据 ID 列表，与对外 search_knowledge 响应的 evidence[].evidence_id 一致",
+      "items": { "$ref": "./common.schema.json#/definitions/EvidenceId" }
+    }
+  },
+  "required": ["request_id", "retrieval_mode", "knowledge_scope_ids", "completion_status", "fused_candidates", "evidence_ref_ids"],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": { "properties": { "retrieval_mode": { "const": "hybrid" } } },
+      "then": { "required": ["subpath_timings"] }
+    },
+    {
+      "if": { "properties": { "completion_status": { "const": "partial" } } },
+      "then": { "required": ["failed_paths"] }
+    }
+  ]
+}

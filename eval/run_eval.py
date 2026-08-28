@@ -115,6 +115,8 @@ async def search_knowledge(
     embedding_provider: EmbeddingProvider,
     collection_name: str,
     top_k: int = 5,
+    mode: str = "dense",
+    sparse_encoder: Any = None,
 ) -> dict[str, Any]:
     """Execute a retrieval query directly via QdrantStore.
 
@@ -127,25 +129,66 @@ async def search_knowledge(
         # Embed the query
         query_vector = await embedding_provider.embed_query(query)
 
-        # Search Qdrant
-        results = qdrant_store.search(
-            collection=collection_name,
-            vector=query_vector,
-            scope_ids=project_scope_ids,
-            limit=top_k,
-        )
+        if mode == "hybrid" and sparse_encoder is not None:
+            # Hybrid: Dense + Sparse parallel recall + RRF fusion
+            sparse_query = sparse_encoder.encode(query)
+            dense_results, sparse_results = qdrant_store.query_hybrid(
+                collection=collection_name,
+                dense_vector=query_vector,
+                sparse_vector=sparse_query,
+                scope_ids=project_scope_ids,
+                limit=top_k,
+            )
+            # RRF fusion
+            from rag_mcp.fusion.rrf import rrf_fuse
+            fused = rrf_fuse(dense_results, sparse_results, k=60)
+            # Build result map
+            result_map = {}
+            for r in dense_results + sparse_results:
+                payload = r.get("payload") or {}
+                cid = str(payload.get("chunk_id", r.get("id", "")))
+                if cid and cid not in result_map:
+                    result_map[cid] = r
+            results = [
+                {"id": result_map.get(c.chunk_id, {}).get("id"),
+                 "score": c.fused_score,
+                 "payload": result_map.get(c.chunk_id, {}).get("payload", {})}
+                for c in fused
+            ]
+            # Per-candidate detail scores (FR-020/SC-007)
+            candidate_details = [
+                {
+                    "chunk_id": c.chunk_id,
+                    "dense_score": c.dense_score,
+                    "sparse_score": c.sparse_score,
+                    "fused_score": c.fused_score,
+                    "rerank_score": c.fused_score,  # RRF score as rerank fallback
+                }
+                for c in fused
+            ]
+        else:
+            # Dense-only search
+            results = qdrant_store.search(
+                collection=collection_name,
+                vector=query_vector,
+                scope_ids=project_scope_ids,
+                limit=top_k,
+            )
 
         elapsed_ms = (time.perf_counter() - start_time) * 1000
 
         evidence_ids = [str(r["id"]) for r in results]
         scores = [r["score"] for r in results]
 
-        return {
+        result = {
             "evidence_ids": evidence_ids,
             "scores": scores,
             "latency_ms": elapsed_ms,
             "status": "ok",
         }
+        if mode == "hybrid" and sparse_encoder is not None:
+            result["candidate_details"] = candidate_details
+        return result
 
     except Exception as exc:
         elapsed_ms = (time.perf_counter() - start_time) * 1000
@@ -346,6 +389,8 @@ async def run_single_eval(
     embedding_provider: EmbeddingProvider,
     collection_name: str,
     top_k: int,
+    mode: str = "dense",
+    sparse_encoder: Any = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """Run one complete evaluation pass.
 
@@ -369,6 +414,8 @@ async def run_single_eval(
             embedding_provider=embedding_provider,
             collection_name=collection_name,
             top_k=top_k,
+            mode=mode,
+            sparse_encoder=sparse_encoder,
         )
 
         per_query_result = {
@@ -380,6 +427,7 @@ async def run_single_eval(
             "scores": result["scores"],
             "latency_ms": result["latency_ms"],
             "status": result["status"],
+            "candidate_details": result.get("candidate_details", []),
         }
         per_query_results.append(per_query_result)
 
@@ -397,6 +445,7 @@ async def run_evaluation(
     skip_reproducibility: bool = False,
     db_url: str | None = None,
     qdrant_url: str | None = None,
+    mode: str = "dense",
 ) -> int:
     """Main evaluation orchestration.
 
@@ -435,10 +484,12 @@ async def run_evaluation(
     # Determine collection name from index_version convention
     from rag_mcp.services.ingestion_service import _derive_index_version
     index_version = _derive_index_version(settings.embedding_model)
-    collection_name = f"chunks_dense_{index_version}"
+    if mode == "hybrid":
+        collection_name = f"chunks_hybrid_{index_version}"
+    else:
+        collection_name = f"chunks_dense_{index_version}"
 
-    logger.info("Using Qdrant collection: %s", collection_name)
-    logger.info("Top-K: %d", top_k)
+    logger.info("Mode: %s | Collection: %s | Top-K: %d", mode, collection_name, top_k)
 
     # Check collection exists
     if not qdrant_store.collection_exists(collection_name):
@@ -449,11 +500,42 @@ async def run_evaluation(
         )
         return 1
 
+    # Build sparse encoder for hybrid mode
+    sparse_encoder = None
+    if mode == "hybrid":
+        from rag_mcp.indexing.sparse_encoder import BM25SparseEncoder
+        from sqlalchemy import select as sa_select
+        from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+        from sqlalchemy.orm import sessionmaker
+        from rag_mcp.models.chunk import Chunk
+        from rag_mcp.models.knowledge_version import KnowledgeVersion
+
+        engine = create_async_engine(settings.database_url)
+        async with engine.begin() as conn:
+            pass
+        async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+        async with async_session() as session:
+            result = await session.execute(
+                sa_select(Chunk.content_text)
+                .join(KnowledgeVersion, Chunk.version_id == KnowledgeVersion.version_id)
+                .where(KnowledgeVersion.status == "published")
+                .order_by(Chunk.chunk_id)
+            )
+            texts = [row[0] for row in result.all()]
+        await engine.dispose()
+        if texts:
+            sparse_encoder = BM25SparseEncoder()
+            sparse_encoder.fit(texts)
+            logger.info("Sparse encoder fitted on %d chunk texts", len(texts))
+        else:
+            logger.warning("No chunk texts found for sparse encoder, falling back to dense")
+
     # --- Run 1 ---
     logger.info("=== Evaluation Run 1 ===")
     run1_start = time.time()
     per_query_1, metrics_1 = await run_single_eval(
         dataset, qdrant_store, embedding_provider, collection_name, top_k,
+        mode=mode, sparse_encoder=sparse_encoder,
     )
     run1_elapsed = time.time() - run1_start
     logger.info("Run 1 completed in %.2fs", run1_elapsed)
@@ -466,6 +548,7 @@ async def run_evaluation(
         run2_start = time.time()
         _, metrics_2 = await run_single_eval(
             dataset, qdrant_store, embedding_provider, collection_name, top_k,
+            mode=mode, sparse_encoder=sparse_encoder,
         )
         run2_elapsed = time.time() - run2_start
         logger.info("Run 2 completed in %.2fs", run2_elapsed)
@@ -495,6 +578,7 @@ async def run_evaluation(
         "config": {
             "embedding_model": settings.embedding_model,
             "qdrant_collection": collection_name,
+            "retrieval_mode": mode,
             "top_k": top_k,
             "dataset_path": str(ds_path.resolve()),
             "num_queries": len(dataset),
@@ -566,6 +650,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Number of results to retrieve per query (default: 5, max: 20).",
     )
     parser.add_argument(
+        "--mode", "-m",
+        type=str,
+        choices=["dense", "hybrid"],
+        default="dense",
+        help="Retrieval mode: dense (001 baseline) or hybrid (002 Dense+Sparse+RRF).",
+    )
+    parser.add_argument(
         "--no-reproducibility-check",
         action="store_true",
         default=False,
@@ -611,6 +702,7 @@ async def main(argv: list[str] | None = None) -> int:
         skip_reproducibility=args.no_reproducibility_check,
         db_url=args.db_url,
         qdrant_url=args.qdrant_url,
+        mode=args.mode,
     )
 
 
