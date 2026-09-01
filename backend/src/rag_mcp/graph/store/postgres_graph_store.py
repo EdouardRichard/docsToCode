@@ -151,6 +151,15 @@ class PostgresGraphStore(GraphStore):
                 logger.warning("Failed to write edge %s: %s", edge_id, exc)
         return count
 
+    async def _has_edges_for_scope(self, scope: GraphScope) -> bool:
+        """True if any graph_edge exists for the given scope."""
+        result = await self._session.execute(text(
+            "SELECT 1 FROM graph_edge WHERE knowledge_scope_id = :ksid "
+            "AND project_id = :pid AND index_version = :iv LIMIT 1"
+        ), {"ksid": scope.knowledge_scope_id, "pid": scope.project_id,
+            "iv": scope.index_version})
+        return result.scalar_one_or_none() is not None
+
     async def mark_graph_unretrievable(self, scope: GraphScope) -> None:
         """Mark the scope's versions as graph_ready=false (non-retrievable).
 

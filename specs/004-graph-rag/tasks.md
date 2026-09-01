@@ -161,7 +161,7 @@
   - ① Red: 集成测试断言入库后 graph_edge 含预期硬边且隔离字段齐全，当前失败
   - ② Green: 接入提取器到入库流程，测试通过
 
-- [ ] T021 [US1] Story integration test — Java call-chain recall (AS1.1–1.3)
+- [X] T021 [US1] Story integration test — Java call-chain recall (AS1.1–1.3)
   - [路径] backend/tests/integration/test_us1_java_callgraph_recall.py
   - [AC] AS1.1 携带显式作用域查询某方法→1~3 跳召回调用者/被调用者硬关系证据、每条带来源 ID/版本/位置；AS1.2 validateToken 类用例方法级证据排名不劣于混合基线、变化可由 edge_path 解释；AS1.3 跨项目作用域外图边不返回、泄漏=0
   - ① Red: 端到端测试断言三场景，当前失败（依赖 T019/T020 + 引擎）
@@ -189,7 +189,7 @@
   - ① Red: 集成测试断言入库后 graph_edge 含预期外键边，当前失败
   - ② Green: 接入 ddl_fk 到入库流程，测试通过
 
-- [ ] T024 [US2] Story integration test — DDL FK recall (AS2.1–2.3)
+- [X] T024 [US2] Story integration test — DDL FK recall (AS2.1–2.3)
   - [路径] backend/tests/integration/test_us2_ddl_fk_recall.py
   - [AC] AS2.1 查询某表被哪些表外键引用→1~3 跳召回引用方表/级联字段硬关系证据、带来源；AS2.2 未召回目标表沿外键边扩展并入候选并带外键路径；AS2.3 跨项目外键边不返回、泄漏=0
   - ① Red: 端到端测试断言三场景，当前失败
@@ -217,7 +217,7 @@
   - ① Red: 测试断言新增条数≥6、含中文、字段合法、原有条数不变，当前失败
   - ② Green: 新增并审核条目，测试通过
 
-- [ ] T027 [US3] Story integration test — graph-enhanced eval vs 002 hybrid + 001 Dense (AS3.1–3.3)
+- [X] T027 [US3] Story integration test — graph-enhanced eval vs 002 hybrid + 001 Dense (AS3.1–3.3)
   - [路径] backend/tests/integration/test_us3_graph_eval_comparison.py
   - [AC] AS3.1 结构性子集 MRR/nDCG 相对混合基线 ≥3% 相对提升、Recall@K 不下降；AS3.2 图扩展子步骤超时→partial+失败路径、不返回空/伪造；AS3.3 001 11 条 Recall@K 精确持平、MRR/nDCG 非劣（1% 容差）；硬性指标泄漏=0/Schema 100%/定位 100%；同会话先重跑混合基线（FR-025）
   - ① Red: 端到端测试断言上述场景与 three_gate_pass，当前失败
@@ -246,7 +246,7 @@
   - ① Red: 集成测试断言入库后 soft_relation 含五元数据与状态，当前失败
   - ② Green: 接入推断到入库流程，测试通过
 
-- [ ] T030 [US4] Story integration test — soft relation distinguishable, no masquerade (AS4.1–4.3)
+- [X] T030 [US4] Story integration test — soft relation distinguishable, no masquerade (AS4.1–4.3)
   - [路径] backend/tests/integration/test_us4_soft_relation.py
   - [AC] AS4.1 软关系带五元数据且可独立检索/定位；AS4.2 软/硬冲突时并列返回可区分标注、软关系不静默覆盖硬关系；AS4.3 低置信度或缺支撑证据软关系不入默认路径或仅低权重补充（FR-005）
   - ① Red: 端到端测试断言三场景，当前失败
@@ -280,7 +280,7 @@
   - ① Red: 测试删除图数据后重建结果与原一致，当前失败
   - ② Green: 实现重建，测试通过
 
-- [ ] T034 [US5] Story integration test — graph_ready gating, isolation, cleanup, rebuild (AS5.1–5.4)
+- [X] T034 [US5] Story integration test — graph_ready gating, isolation, cleanup, rebuild (AS5.1–5.4)
   - [路径] backend/tests/integration/test_us5_graph_ready_lifecycle.py
   - [AC] AS5.1 混合能力版本重建获 graph_ready、未就绪不可检索；AS5.2 两项目 graph_ready 版本只在作用域内扩展、跨项目不返回；AS5.3 删除/清空先停检索再异步删图、他项目不受影响；AS5.4 从原始源重建全部图派生数据
   - ① Red: 端到端测试断言四场景，当前失败
