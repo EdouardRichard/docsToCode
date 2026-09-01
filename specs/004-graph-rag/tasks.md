@@ -300,13 +300,13 @@
   - ① Red: 测试断言各边缘场景行为，当前失败
   - ② Green: 修复实现使各场景通过
 
-- [ ] T036 [P] Concurrency isolation test — 5 concurrent requests (蓝图 §21.1)
+- [X] T036 [P] Concurrency isolation test — 5 concurrent requests (蓝图 §21.1)
   - [路径] backend/tests/integration/test_graph_concurrency.py
   - [AC] 5 并发请求级隔离：作用域/证据账本/图扩展中间状态不串扰（FR-020）
   - ① Red: 测试断言并发无串扰，当前失败
   - ② Green: 确认/加固请求级隔离，测试通过
 
-- [ ] T037 [P] Reproducibility test — SC-007 1% tolerance
+- [X] T037 [P] Reproducibility test — SC-007 1% tolerance
   - [路径] backend/tests/integration/test_graph_reproducibility.py
   - [AC] 连续两次运行 Recall@K/MRR/nDCG 在 1% 相对容差内一致；延迟标注环境敏感不否决（SC-007）
   - ① Red: 测试断言可重复性，当前失败
