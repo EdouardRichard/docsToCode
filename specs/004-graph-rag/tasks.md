@@ -318,13 +318,13 @@
   - ① Red: 测试断言端到端调用与 Schema 校验通过，当前失败
   - ② Green: 接入并通过
 
-- [ ] T039 [P] Run quickstart.md validation scenarios
+- [X] T039 [P] Run quickstart.md validation scenarios
   - [路径] specs/004-graph-rag/quickstart.md | backend/tests/integration/test_quickstart_scenarios.py
   - [AC] 依次执行 quickstart.md 场景 1–7，全部期望结果达成
   - ① Red: 测试以 quickstart 场景为断言，当前失败
   - ② Green: 全场景通过
 
-- [ ] T040 [P] Documentation cross-refs update
+- [X] T040 [P] Documentation cross-refs update
   - [路径] specs/004-graph-rag/plan.md, specs/004-graph-rag/research.md, specs/004-graph-rag/data-model.md, specs/004-graph-rag/quickstart.md
   - [AC] 文档间交叉引用与契约路径一致；tasks.md 任务映射到 FR/用户故事可追溯
   - ① Red: 脚本检查交叉链接，当前不一致
