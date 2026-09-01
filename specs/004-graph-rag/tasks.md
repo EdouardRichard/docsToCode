@@ -90,7 +90,7 @@
   - ① Red: 测试断言总预算截断、权重衰减、双向默认、edge_path 结构，当前失败
   - ② Green: 实现扩展引擎，测试通过
 
-- [ ] T012 [P] graph/capabilities.py — graph_ready gating (depends T007, T008)
+- [X] T012 [P] graph/capabilities.py — graph_ready gating (depends T007, T008)
   - [路径] backend/src/rag_mcp/graph/capabilities.py | backend/tests/unit/test_graph_capabilities.py
   - [AC] graph_ready=true 隐含 dense_ready+lexical_ready；声明 graph_ready 的版本图关系就绪才可检索；未声明则不参与图扩展但继续混合检索（FR-013/FR-014）
   - ① Red: 测试声明 graph_ready 但图未就绪应拒绝可检索、不隐含 dense 应拒绝，当前失败
