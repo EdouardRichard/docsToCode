@@ -183,7 +183,7 @@
   - ① Red: 测试用 fixture DDL 断言提取出预期外键边，当前失败
   - ② Green: 复用 ddl_parser 实现确定性提取，测试通过
 
-- [ ] T023 [US2] services/ingestion_service.py extension — invoke ddl_fk extractor (depends T022)
+- [X] T023 [US2] services/ingestion_service.py extension — invoke ddl_fk extractor (depends T022)
   - [路径] backend/src/rag_mcp/services/ingestion_service.py | backend/tests/integration/test_us2_ingestion_ddl.py
   - [AC] DDL 知识源入库时触发外键提取并写 graph_edge；外键边带隔离三元组
   - ① Red: 集成测试断言入库后 graph_edge 含预期外键边，当前失败
