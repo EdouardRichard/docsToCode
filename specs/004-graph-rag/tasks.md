@@ -234,7 +234,7 @@
 
 **Independent Test**: 运行软关系推断，验证五元数据齐全、MCP 结果硬/软可区分、软关系不静默覆盖硬关系、低置信度不入默认路径。
 
-- [ ] T028 [P] [US4] graph/soft_relation_inference.py — offline LLM inference + 5 metadata + 4-state + deterministic supersede (depends T005, T008, T012)
+- [X] T028 [P] [US4] graph/soft_relation_inference.py — offline LLM inference + 5 metadata + 4-state + deterministic supersede (depends T005, T008, T012)
   - [路径] backend/src/rag_mcp/graph/soft_relation_inference.py | backend/tests/unit/test_soft_relation_inference.py
   - [AC] 离线 LLM 推断软关系写入 soft_relation（relation_type=inferred, is_hard=false, 五元数据必填）；四态机 inferred→active(置信度≥0.6 且支撑证据校验)→superseded→retired；active→superseded 由确定性三元组+置信度/硬关系取代规则触发、不由 LLM 独占（宪法 VI，spec 澄清 Q3）；软关系不得升级为硬关系（宪法 III）
   - ① Red: 测试断言五元数据缺失被拒、四态转换规则、supersede 触发、低置信度不 active，当前失败
