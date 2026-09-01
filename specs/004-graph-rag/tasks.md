@@ -294,7 +294,7 @@
 
 **Purpose**: 跨故事的边缘用例、并发、可重复性、目标 Host、文档。
 
-- [ ] T035 [P] Edge cases — AST degradation, no-FK, fan-out truncation, partial/failed 四态, hard>soft conflict, version revoked
+- [X] T035 [P] Edge cases — AST degradation, no-FK, fan-out truncation, partial/failed 四态, hard>soft conflict, version revoked
   - [路径] backend/tests/integration/test_graph_edge_cases.py
   - [AC] 覆盖 spec Edge Cases 全部条目：AST 失败报告降级不伪造、DDL 无外键只产可定边、高扇出护栏截断、图扩展超时→partial、硬>软冲突以硬为准、低置信度软关系排除、graph_ready 数据损坏降级、版本撤销不静默替代（宪法 III）
   - ① Red: 测试断言各边缘场景行为，当前失败
