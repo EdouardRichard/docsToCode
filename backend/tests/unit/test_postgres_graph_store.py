@@ -48,8 +48,13 @@ async def _setup_scope(session: AsyncSession, scope_id: int, project_id: int,
 
 
 async def _insert_chunk(session: AsyncSession, chunk_id: int, scope_id: int,
-                        version_id: int, source_id: int) -> None:
-    """Insert a minimal chunk for testing."""
+                        version_id: int, source_id: int,
+                        content: str | None = None) -> None:
+    """Insert a minimal chunk for testing.
+
+    The optional 'content' overrides the default placeholder so
+    retrieval-path tests can build a realistic sparse vocabulary.
+    """
     await session.execute(text(
         "INSERT INTO chunks (chunk_id, source_id, version_id, knowledge_scope_id, "
         "content_text, position_path, chunk_type, start_line, end_line, "
@@ -58,7 +63,8 @@ async def _insert_chunk(session: AsyncSession, chunk_id: int, scope_id: int,
         "ON CONFLICT (chunk_id) DO NOTHING"
     ), {
         "cid": chunk_id, "sid": source_id, "vid": version_id,
-        "ksid": scope_id, "content": f"chunk-{chunk_id}",
+        "ksid": scope_id,
+        "content": content if content is not None else f"chunk-{chunk_id}",
         "path": f"path-{chunk_id}",
     })
 

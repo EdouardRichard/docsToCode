@@ -145,3 +145,187 @@ async def test_as1_2_hops_bounded(db_session, us1_two_projects):
     results = await engine.expand(start_chunk_ids=[vt], scope=scope, hop=3, budget=20)
     for r in results:
         assert 1 <= r.hop_count <= 3
+
+# ---------------------------------------------------------------------------
+# T043: graph expansion wired into the hybrid retrieval path (config-gated)
+# ---------------------------------------------------------------------------
+
+
+class _SearchFakeEmbedding:
+    async def embed_query(self, q):
+        return [0.1] * 8
+
+    async def embed_texts(self, texts):
+        return [[0.1] * 8 for _ in texts]
+
+    def get_dimension(self):
+        return 8
+
+
+class _SearchMockQdrant:
+    """Returns only the validateToken chunk from Dense/Sparse recall."""
+
+    def __init__(self, hits):
+        self._hits = hits  # list of result dicts
+
+    def collection_exists(self, name):
+        return True
+
+    def query_hybrid(self, collection, dense_vector, sparse_vector,
+                     scope_ids, version_id, limit):
+        return list(self._hits), list(self._hits)
+
+    def search(self, collection, vector, scope_ids, limit):
+        return list(self._hits)
+
+
+def _hit(chunk_id, version_id, scope_id, source_id):
+    return {
+        "id": chunk_id,
+        "score": 0.9,
+        "payload": {
+            "chunk_id": str(chunk_id),
+            "version_id": str(version_id),
+            "knowledge_scope_id": str(scope_id),
+            "source_id": str(source_id),
+            "position_path": "sym",
+            "index_version": "bge-m3_v1",
+        },
+    }
+
+
+@pytest.fixture
+async def us1_search_env(db_session):
+    """Graph-ready published version + chunks + edges for a real search()."""
+    sa = generate_id(); pa = generate_id(); va = generate_id()
+    src_a = await _setup_scope(db_session, sa, pa, va)
+    chunks = _make_token_chunks(sa, va, src_a)
+    for c in chunks.values():
+        await _insert_chunk(
+            db_session, c["chunk_id"], sa, va, src_a, content=c["content_text"]
+        )
+    # Capabilities for the hybrid path + graph_ready declaration
+    await db_session.execute(text(
+        "UPDATE knowledge_versions SET capabilities = :caps, graph_ready = true "
+        "WHERE version_id = :vid"
+    ), {"caps": '{"dense_ready": true, "lexical_ready": true}', "vid": va})
+
+    extractor = JavaCallGraphExtractor()
+    store = PostgresGraphStore(db_session)
+    edges = extractor.extract(_JAVA_SOURCE, list(chunks.values()), GraphScope(sa, pa, 1))
+    await store.write_edges(edges, GraphScope(sa, pa, 1))
+    await db_session.commit()
+
+    vt = chunks["validateToken"]["chunk_id"]
+    return {"sa": sa, "pa": pa, "va": va, "src_a": src_a,
+            "chunks": chunks, "vt": vt}
+
+
+class TestGraphEnhancedRetrievalPath:
+    """T043: graph expansion is the 3rd fusion input, behind a config switch.
+
+    Default OFF keeps the deterministic 001/002 path untouched; enabling
+    GRAPH_ENHANCED_RETRIEVAL_ENABLED=true adds graph-recalled evidence.
+    """
+
+    @pytest.mark.asyncio
+    async def test_graph_off_default_path_unchanged(self, db_session, us1_search_env, monkeypatch):
+        """Switch OFF (default): only Dense/Sparse hits are returned."""
+        from rag_mcp.services.retrieval_service import RetrievalService
+
+        env = us1_search_env
+        monkeypatch.delenv("GRAPH_ENHANCED_RETRIEVAL_ENABLED", raising=False)
+        qdrant = _SearchMockQdrant([_hit(env["vt"], env["va"], env["sa"], env["src_a"])])
+        svc = RetrievalService(db_session, qdrant, _SearchFakeEmbedding())
+
+        resp = await svc.search("validateToken", [str(env["pa"])], top_k=5)
+        assert resp["completion_status"] == "complete"
+        ids = {e["evidence_id"] for e in resp["evidence"]}
+        assert ids == {str(env["vt"])}, "default path must not add graph evidence"
+
+    @pytest.mark.asyncio
+    async def test_graph_on_recalls_callers_and_callees(self, db_session, us1_search_env, monkeypatch):
+        """Switch ON: callers/callees of validateToken appear via graph (AS1.1)."""
+        from rag_mcp.services.retrieval_service import RetrievalService
+
+        env = us1_search_env
+        monkeypatch.setenv("GRAPH_ENHANCED_RETRIEVAL_ENABLED", "true")
+        qdrant = _SearchMockQdrant([_hit(env["vt"], env["va"], env["sa"], env["src_a"])])
+        svc = RetrievalService(db_session, qdrant, _SearchFakeEmbedding())
+
+        resp = await svc.search("validateToken", [str(env["pa"])], top_k=5)
+        assert resp["completion_status"] == "complete"
+        ids = {e["evidence_id"] for e in resp["evidence"]}
+        expected_graph = {
+            str(env["chunks"]["processRequest"]["chunk_id"]),
+            str(env["chunks"]["logAccess"]["chunk_id"]),
+            str(env["chunks"]["checkSignature"]["chunk_id"]),
+        }
+        assert expected_graph & ids, f"graph expansion added no evidence: {ids}"
+
+    @pytest.mark.asyncio
+    async def test_graph_on_records_subpath_timing(self, db_session, us1_search_env, monkeypatch):
+        """RetrievalRun.subpath_timings MUST include graph_recall_ms (FR-026)."""
+        import json
+
+        from rag_mcp.services.retrieval_service import RetrievalService
+
+        env = us1_search_env
+        monkeypatch.setenv("GRAPH_ENHANCED_RETRIEVAL_ENABLED", "true")
+        qdrant = _SearchMockQdrant([_hit(env["vt"], env["va"], env["sa"], env["src_a"])])
+        svc = RetrievalService(db_session, qdrant, _SearchFakeEmbedding())
+        await svc.search("validateToken", [str(env["pa"])], top_k=5)
+
+        row = (await db_session.execute(text(
+            "SELECT subpath_timings, retrieval_mode FROM retrieval_runs "
+            "ORDER BY run_id DESC LIMIT 1"
+        ))).fetchone()
+        timings = row[0]
+        if isinstance(timings, str):
+            timings = json.loads(timings)
+        assert "graph_recall_ms" in timings
+        assert row[1] == "graph_enhanced"
+
+    @pytest.mark.asyncio
+    async def test_graph_failure_degrades_to_partial(self, db_session, us1_search_env, monkeypatch):
+        """Graph sub-path failure -> partial with hybrid evidence kept (FR-018)."""
+        from rag_mcp.services.retrieval_service import RetrievalService
+
+        async def boom(*args, **kwargs):
+            raise RuntimeError("graph store unavailable")
+
+        monkeypatch.setenv("GRAPH_ENHANCED_RETRIEVAL_ENABLED", "true")
+        monkeypatch.setattr(
+            "rag_mcp.graph.store.postgres_graph_store.PostgresGraphStore.expand", boom
+        )
+
+        env = us1_search_env
+        qdrant = _SearchMockQdrant([_hit(env["vt"], env["va"], env["sa"], env["src_a"])])
+        svc = RetrievalService(db_session, qdrant, _SearchFakeEmbedding())
+
+        resp = await svc.search("validateToken", [str(env["pa"])], top_k=5)
+        assert resp["completion_status"] == "partial"
+        ids = {e["evidence_id"] for e in resp["evidence"]}
+        assert str(env["vt"]) in ids, "hybrid evidence must survive graph failure"
+        assert any("graph" in g["description"] for g in resp.get("gaps", []))
+
+    @pytest.mark.asyncio
+    async def test_no_graph_ready_version_skips_graph(self, db_session, us1_search_env, monkeypatch):
+        """FR-014: without a graph_ready version the graph path is skipped."""
+        from rag_mcp.services.retrieval_service import RetrievalService
+
+        env = us1_search_env
+        await db_session.execute(text(
+            "UPDATE knowledge_versions SET graph_ready = false WHERE version_id = :vid"
+        ), {"vid": env["va"]})
+        await db_session.commit()
+
+        monkeypatch.setenv("GRAPH_ENHANCED_RETRIEVAL_ENABLED", "true")
+        qdrant = _SearchMockQdrant([_hit(env["vt"], env["va"], env["sa"], env["src_a"])])
+        svc = RetrievalService(db_session, qdrant, _SearchFakeEmbedding())
+
+        resp = await svc.search("validateToken", [str(env["pa"])], top_k=5)
+        assert resp["completion_status"] == "complete"
+        ids = {e["evidence_id"] for e in resp["evidence"]}
+        assert ids == {str(env["vt"])}, "non-graph_ready version must stay hybrid-only"
+

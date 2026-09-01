@@ -25,9 +25,10 @@ from rag_mcp.models import Base
 class RetrievalRun(Base):
     __tablename__ = "retrieval_runs"
     __table_args__ = (
-        # Hybrid mode must record subpath timings (data-model §3.3)
+        # Hybrid and graph-enhanced modes must record subpath timings
+        # (data-model §3.3; 004 migration 0045 adds graph_enhanced, FR-026)
         CheckConstraint(
-            "retrieval_mode <> 'hybrid' OR "
+            "retrieval_mode NOT IN ('hybrid', 'graph_enhanced') OR "
             "(subpath_timings IS NOT NULL AND subpath_timings::text <> 'null')",
             name="chk_hybrid_timings",
         ),
@@ -66,7 +67,7 @@ class RetrievalRun(Base):
         String(16),
         nullable=False,
         server_default=text("'dense'"),
-        comment="'dense' (001) or 'hybrid' (002 Dense+Sparse+RRF+Rerank)",
+        comment="'dense' (001), 'hybrid' (002) or 'graph_enhanced' (004)",
     )
     subpath_timings: Mapped[dict | None] = mapped_column(
         JSONB,

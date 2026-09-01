@@ -9,6 +9,7 @@ Blueprint §12 (retrieval guardrails), §14 (four-state completion status).
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 import uuid
@@ -159,8 +160,8 @@ class RetrievalService:
             )
             failed_paths: list[str] = []
             if hybrid_result is not None:
-                raw_results, subpath_timings, failed_paths = hybrid_result
-                retrieval_mode = "hybrid"
+                raw_results, subpath_timings, failed_paths, graph_used = hybrid_result
+                retrieval_mode = "graph_enhanced" if graph_used else "hybrid"
             else:
                 # Dense-only path (001 behavior, backward compat)
                 index_version = self._derive_index_version()
@@ -601,6 +602,147 @@ class RetrievalService:
         )
         return result.scalar_one_or_none() is not None
 
+    async def _graph_scope_triple(self, scope_id: int):
+        """Resolve the GraphScope triple for a scope's graph-eligible version.
+
+        Returns (project_id, version_number) of the newest published version
+        that satisfies the capability gate (graph_ready=true AND the FR-015
+        dense+lexical implication, checked via graph.capabilities), or None
+        when the scope has no graph-eligible published version (FR-014).
+        """
+        from rag_mcp.graph.capabilities import is_graph_ready_version
+        from rag_mcp.models.project import Project
+
+        result = await self._session.execute(
+            select(KnowledgeVersion).where(
+                KnowledgeVersion.knowledge_scope_id == scope_id,
+                KnowledgeVersion.status == "published",
+                KnowledgeVersion.graph_ready == True,  # noqa: E712
+            ).order_by(KnowledgeVersion.version_number.desc())
+        )
+        eligible = next(
+            (v for v in result.scalars().all() if is_graph_ready_version(v)), None
+        )
+        if eligible is None:
+            return None
+
+        proj_result = await self._session.execute(
+            select(Project.project_id).where(
+                Project.knowledge_scope_id == scope_id
+            ).limit(1)
+        )
+        project_id = proj_result.scalar_one_or_none()
+        if project_id is None:
+            return None
+        return project_id, eligible.version_number
+
+    async def _graph_recall(
+        self,
+        scope_ids: list[int],
+        dense_results: list[dict[str, Any]],
+        sparse_results: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """Graph-expansion recall as the 3rd retriever input (004, FR-006).
+
+        Seeds expansion from the Dense/Sparse hit chunks and expands within
+        each scope's graph-eligible published version (FR-013/FR-014 gating,
+        FR-010 isolation). Guardrails (hop/budget/direction) come from
+        GraphConfig via GraphExpansionEngine (FR-017). Returns candidates as
+        fusion-ready dicts carrying graph_rank/structure_weight/edge_path.
+        """
+        from rag_mcp.graph.expansion import GraphExpansionEngine
+        from rag_mcp.graph.store.base import GraphScope
+
+        # Capability pre-gates (FR-013/FR-014): skip unless a graph_ready
+        # published version with actual edges exists in the requested scopes.
+        if not await self._has_graph_ready_versions(scope_ids):
+            return []
+        if not await self._has_graph_edges(scope_ids):
+            return []
+
+        # Seed chunks: union of Dense/Sparse hits (deterministic order).
+        seed_ids: list[int] = []
+        seen: set[int] = set()
+        for r in dense_results + sparse_results:
+            payload = r.get("payload") or {}
+            cid = payload.get("chunk_id", r.get("id"))
+            try:
+                cid_int = int(cid)
+            except (TypeError, ValueError):
+                continue
+            if cid_int not in seen:
+                seen.add(cid_int)
+                seed_ids.append(cid_int)
+        if not seed_ids:
+            return []
+
+        engine = GraphExpansionEngine(self._session)
+        graph_results: list[dict[str, Any]] = []
+        for scope_id in scope_ids:
+            triple = await self._graph_scope_triple(scope_id)
+            if triple is None:
+                continue
+            project_id, version_number = triple
+            scope = GraphScope(
+                knowledge_scope_id=scope_id,
+                project_id=project_id,
+                index_version=version_number,
+            )
+            candidates = await engine.expand(seed_ids, scope)
+            for cand in candidates:
+                graph_results.append({
+                    "chunk_id": str(cand.chunk_id),
+                    "knowledge_scope_id": str(cand.knowledge_scope_id),
+                    "graph_rank": cand.graph_rank,
+                    "structure_weight": cand.structure_weight,
+                    "hop_count": cand.hop_count,
+                    "edge_path": cand.edge_path,
+                    "start_chunk_id": str(cand.start_chunk_id),
+                    "relation_is_hard": cand.relation_is_hard,
+                })
+
+        logger.info("Graph recall: %d candidates across %d scope(s)",
+                    len(graph_results), len(scope_ids))
+        return graph_results
+
+    async def _synthesize_graph_payloads(
+        self, chunk_ids: list[str]
+    ) -> dict[str, dict[str, Any]]:
+        """Build retrieval-result payloads for graph-only candidates from PG.
+
+        Graph-recalled chunks absent from Dense/Sparse have no Qdrant payload;
+        their metadata is fetched from the chunks table so they can flow
+        through the published-version filter and evidence building unchanged.
+        """
+        int_ids: list[int] = []
+        for cid in chunk_ids:
+            try:
+                int_ids.append(int(cid))
+            except (TypeError, ValueError):
+                continue
+        if not int_ids:
+            return {}
+
+        result = await self._session.execute(
+            select(Chunk).where(Chunk.chunk_id.in_(int_ids))
+        )
+        payloads: dict[str, dict[str, Any]] = {}
+        for chunk in result.scalars().all():
+            payloads[str(chunk.chunk_id)] = {
+                "id": chunk.chunk_id,
+                "score": 0.0,
+                "payload": {
+                    "chunk_id": str(chunk.chunk_id),
+                    "version_id": str(chunk.version_id),
+                    "knowledge_scope_id": str(chunk.knowledge_scope_id),
+                    "source_id": str(chunk.source_id),
+                    "position_path": chunk.position_path or "",
+                    "chunk_type": chunk.chunk_type,
+                    "index_version": chunk.index_version,
+                },
+            }
+        return payloads
+
     async def _has_lexical_ready_versions(self, scope_ids: list[int]) -> bool:
         """Check if any published version in the given scopes has lexical_ready.
 
@@ -673,9 +815,38 @@ class RetrievalService:
         )
         recall_elapsed = (time.monotonic() - t_recall_start) * 1000
 
-        # RRF fusion (FR-003, deterministic tie-breaker FR-017)
+        failed_paths: list[str] = []
+
+        # Graph recall (004, FR-006/FR-007): the 3rd retriever input, behind
+        # the GRAPH_ENHANCED_RETRIEVAL_ENABLED switch (FR-024). Guarded by the
+        # graph sub-timeout; failures degrade to hybrid-only with a recorded
+        # failed path (FR-018 partial), never blocking the response.
+        graph_cfg = self._settings.graph
+        graph_results: list[dict[str, Any]] = []
+        graph_elapsed = 0.0
+        graph_used = False
+        if graph_cfg.enabled:
+            t_graph_start = time.monotonic()
+            try:
+                graph_results = await asyncio.wait_for(
+                    self._graph_recall(scope_ids, dense_results, sparse_results),
+                    timeout=graph_cfg.graph_sub_timeout_ms / 1000.0,
+                )
+                graph_used = bool(graph_results)
+            except asyncio.TimeoutError:
+                logger.warning("Graph expansion timed out after %dms",
+                               graph_cfg.graph_sub_timeout_ms)
+                failed_paths.append("graph_expansion_timeout")
+            except Exception as graph_exc:  # noqa: BLE001 - degrade, keep hybrid
+                logger.warning("Graph expansion failed: %s", graph_exc)
+                failed_paths.append("graph_expansion_failed")
+            graph_elapsed = (time.monotonic() - t_graph_start) * 1000
+
+        # RRF fusion (FR-003, deterministic tie-breaker FR-017); graph joins
+        # the same fusion pool as the 3rd ranked list (FR-006).
         t_fusion_start = time.monotonic()
-        fused = rrf_fuse(dense_results, sparse_results, k=60)
+        fused = rrf_fuse(dense_results, sparse_results, k=60,
+                         graph_results=graph_results or None)
         fusion_elapsed = (time.monotonic() - t_fusion_start) * 1000
 
         # Build chunk_id -> result map from both dense and sparse results
@@ -685,6 +856,18 @@ class RetrievalService:
             chunk_id = str(payload.get("chunk_id", r.get("id", "")))
             if chunk_id and chunk_id not in result_map:
                 result_map[chunk_id] = r
+
+        # Enrich graph-only candidates (recalled by edges, absent from
+        # Dense/Sparse) with PG metadata so they can become evidence (FR-006).
+        if graph_results:
+            graph_only = [
+                str(g.get("chunk_id", ""))
+                for g in graph_results
+                if str(g.get("chunk_id", "")) not in result_map
+            ]
+            if graph_only:
+                enriched = await self._synthesize_graph_payloads(graph_only)
+                result_map.update(enriched)
 
         # Convert fused candidates to raw_results format (sorted by fused score)
         raw_results: list[dict[str, Any]] = []
@@ -696,8 +879,6 @@ class RetrievalService:
                     "score": cand.fused_score,
                     "payload": r.get("payload", {}),
                 })
-
-        failed_paths: list[str] = []
 
         # Rerank (FR-004/FR-005): only if reranker is configured and results exist
         rerank_elapsed = 0.0
@@ -763,16 +944,21 @@ class RetrievalService:
             "sparse_recall_ms": round(recall_elapsed, 2),  # parallel
             "fusion_ms": round(fusion_elapsed, 4),
             "rerank_ms": round(rerank_elapsed, 2),
-            "total_ms": round(recall_elapsed + fusion_elapsed + rerank_elapsed, 2),
+            "total_ms": round(
+                recall_elapsed + graph_elapsed + fusion_elapsed + rerank_elapsed, 2
+            ),
         }
+        if graph_cfg.enabled:
+            subpath_timings["graph_recall_ms"] = round(graph_elapsed, 2)
 
         logger.info(
-            "Hybrid recall: dense=%d sparse=%d fused=%d rerank=%dms, failed=%s, timings=%s",
-            len(dense_results), len(sparse_results), len(raw_results),
-            rerank_elapsed, failed_paths, subpath_timings,
+            "Hybrid recall: dense=%d sparse=%d graph=%d fused=%d rerank=%dms, "
+            "failed=%s, timings=%s",
+            len(dense_results), len(sparse_results), len(graph_results),
+            len(raw_results), rerank_elapsed, failed_paths, subpath_timings,
         )
 
-        return raw_results, subpath_timings, failed_paths
+        return raw_results, subpath_timings, failed_paths, graph_used
 
     async def _fetch_chunk_content(self, chunk_ids: list[int]) -> dict[int, str]:
         """Fetch content_text for chunks by ID (for rerank query+passage pairs)."""

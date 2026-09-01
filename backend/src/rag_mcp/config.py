@@ -73,8 +73,13 @@ class GraphConfig:
     - direction_default='bidirectional' (calls+called_by, fk_references+fk_referenced_by)
     - structure_weight_hard=1.0, soft=0.3, hop_decay=0.5 (research §2)
     - soft_confidence_threshold=0.6 (research §4, active gating)
+    - enabled=False: graph-enhanced retrieval is a CONFIGURABLE SWITCH. The
+      deterministic 001/002 default path stays untouched until the comparison
+      evaluation proves benefit (FR-024 three-gate pass) and an operator
+      enables GRAPH_ENHANCED_RETRIEVAL_ENABLED=true.
     """
 
+    enabled: bool = False
     hop_default: int = 2
     hop_max: int = 3
     candidate_budget: int = 10
@@ -157,6 +162,13 @@ class Settings:
     ingestion: IngestionConfig = field(default_factory=IngestionConfig)
 
     # 004: Graph-enhanced retrieval (environment-overridable)
+    # Configurable switch (FR-024): default OFF keeps the deterministic
+    # 001/002 path; enable only after the comparison evaluation passes.
+    graph_enhanced_retrieval_enabled: bool = field(
+        default_factory=lambda: os.getenv(
+            "GRAPH_ENHANCED_RETRIEVAL_ENABLED", "false"
+        ).lower() in ("1", "true", "yes", "on")
+    )
     graph_hop_default: int = field(
         default_factory=lambda: int(os.getenv("GRAPH_HOP_DEFAULT", "2"))
     )
@@ -195,6 +207,7 @@ class Settings:
     def graph(self) -> "GraphConfig":
         """Assemble a frozen GraphConfig from environment-overridable fields."""
         return GraphConfig(
+            enabled=self.graph_enhanced_retrieval_enabled,
             hop_default=self.graph_hop_default,
             hop_max=self.graph_hop_max,
             candidate_budget=self.graph_candidate_budget,
