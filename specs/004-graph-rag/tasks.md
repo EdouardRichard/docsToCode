@@ -42,25 +42,25 @@
 
 **Purpose**: 图引擎核心——所有 P1 用户故事共享的图存储/扩展/融合/证据标注/能力门控/契约。CRITICAL: US1–US5 不得在本阶段完成前开始。
 
-- [ ] T004 [P] Alembic migration: graph_edge table + indexes
+- [X] T004 [P] Alembic migration: graph_edge table + indexes
   - [路径] backend/alembic/versions/0041_create_graph_edge.py | backend/tests/unit/test_migration_graph_edge.py
   - [AC] graph_edge 表含 edge_id(PK)/knowledge_scope_id/project_id/index_version/source_chunk_id/target_chunk_id/relation_type/direction/is_hard/version/parse_evidence/created_at；索引 idx_graph_edge_source/idx_graph_edge_target/uniq_graph_edge；relation_type CHECK 硬关系枚举（data-model §2）
   - ① Red: 测试断言表与索引存在，当前失败
   - ② Green: 编写并应用迁移，测试通过
 
-- [ ] T005 [P] Alembic migration: soft_relation table + indexes
+- [X] T005 [P] Alembic migration: soft_relation table + indexes
   - [路径] backend/alembic/versions/0042_create_soft_relation.py | backend/tests/unit/test_migration_soft_relation.py
   - [AC] soft_relation 表含 edge_id(PK)/隔离三元组/source/target/relation_type=inferred/direction/is_hard=false/version + 五元数据/lifecycle_state/superseded_by/superseded_at；索引 idx_soft_relation_pair/idx_soft_relation_active；lifecycle_state CHECK 四态（data-model §3）
   - ① Red: 测试断言表/索引/枚举约束，当前失败
   - ② Green: 编写并应用迁移，测试通过
 
-- [ ] T006 [P] Alembic migration: graph_expansion_path table
+- [X] T006 [P] Alembic migration: graph_expansion_path table
   - [路径] backend/alembic/versions/0043_create_graph_expansion_path.py | backend/tests/unit/test_migration_graph_expansion_path.py
   - [AC] graph_expansion_path 表含 request_id/evidence_id/chunk_id/start_chunk_id/edge_path(JSONB)/hop_count∈[1,3]/structure_weight/graph_rank；FK→retrieval_run/evidence/chunk（data-model §4，DM-1 chunk_id↔evidence_id 桥接）
   - ① Red: 测试断言表与 hop_count CHECK，当前失败
   - ② Green: 编写并应用迁移，测试通过
 
-- [ ] T007 [P] Alembic migration: extend knowledge_capabilities with graph_ready
+- [X] T007 [P] Alembic migration: extend knowledge_capabilities with graph_ready
   - [路径] backend/alembic/versions/0044_add_graph_ready.py | backend/tests/unit/test_migration_graph_ready.py
   - [AC] knowledge_capabilities 新增 graph_ready 布尔列（默认 false）；遵循 knowledge-capabilities.graph-extension.schema.json 门控
   - ① Red: 测试断言 graph_ready 列存在，当前失败
