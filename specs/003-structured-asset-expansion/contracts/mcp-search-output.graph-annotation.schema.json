@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-engineering-rag-mcp.local/schemas/004/mcp-search-output.graph-annotation.schema.json",
+  "title": "search_knowledge Output Schema — Graph Relation Annotation Extension (004)",
+  "description": "004 对 001 mcp-search-output 的独立演进扩展（宪法原则 VII：接口独立演进；逻辑 $id /schemas/004/）。在既有证据项上增补可选 relation 标注字段，区分硬关系（可验证证据）与软关系（推断关系）（FR-004/FR-011/SC-009）。001 既有字段与约束不变；未携带 relation 的响应仍 100% 通过 001 基线 schema。本扩展仅在图增强路径（GRAPH_ENHANCED_RETRIEVAL_ENABLED=true）的响应中出现。",
+  "type": "object",
+  "definitions": {
+    "RelationAnnotation": {
+      "type": "object",
+      "description": "证据的图关系来源标注：硬关系=确定性解析的可验证证据；软关系=LLM 推断、低权重、不冒充项目事实（蓝图 §10.2、宪法原则 III）",
+      "properties": {
+        "type": { "type": "string", "enum": ["hard", "soft"], "description": "hard=可验证证据；soft=推断关系" },
+        "relation_type": {
+          "type": "string",
+          "enum": ["calls", "called_by", "fk_references", "fk_referenced_by", "other_hard", "inferred"]
+        },
+        "is_hard": { "type": "boolean", "description": "与 type 一致：hard=>true, soft=>false" },
+        "edge_id": { "type": "string", "pattern": "^[0-9]+$", "minLength": 1, "description": "来源图边 ID（可审计）" },
+        "parse_evidence": {
+          "type": "object",
+          "description": "硬关系确定性解析依据（仅 hard 出现）",
+          "properties": {
+            "source_format": { "type": "string" },
+            "locator": { "type": "string", "minLength": 1 },
+            "extractor": { "type": "string", "minLength": 1 }
+          },
+          "required": ["source_format", "locator", "extractor"],
+          "additionalProperties": false
+        },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1, "description": "软关系置信度（仅 soft 出现）" },
+        "model_and_version": { "type": "string", "minLength": 1, "description": "软关系推断模型与版本（仅 soft 出现）" },
+        "lifecycle_state": {
+          "type": "string",
+          "enum": ["inferred", "active", "superseded", "retired"],
+          "description": "软关系四态（仅 soft 出现）"
+        }
+      },
+      "required": ["type", "relation_type", "is_hard"],
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "hard" } } },
+          "then": { "required": ["edge_id", "parse_evidence"], "properties": { "is_hard": { "const": true } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "soft" } } },
+          "then": {
+            "required": ["edge_id", "confidence", "model_and_version", "lifecycle_state"],
+            "properties": { "is_hard": { "const": false }, "relation_type": { "const": "inferred" } }
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "AnnotatedEvidenceItem": {
+      "type": "object",
+      "description": "001 证据项 + 可选 relation 标注（增补式，不改既有字段）",
+      "properties": {
+        "evidence_id": { "type": "string" },
+        "content_excerpt": { "type": "string", "maxLength": 500 },
+        "source_version": { "type": "integer", "minimum": 1 },
+        "source_position": { "type": "string" },
+        "knowledge_scope_id": { "type": "string", "pattern": "^[0-9]+$", "minLength": 1 },
+        "knowledge_scope_type": { "type": "string", "enum": ["project", "public"] },
+        "relevance_score": { "type": "number", "minimum": 0, "maximum": 1 },
+        "relation": { "$ref": "#/definitions/RelationAnnotation" }
+      },
+      "required": ["evidence_id", "content_excerpt", "source_version", "source_position", "knowledge_scope_id", "knowledge_scope_type", "relevance_score"],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "completion_status": { "type": "string", "enum": ["complete", "partial", "no_evidence", "failed"] },
+    "evidence": { "type": "array", "items": { "$ref": "#/definitions/AnnotatedEvidenceItem" } },
+    "gaps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": { "type": "string" },
+          "suggested_action": { "type": "string" }
+        },
+        "required": ["description"],
+        "additionalProperties": false
+      }
+    },
+    "error": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": ["SYSTEM_ERROR", "MISSING_PROJECT_SCOPE", "AMBIGUOUS_PROJECT_REF", "INVALID_PROJECT_REF", "INDEX_UNAVAILABLE"]
+        },
+        "message": { "type": "string" },
+        "candidates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "project_id": { "type": "string" },
+              "name": { "type": "string" },
+              "alias": { "type": "string" },
+              "repo_path": { "type": "string" }
+            },
+            "required": ["project_id", "name"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": ["code", "message"],
+      "additionalProperties": false
+    },
+    "request_id": { "type": "string" }
+  },
+  "required": ["completion_status", "evidence", "request_id"],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": { "properties": { "completion_status": { "const": "partial" } } },
+      "then": { "required": ["gaps"] }
+    },
+    {
+      "if": { "properties": { "completion_status": { "const": "failed" } } },
+      "then": { "required": ["error"] }
+    },
+    {
+      "if": { "properties": { "completion_status": { "const": "no_evidence" } } },
+      "then": { "properties": { "evidence": { "maxItems": 0 } } }
+    }
+  ]
+}

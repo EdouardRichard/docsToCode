@@ -329,3 +329,50 @@ class TestGraphEnhancedRetrievalPath:
         ids = {e["evidence_id"] for e in resp["evidence"]}
         assert ids == {str(env["vt"])}, "non-graph_ready version must stay hybrid-only"
 
+class TestGraphEvidenceRelationAnnotation:
+    """T046: graph-recalled evidence carries hard/soft relation annotations."""
+
+    @pytest.mark.asyncio
+    async def test_graph_evidence_carries_hard_annotation(self, db_session, us1_search_env, monkeypatch):
+        import jsonschema
+        from tests.contract._graph_schema_helper import load_schema
+
+        from rag_mcp.services.retrieval_service import RetrievalService
+
+        env = us1_search_env
+        monkeypatch.setenv("GRAPH_ENHANCED_RETRIEVAL_ENABLED", "true")
+        qdrant = _SearchMockQdrant([_hit(env["vt"], env["va"], env["sa"], env["src_a"])])
+        svc = RetrievalService(db_session, qdrant, _SearchFakeEmbedding())
+
+        resp = await svc.search("validateToken", [str(env["pa"])], top_k=5)
+        assert resp["completion_status"] == "complete"
+
+        graph_chunk_ids = {
+            str(env["chunks"]["processRequest"]["chunk_id"]),
+            str(env["chunks"]["logAccess"]["chunk_id"]),
+            str(env["chunks"]["checkSignature"]["chunk_id"]),
+        }
+        annotated = {}
+        for item in resp["evidence"]:
+            if "relation" in item:
+                annotated[item["evidence_id"]] = item["relation"]
+        assert annotated, "graph-recalled evidence MUST carry relation annotation"
+        for eid, rel in annotated.items():
+            assert eid in graph_chunk_ids, "only graph-recalled evidence is annotated"
+            assert rel["type"] == "hard"
+            assert rel["is_hard"] is True
+            assert rel["relation_type"] in (
+                "calls", "called_by", "fk_references", "fk_referenced_by", "other_hard"
+            )
+            assert rel["edge_id"]
+            assert rel["parse_evidence"]["extractor"] == "java_call_graph"
+
+        # The dense-only hit stays unannotated (annotation is additive per path)
+        vt_item = next(i for i in resp["evidence"] if i["evidence_id"] == str(env["vt"]))
+        assert "relation" not in vt_item
+
+        # Whole response validates against the 004 annotation extension schema
+        schema = load_schema("mcp-search-output.graph-annotation.schema.json")
+        jsonschema.validate(resp, schema)
+
+

@@ -240,11 +240,18 @@ class PostgresGraphStore(GraphStore):
         return count
 
     def _forward_edges_cte(self, rt_filter: str) -> str:
+        # Hard edges (graph_edge) plus ACTIVE soft relations (soft_relation,
+        # FR-005 low-weight supplement); non-active soft rows never expand.
         return (
             "SELECT source_chunk_id AS from_chunk, target_chunk_id AS to_chunk, "
             "edge_id, relation_type, direction, is_hard FROM graph_edge "
             "WHERE knowledge_scope_id = :ksid AND project_id = :pid "
-            "AND index_version = :iv" + rt_filter
+            "AND index_version = :iv" + rt_filter +
+            " UNION ALL "
+            "SELECT source_chunk_id, target_chunk_id, edge_id, relation_type, "
+            "direction, is_hard FROM soft_relation "
+            "WHERE lifecycle_state = 'active' AND knowledge_scope_id = :ksid "
+            "AND project_id = :pid AND index_version = :iv" + rt_filter
         )
 
     def _reverse_edges_cte(self, rt_filter: str) -> str:
@@ -260,7 +267,14 @@ class PostgresGraphStore(GraphStore):
             "CASE direction WHEN 'out' THEN 'in' ELSE 'out' END AS direction, "
             "is_hard FROM graph_edge "
             "WHERE knowledge_scope_id = :ksid AND project_id = :pid "
-            "AND index_version = :iv" + rt_filter
+            "AND index_version = :iv" + rt_filter +
+            " UNION ALL "
+            "SELECT target_chunk_id, source_chunk_id, edge_id, "
+            "relation_type, "
+            "CASE direction WHEN 'out' THEN 'in' ELSE 'out' END, "
+            "is_hard FROM soft_relation "
+            "WHERE lifecycle_state = 'active' AND knowledge_scope_id = :ksid "
+            "AND project_id = :pid AND index_version = :iv" + rt_filter
         )
 
     def _build_expansion_sql(self, directed_union: str) -> str:

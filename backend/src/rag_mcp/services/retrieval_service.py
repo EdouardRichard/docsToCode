@@ -190,6 +190,14 @@ class RetrievalService:
             # 8. Build evidence items
             evidence_items = await self._build_evidence_items(final_results)
 
+            # 8b. Annotate graph-recalled evidence with hard/soft relation
+            # metadata (004, FR-004/SC-009). Additive per the 004 annotation
+            # contract extension; only present when the graph path ran.
+            if graph_trace_data is not None and graph_trace_data["graph_candidates"]:
+                await self._annotate_graph_evidence(
+                    evidence_items, graph_trace_data["graph_candidates"]
+                )
+
             # 9. Determine completion status
             completion_status = self._determine_completion_status(
                 evidence_items=evidence_items,
@@ -612,15 +620,72 @@ class RetrievalService:
         return result.scalar_one_or_none() is not None
 
     async def _has_graph_edges(self, scope_ids: list[int]) -> bool:
-        """Check if graph_edge records exist for the given scopes (FR-013)."""
+        """Check if graph relations exist for the given scopes (FR-013).
+
+        Hard edges (graph_edge) or ACTIVE soft relations (soft_relation,
+        FR-005) both make the graph path worthwhile for a scope.
+        """
         from sqlalchemy import text as sa_text
         result = await self._session.execute(
             sa_text(
-                "SELECT 1 FROM graph_edge WHERE knowledge_scope_id = ANY(:sids) LIMIT 1"
+                "SELECT 1 WHERE EXISTS ("
+                "SELECT 1 FROM graph_edge WHERE knowledge_scope_id = ANY(:sids)"
+                ") OR EXISTS ("
+                "SELECT 1 FROM soft_relation "
+                "WHERE lifecycle_state = 'active' AND knowledge_scope_id = ANY(:sids)"
+                ") LIMIT 1"
             ),
             {"sids": list(scope_ids)},
         )
         return result.scalar_one_or_none() is not None
+
+    async def _annotate_graph_evidence(
+        self,
+        evidence_items: list[dict[str, Any]],
+        graph_candidates: list[dict[str, Any]],
+    ) -> None:
+        """Attach hard/soft relation annotations to graph-recalled evidence.
+
+        Each graph-recalled evidence item gains an additive 'relation' field
+        (004 annotation contract): hard relations are verifiable evidence with
+        deterministic parse_evidence; soft relations are marked inferred with
+        confidence/model/lifecycle metadata and never masquerade as hard
+        (FR-004/SC-009, Constitution III). Annotation failures never break the
+        response — items simply stay unannotated.
+        """
+        try:
+            from rag_mcp.graph.models import GraphEdge, SoftRelation
+            from rag_mcp.services.evidence_service import EvidenceService
+
+            cand_by_chunk = {
+                str(c.get("chunk_id", "")): c for c in graph_candidates
+            }
+            evidence_svc = EvidenceService(self._session)
+            for item in evidence_items:
+                cand = cand_by_chunk.get(str(item.get("evidence_id", "")))
+                if cand is None or not cand.get("edge_path"):
+                    continue
+                first_hop = cand["edge_path"][0]
+                try:
+                    edge_id = int(first_hop.get("edge_id"))
+                except (TypeError, ValueError):
+                    continue
+                if first_hop.get("is_hard"):
+                    edge = await self._session.get(GraphEdge, edge_id)
+                    if edge is not None:
+                        annotated = evidence_svc.annotate_evidence(
+                            item, relation_edge=edge
+                        )
+                        item["relation"] = annotated["relation"]
+                else:
+                    relation = await self._session.get(SoftRelation, edge_id)
+                    if relation is not None:
+                        annotated = evidence_svc.annotate_evidence(
+                            item, soft_relation=relation
+                        )
+                        item["relation"] = annotated["relation"]
+        except Exception:  # noqa: BLE001 - annotation must never break search
+            logger.error("Failed to annotate graph evidence", exc_info=True)
 
     async def _record_graph_trace(
         self,

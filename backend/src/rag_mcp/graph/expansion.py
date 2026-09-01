@@ -23,9 +23,11 @@ from rag_mcp.graph.store.postgres_graph_store import PostgresGraphStore
 
 logger = logging.getLogger(__name__)
 
-# Default bidirectional relation pairs (research sec 3)
+# Default bidirectional relation pairs (research sec 3). 'inferred' joins the
+# default filter so ACTIVE soft relations participate as low-weight supplement
+# (FR-005); rows are additionally gated by lifecycle_state='active' in SQL.
 _BIDIRECTIONAL_PAIRS = [
-    "calls", "called_by", "fk_references", "fk_referenced_by",
+    "calls", "called_by", "fk_references", "fk_referenced_by", "inferred",
 ]
 
 
