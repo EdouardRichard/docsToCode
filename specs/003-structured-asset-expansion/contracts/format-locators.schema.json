@@ -1,0 +1,224 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-engineering-rag-mcp.local/schemas/003/format-locators.schema.json",
+  "title": "Format Source Locators (003)",
+  "description": "各格式来源位置标识的规范格式与验证规则。用于验收测试集校验来源可定位率（宪法硬约束：证据来源可定位率 100%）。这不是 MCP 对外契约（不改变 Tool 响应 Schema），而是验收测试的内部校验规范。复用 common.schema.json 的 SourceFormat 定义。",
+  "type": "object",
+  "required": ["format", "source_position"],
+  "properties": {
+    "format": {
+      "$ref": "common.schema.json#/definitions/SourceFormat"
+    },
+    "source_position": {
+      "type": "string",
+      "description": "来源位置路径，格式因 format 而异",
+      "minLength": 1
+    },
+    "chunk_type": {
+      "type": "string",
+      "description": "Chunk 结构类型",
+      "enum": [
+        "section", "symbol",
+        "endpoint", "schema",
+        "table", "column", "constraint", "index", "view", "procedure",
+        "function", "method", "type", "interface", "class",
+        "heading", "paragraph", "list"
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "description": "Markdown 来源位置标识：标题路径（001 chunk_type=section）",
+      "if": { "properties": { "format": { "const": "markdown" } } },
+      "then": {
+        "properties": {
+          "source_position": { "pattern": "^#{1,6} .+(?: > #{1,6} .+)*$" },
+          "chunk_type": { "enum": ["section"] }
+        }
+      }
+    },
+    {
+      "description": "Java 来源位置标识：全限定符号路径（001/002 chunk_type=symbol）",
+      "if": { "properties": { "format": { "const": "java" } } },
+      "then": {
+        "properties": {
+          "source_position": { "pattern": "^[a-z][\\w.]*(?:#[A-Za-z_]\\w*)?$" },
+          "chunk_type": { "enum": ["symbol"] }
+        }
+      }
+    },
+    {
+      "description": "OpenAPI 格式 chunk_type 约束：仅允许 endpoint 与 schema（spec FR-001 范围决策：service 为文档级父上下文、请求/响应为 endpoint Chunk 内容承载，不独立成 chunk_type）",
+      "if": { "properties": { "format": { "const": "openapi" } } },
+      "then": {
+        "properties": {
+          "chunk_type": { "enum": ["endpoint", "schema"] }
+        }
+      }
+    },
+    {
+      "description": "OpenAPI 端点来源位置标识",
+      "if": { "properties": { "format": { "const": "openapi" }, "chunk_type": { "const": "endpoint" } } },
+      "then": {
+        "properties": {
+          "source_position": { "pattern": "^(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS) /.+$" }
+        }
+      }
+    },
+    {
+      "description": "OpenAPI Schema 来源位置标识（OpenAPI 3.x）",
+      "if": { "properties": { "format": { "const": "openapi" }, "chunk_type": { "const": "schema" } } },
+      "then": {
+        "properties": {
+          "source_position": { "pattern": "^schema:(components\\.schemas|definitions)\\..+$" }
+        }
+      }
+    },
+    {
+      "description": "DDL 格式 chunk_type 约束：仅允许 table/column/constraint/index/view/procedure（spec FR-002；列级约束 NOT NULL/DEFAULT 为字段属性不独立成 chunk_type，DML 语句不产生 Chunk）",
+      "if": { "properties": { "format": { "const": "ddl" } } },
+      "then": {
+        "properties": {
+          "chunk_type": { "enum": ["table", "column", "constraint", "index", "view", "procedure"] }
+        }
+      }
+    },
+    {
+      "description": "DDL 表来源位置标识",
+      "if": { "properties": { "format": { "const": "ddl" }, "chunk_type": { "const": "table" } } },
+      "then": {
+        "properties": {
+          "source_position": { "pattern": "^table:[a-zA-Z_]\\w*$" }
+        }
+      }
+    },
+    {
+      "description": "DDL 字段来源位置标识",
+      "if": { "properties": { "format": { "const": "ddl" }, "chunk_type": { "const": "column" } } },
+      "then": {
+        "properties": {
+          "source_position": { "pattern": "^table:[a-zA-Z_]\\w*\\.column:[a-zA-Z_]\\w*$" }
+        }
+      }
+    },
+    {
+      "description": "DDL 命名约束来源位置标识（表级 PK/FK/UNIQUE/CHECK）",
+      "if": { "properties": { "format": { "const": "ddl" }, "chunk_type": { "const": "constraint" } } },
+      "then": {
+        "properties": {
+          "source_position": { "pattern": "^constraint:[a-zA-Z_]\\w*$" }
+        }
+      }
+    },
+    {
+      "description": "DDL 索引来源位置标识",
+      "if": { "properties": { "format": { "const": "ddl" }, "chunk_type": { "const": "index" } } },
+      "then": {
+        "properties": {
+          "source_position": { "pattern": "^index:[a-zA-Z_]\\w*$" }
+        }
+      }
+    },
+    {
+      "description": "DDL 视图来源位置标识",
+      "if": { "properties": { "format": { "const": "ddl" }, "chunk_type": { "const": "view" } } },
+      "then": {
+        "properties": {
+          "source_position": { "pattern": "^view:[a-zA-Z_]\\w*$" }
+        }
+      }
+    },
+    {
+      "description": "DDL 存储过程来源位置标识",
+      "if": { "properties": { "format": { "const": "ddl" }, "chunk_type": { "const": "procedure" } } },
+      "then": {
+        "properties": {
+          "source_position": { "pattern": "^procedure:[a-zA-Z_]\\w*$" }
+        }
+      }
+    },
+    {
+      "description": "Go 格式 chunk_type 约束：仅允许 function/method/type/interface（spec FR-003；Package 为 symbol_path 前缀如 pkg.Service#Method，不独立成 chunk_type）",
+      "if": { "properties": { "format": { "const": "go" } } },
+      "then": {
+        "properties": {
+          "chunk_type": { "enum": ["function", "method", "type", "interface"] }
+        }
+      }
+    },
+    {
+      "description": "Go 方法来源位置标识",
+      "if": { "properties": { "format": { "const": "go" }, "chunk_type": { "const": "method" } } },
+      "then": {
+        "properties": {
+          "source_position": { "pattern": "^[a-z_]\\w*\\.[A-Za-z_]\\w*#[A-Za-z_]\\w*$" }
+        }
+      }
+    },
+    {
+      "description": "Go 函数/类型来源位置标识",
+      "if": { "properties": { "format": { "const": "go" }, "chunk_type": { "enum": ["function", "type", "interface"] } } },
+      "then": {
+        "properties": {
+          "source_position": { "pattern": "^[a-z_]\\w*\\.[A-Za-z_]\\w*$" }
+        }
+      }
+    },
+    {
+      "description": "Python 格式 chunk_type 约束：仅允许 function/class/method（spec FR-004；Module 为 symbol_path 前缀如 module.Class.method，不独立成 chunk_type）",
+      "if": { "properties": { "format": { "const": "python" } } },
+      "then": {
+        "properties": {
+          "chunk_type": { "enum": ["function", "class", "method"] }
+        }
+      }
+    },
+    {
+      "description": "Python 方法来源位置标识（含嵌套类方法，如 module.Outer.Inner.method）",
+      "if": { "properties": { "format": { "const": "python" }, "chunk_type": { "const": "method" } } },
+      "then": {
+        "properties": {
+          "source_position": { "pattern": "^[a-z_]\\w*(\\.[A-Z][\\w]*)+\\.[a-z_]\\w*$" }
+        }
+      }
+    },
+    {
+      "description": "Python 类来源位置标识（含嵌套类，如 module.Outer.Inner）",
+      "if": { "properties": { "format": { "const": "python" }, "chunk_type": { "const": "class" } } },
+      "then": {
+        "properties": {
+          "source_position": { "pattern": "^[a-z_]\\w*(\\.[A-Z][\\w]*)+$" }
+        }
+      }
+    },
+    {
+      "description": "Python 函数来源位置标识（含嵌套函数，如 module.outer.inner）",
+      "if": { "properties": { "format": { "const": "python" }, "chunk_type": { "const": "function" } } },
+      "then": {
+        "properties": {
+          "source_position": { "pattern": "^[a-z_]\\w*(\\.[a-z_]\\w*)+$" }
+        }
+      }
+    },
+    {
+      "description": "Word 来源位置标识：标题路径（与 Markdown 格式一致）",
+      "if": { "properties": { "format": { "const": "word" } } },
+      "then": {
+        "properties": {
+          "source_position": { "pattern": "^#{1,6} .+(?: > #{1,6} .+)*$" },
+          "chunk_type": { "enum": ["heading", "paragraph", "list", "table"] }
+        }
+      }
+    },
+    {
+      "description": "PDF 来源位置标识：页码 + 可选标题路径",
+      "if": { "properties": { "format": { "const": "pdf" } } },
+      "then": {
+        "properties": {
+          "source_position": { "pattern": "^page:\\d+(?: §.+)?$" },
+          "chunk_type": { "enum": ["heading", "paragraph"] }
+        }
+      }
+    }
+  ]
+}

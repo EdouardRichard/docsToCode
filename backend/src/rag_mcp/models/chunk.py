@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import BigInteger, ForeignKey, Integer, String, Text
+from sqlalchemy import BigInteger, CheckConstraint, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from rag_mcp.models import Base
@@ -22,6 +22,12 @@ if TYPE_CHECKING:
 
 class Chunk(Base):
     __tablename__ = "chunks"
+    __table_args__ = (
+        CheckConstraint(
+            "chunk_type IN ('section','symbol','endpoint','schema','table','column','constraint','index','view','procedure','function','method','type','interface','class','heading','paragraph','list')",
+            name="chunks_chunk_type_check",
+        ),
+    )
 
     chunk_id: Mapped[int] = mapped_column(
         BigInteger, primary_key=True, autoincrement=False, comment="Snowflake ID; also Qdrant Point ID"
@@ -55,7 +61,8 @@ class Chunk(Base):
         String(1024), nullable=False, comment="Section path or fully-qualified symbol path"
     )
     chunk_type: Mapped[str] = mapped_column(
-        String(16), nullable=False, comment="'section' or 'symbol'"
+        String(16), nullable=False,
+        comment="Chunk structure type: section, symbol, endpoint, schema, table, column, constraint, index, view, procedure, function, method, type, interface, class, heading, paragraph, list"
     )
     start_line: Mapped[int] = mapped_column(
         Integer, nullable=False, comment="1-based inclusive start line, > 0"

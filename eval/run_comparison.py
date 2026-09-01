@@ -15,6 +15,7 @@ import argparse
 import asyncio
 import json
 import logging
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -38,11 +39,219 @@ from run_eval import (
 logger = logging.getLogger(__name__)
 
 
+# ---------------------------------------------------------------------------
+# Format expansion report (T039 / FR-026)
+# ---------------------------------------------------------------------------
+
+# Java markers for inferring format of original 18 queries (no explicit field)
+_JAVA_MARKERS = (
+    "com.example", "UserService", "validateToken",
+    "DB_PASSWORD", "findById", "getActiveUsers",
+)
+
+# Canonical ordering of formats in the per-format report
+_FORMAT_ORDER = (
+    "java", "markdown", "openapi", "ddl", "go", "python", "word", "pdf",
+)
+
+
+def _infer_query_format(entry: dict[str, Any]) -> str:
+    """Infer the retrieval format of a dataset entry.
+
+    New 003 entries carry an explicit format field.  Original 001/002
+    entries (18 queries, no format field) are classified as java or
+    markdown from query text.
+    """
+    if "format" in entry:
+        return str(entry["format"])
+    query = entry.get("query", "")
+    if any(m in query for m in _JAVA_MARKERS):
+        return "java"
+    if "#" in query:
+        return "markdown"
+    return "unknown"
+
+
+def _group_results_by_format(
+    dataset: list[dict[str, Any]],
+    per_query: list[dict[str, Any]],
+) -> dict[str, list[dict[str, Any]]]:
+    """Group per-query results by the inferred format of their dataset entry."""
+    groups: dict[str, list[dict[str, Any]]] = {}
+    for i, entry in enumerate(dataset):
+        fmt = _infer_query_format(entry)
+        groups.setdefault(fmt, []).append(per_query[i])
+    return groups
+
+
+def _flat_metrics(m: dict[str, Any], top_k: int) -> dict[str, Any]:
+    """Flatten a compute_metrics() result (or a stored metrics block) into
+    the per-format report schema: recall_at_K / mrr / ndcg_at_K / p50 / p95.
+    """
+    return {
+        "num_queries": m.get("num_queries", 0),
+        f"recall_at_{top_k}": {
+            "mean": round(m.get("recall_at_k", {}).get("mean", 0.0), 4),
+            "min": round(m.get("recall_at_k", {}).get("min", 0.0), 4),
+            "max": round(m.get("recall_at_k", {}).get("max", 0.0), 4),
+        },
+        "mrr": {
+            "mean": round(m.get("mrr", {}).get("mean", 0.0), 4),
+            "min": round(m.get("mrr", {}).get("min", 0.0), 4),
+            "max": round(m.get("mrr", {}).get("max", 0.0), 4),
+        },
+        f"ndcg_at_{top_k}": {
+            "mean": round(m.get("ndcg_at_k", {}).get("mean", 0.0), 4),
+            "min": round(m.get("ndcg_at_k", {}).get("min", 0.0), 4),
+            "max": round(m.get("ndcg_at_k", {}).get("max", 0.0), 4),
+        },
+        "p50": round(m.get("latency_ms", {}).get("p50", 0.0), 2),
+        "p95": round(m.get("latency_ms", {}).get("p95", 0.0), 2),
+    }
+
+
+def _empty_flat_metrics(top_k: int) -> dict[str, Any]:
+    """Zero-valued placeholder when a format group has no queries."""
+    zero = {"mean": 0.0, "min": 0.0, "max": 0.0}
+    return {
+        "num_queries": 0,
+        f"recall_at_{top_k}": zero,
+        "mrr": zero,
+        f"ndcg_at_{top_k}": zero,
+        "p50": 0.0,
+        "p95": 0.0,
+    }
+
+
+def generate_format_expansion_report(
+    dataset: list[dict[str, Any]],
+    dense_per_query: list[dict[str, Any]],
+    hybrid_per_query: list[dict[str, Any]],
+    dense_metrics: dict[str, Any],
+    hybrid_metrics: dict[str, Any],
+    top_k: int,
+    config: dict[str, Any],
+    output_path: str,
+) -> dict[str, Any]:
+    """Generate the per-format comparison report (FR-026 / T039).
+
+    1. Groups eval results by format (explicit field or inferred from query).
+    2. Generates per-format Recall@K / MRR / nDCG / P50 / P95 metrics.
+    3. Compares 001 Dense baseline vs 002 hybrid baseline vs 003 regression
+       (original 18 queries vs newly added queries).
+    4. Writes eval/format_expansion_report.json.
+
+    Returns the report dict (also written to output_path).
+    """
+    # --- 1. Per-format metrics ---
+    hybrid_by_format = _group_results_by_format(dataset, hybrid_per_query)
+    dense_by_format = _group_results_by_format(dataset, dense_per_query)
+
+    all_formats = list(dict.fromkeys(
+        _FORMAT_ORDER + tuple(hybrid_by_format) + tuple(dense_by_format)
+    ))
+
+    per_format: dict[str, Any] = {}
+    for fmt in all_formats:
+        h_queries = hybrid_by_format.get(fmt, [])
+        d_queries = dense_by_format.get(fmt, [])
+        h_metrics = compute_metrics(h_queries, top_k) if h_queries else None
+        d_metrics = compute_metrics(d_queries, top_k) if d_queries else None
+        per_format[fmt] = {
+            "num_queries": len(h_queries),
+            "dense": _flat_metrics(d_metrics, top_k) if d_metrics else _empty_flat_metrics(top_k),
+            "hybrid": _flat_metrics(h_metrics, top_k) if h_metrics else _empty_flat_metrics(top_k),
+        }
+
+    # --- 2. Regression: original 18 vs newly added queries ---
+    n_original = min(18, len(dataset))
+    original_dense = compute_metrics(dense_per_query[:n_original], top_k)
+    original_hybrid = compute_metrics(hybrid_per_query[:n_original], top_k)
+    new_dense = (
+        compute_metrics(dense_per_query[n_original:], top_k)
+        if len(dense_per_query) > n_original else None
+    )
+    new_hybrid = (
+        compute_metrics(hybrid_per_query[n_original:], top_k)
+        if len(hybrid_per_query) > n_original else None
+    )
+
+    regression = {
+        "original_18": {
+            "num_queries": n_original,
+            "dense": _flat_metrics(original_dense, top_k),
+            "hybrid": _flat_metrics(original_hybrid, top_k),
+        },
+        "new_12": {
+            "num_queries": len(dataset) - n_original,
+            "dense": _flat_metrics(new_dense, top_k) if new_dense else _empty_flat_metrics(top_k),
+            "hybrid": _flat_metrics(new_hybrid, top_k) if new_hybrid else _empty_flat_metrics(top_k),
+        },
+    }
+
+    # --- 3. Baseline comparison: 001 Dense vs 002 Hybrid (overall) ---
+    baseline_comparison: dict[str, Any] = {
+        "001_dense": _flat_metrics(dense_metrics, top_k),
+        "002_hybrid": _flat_metrics(hybrid_metrics, top_k),
+        "deltas": {
+            "recall_mean_delta": round(
+                hybrid_metrics["recall_at_k"]["mean"] - dense_metrics["recall_at_k"]["mean"], 6),
+            "mrr_mean_delta": round(
+                hybrid_metrics["mrr"]["mean"] - dense_metrics["mrr"]["mean"], 6),
+            "ndcg_mean_delta": round(
+                hybrid_metrics["ndcg_at_k"]["mean"] - dense_metrics["ndcg_at_k"]["mean"], 6),
+        },
+    }
+
+    # Cross-reference stored 001/002 baseline reports if present
+    eval_dir = _REPO_ROOT / "eval"
+    baseline_path = eval_dir / "baseline_report.json"
+    if baseline_path.exists():
+        try:
+            with open(baseline_path, "r", encoding="utf-8") as f:
+                stored = json.load(f)
+            sm = stored.get("metrics")
+            if sm:
+                baseline_comparison["001_dense_stored"] = _flat_metrics(sm, top_k)
+        except (json.JSONDecodeError, KeyError, TypeError):
+            logger.warning("Could not parse stored baseline_report.json")
+
+    hybrid_path = eval_dir / "hybrid_comparison_report.json"
+    if hybrid_path.exists():
+        try:
+            with open(hybrid_path, "r", encoding="utf-8") as f:
+                stored = json.load(f)
+            hm = stored.get("hybrid_metrics")
+            if hm:
+                baseline_comparison["002_hybrid_stored"] = _flat_metrics(hm, top_k)
+        except (json.JSONDecodeError, KeyError, TypeError):
+            logger.warning("Could not parse stored hybrid_comparison_report.json")
+
+    report: dict[str, Any] = {
+        "report_type": "format_expansion_comparison",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "config": config,
+        "per_format": per_format,
+        "regression": regression,
+        "baseline_comparison": baseline_comparison,
+    }
+
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with open(out, "w", encoding="utf-8") as f:
+        json.dump(report, f, indent=2, ensure_ascii=False)
+
+    logger.info("Format expansion report written to %s", out)
+
+    return report
+
+
 async def run_comparison(
     dataset_path: str,
     output_path: str,
     top_k: int = 5,
     qdrant_url: str | None = None,
+    format_report_output: str | None = None,
 ) -> int:
     """Run Dense baseline then Hybrid comparison evaluation.
 
@@ -279,6 +488,21 @@ async def run_comparison(
     logger.info("  MRR: %.4f -> %.4f (delta %.4f)", dense_metrics["mrr"]["mean"], hybrid_metrics["mrr"]["mean"], deltas["mrr_mean_delta"])
     logger.info("  nDCG: %.4f -> %.4f (delta %.4f)", dense_metrics["ndcg_at_k"]["mean"], hybrid_metrics["ndcg_at_k"]["mean"], deltas["ndcg_mean_delta"])
 
+    # --- Format expansion report (T039 / FR-026) ---
+    _format_report_path = format_report_output or str(
+        _REPO_ROOT / "eval" / "format_expansion_report.json"
+    )
+    generate_format_expansion_report(
+        dataset=dataset,
+        dense_per_query=dense_per_query,
+        hybrid_per_query=hybrid_per_query,
+        dense_metrics=dense_metrics,
+        hybrid_metrics=hybrid_metrics,
+        top_k=top_k,
+        config=report["config"],
+        output_path=_format_report_path,
+    )
+
     return 0
 
 
@@ -290,6 +514,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--output", "-o", required=True, type=str)
     parser.add_argument("--top-k", "-k", type=int, default=5)
     parser.add_argument("--qdrant-url", type=str, default=None)
+    parser.add_argument(
+        "--format-report", type=str, default=None,
+        help="Output path for the per-format expansion report "
+             "(default: eval/format_expansion_report.json).",
+    )
     parser.add_argument("--verbose", "-v", action="store_true", default=False)
     return parser.parse_args(argv)
 
@@ -305,6 +534,7 @@ async def main(argv: list[str] | None = None) -> int:
         output_path=args.output,
         top_k=args.top_k,
         qdrant_url=args.qdrant_url,
+        format_report_output=args.format_report,
     )
 
 

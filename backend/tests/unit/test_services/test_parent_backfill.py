@@ -111,3 +111,79 @@ class TestBackfillParentChunkIds:
         backfill_parent_chunk_ids(chunks)
 
         assert "parent_chunk_id" not in chunk
+
+
+def _structure_chunk(chunk_id, structure_path, parent_structure_path, chunk_type):
+    """Build an OpenAPI/DDL parser-shaped chunk dict with structure_path."""
+    return {
+        "chunk_id": chunk_id,
+        "content_text": f"content for {chunk_id}",
+        "structure_path": structure_path,
+        "start_line": 1,
+        "end_line": 2,
+        "parent_structure_path": parent_structure_path,
+        "token_count": 10,
+        "chunk_type": chunk_type,
+    }
+
+
+class TestBackfillStructurePath:
+    """T004: Verify backfill supports structure_path key (OpenAPI/DDL)."""
+
+    def test_openapi_endpoint_backfills_schema_parent(self):
+        """An endpoint's parent_structure_path resolves to the referenced Schema."""
+        schema = _structure_chunk(300, "schema:components.schemas.User", "", "schema")
+        endpoint = _structure_chunk(
+            301, "GET /api/v1/users", "schema:components.schemas.User", "endpoint"
+        )
+        chunks = [schema, endpoint]
+
+        backfill_parent_chunk_ids(chunks)
+
+        assert endpoint["parent_chunk_id"] == 300
+        assert "parent_chunk_id" not in schema
+
+    def test_ddl_column_backfills_table_parent(self):
+        """A column's parent_structure_path resolves to the table chunk id."""
+        table = _structure_chunk(400, "table:users", "", "table")
+        column = _structure_chunk(
+            401, "table:users.column:email", "table:users", "column"
+        )
+        chunks = [table, column]
+
+        backfill_parent_chunk_ids(chunks)
+
+        assert column["parent_chunk_id"] == 400
+        assert "parent_chunk_id" not in table
+
+    def test_ddl_constraint_backfills_table_parent(self):
+        """A named constraint's parent_structure_path resolves to the table."""
+        table = _structure_chunk(500, "table:orders", "", "table")
+        constraint = _structure_chunk(
+            501, "constraint:fk_orders_user", "table:orders", "constraint"
+        )
+        chunks = [table, constraint]
+
+        backfill_parent_chunk_ids(chunks)
+
+        assert constraint["parent_chunk_id"] == 500
+
+    def test_mixed_keys_in_same_batch(self):
+        """Mixed section_path, symbol_path, structure_path chunks work together."""
+        md_parent = _md_chunk(600, "# Docs", "")
+        md_child = _md_chunk(601, "# Docs > ## Section", "# Docs")
+        java_klass = _java_chunk(602, "com.example.Svc", "", "class")
+        java_method = _java_chunk(603, "com.example.Svc#doWork", "com.example.Svc", "method")
+        ddl_table = _structure_chunk(604, "table:users", "", "table")
+        ddl_col = _structure_chunk(605, "table:users.col:id", "table:users", "column")
+        chunks = [md_parent, md_child, java_klass, java_method, ddl_table, ddl_col]
+
+        backfill_parent_chunk_ids(chunks)
+
+        assert md_child["parent_chunk_id"] == 600
+        assert java_method["parent_chunk_id"] == 602
+        assert ddl_col["parent_chunk_id"] == 604
+        assert "parent_chunk_id" not in md_parent
+        assert "parent_chunk_id" not in java_klass
+        assert "parent_chunk_id" not in ddl_table
+

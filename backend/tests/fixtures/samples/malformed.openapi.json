@@ -1,0 +1,26 @@
+{
+  "info": {
+    "title": "Broken API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/items": {
+      "get": {
+        "summary": "List items",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/NonExistent" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {}
+  }
+}

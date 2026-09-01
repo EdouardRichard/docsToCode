@@ -805,8 +805,9 @@ class RetrievalService:
         retrieval_mode: str = "dense",
         subpath_timings: dict | None = None,
         evidence_ref_ids: list[str] | None = None,
+        format: str | None = None,
     ) -> None:
-        """Record an append-only RetrievalRun audit entry."""
+        """Record an append-only RetrievalRun audit entry (003 adds format, FR-027)."""
         try:
             run = RetrievalRun(
                 run_id=generate_id(),
@@ -818,6 +819,7 @@ class RetrievalService:
                 retrieval_mode=retrieval_mode,
                 subpath_timings=subpath_timings,
                 evidence_ref_ids=evidence_ref_ids or [],
+                format=format,
             )
             self._session.add(run)
             await self._session.flush()

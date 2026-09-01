@@ -340,16 +340,18 @@ def check_reproducibility(
     checks: list[dict[str, Any]] = []
     all_passed = True
 
-    # Compare scalar metrics
+    # Compare scalar metrics.  Latency percentiles are environment-sensitive
+    # and are reported but excluded from the reproducibility veto (SC-010 /
+    # research.md §0.4: "延迟指标标注为环境敏感，不作为可重复性否决项").
     metric_paths = [
-        ("recall_at_k.mean", metrics_a["recall_at_k"]["mean"], metrics_b["recall_at_k"]["mean"]),
-        ("mrr.mean", metrics_a["mrr"]["mean"], metrics_b["mrr"]["mean"]),
-        ("ndcg_at_k.mean", metrics_a["ndcg_at_k"]["mean"], metrics_b["ndcg_at_k"]["mean"]),
-        ("latency_ms.p50", metrics_a["latency_ms"]["p50"], metrics_b["latency_ms"]["p50"]),
-        ("latency_ms.p95", metrics_a["latency_ms"]["p95"], metrics_b["latency_ms"]["p95"]),
+        ("recall_at_k.mean", metrics_a["recall_at_k"]["mean"], metrics_b["recall_at_k"]["mean"], True),
+        ("mrr.mean", metrics_a["mrr"]["mean"], metrics_b["mrr"]["mean"], True),
+        ("ndcg_at_k.mean", metrics_a["ndcg_at_k"]["mean"], metrics_b["ndcg_at_k"]["mean"], True),
+        ("latency_ms.p50", metrics_a["latency_ms"]["p50"], metrics_b["latency_ms"]["p50"], False),
+        ("latency_ms.p95", metrics_a["latency_ms"]["p95"], metrics_b["latency_ms"]["p95"], False),
     ]
 
-    for name, val_a, val_b in metric_paths:
+    for name, val_a, val_b, is_deterministic in metric_paths:
         if val_a == 0 and val_b == 0:
             delta = 0.0
             passed = True
@@ -359,6 +361,10 @@ def check_reproducibility(
         else:
             delta = abs(val_a - val_b) / max(abs(val_a), abs(val_b))
             passed = delta <= tolerance
+
+        # Environment-sensitive metrics (latency) do not veto reproducibility
+        if not is_deterministic:
+            passed = True
 
         if not passed:
             all_passed = False

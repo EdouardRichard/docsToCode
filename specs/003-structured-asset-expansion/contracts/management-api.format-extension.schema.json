@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-engineering-rag-mcp.local/schemas/003/management-api.format-extension.schema.json",
+  "title": "Management API Format Enum Extension (003)",
+  "description": "003 扩展 001 管理 API 响应契约 KnowledgeSourceResponse.format 的 enum。001 原为 inline enum:[markdown,java]（001 contracts/management-api.schema.json L54）；003 新增 6 格式后，format 字段 MUST 改为引用 common.schema.json#/definitions/SourceFormat（8 值）。本契约为 REST 管理 API 契约（非 MCP 对外契约，不违反宪法原则 VII）。实现时将 001 management-api.schema.json 中 KnowledgeSourceResponse.format 的 inline enum 替换为对该 $ref 的引用。",
+  "type": "object",
+  "properties": {
+    "format": {
+      "$ref": "common.schema.json#/definitions/SourceFormat",
+      "description": "知识源格式（003 扩展 001/002 的 markdown/java 至 8 种）。替换 001 的 inline enum:[markdown,java]。"
+    }
+  },
+  "examples": [
+    { "format": "openapi" },
+    { "format": "ddl" },
+    { "format": "go" },
+    { "format": "python" },
+    { "format": "word" },
+    { "format": "pdf" }
+  ]
+}

@@ -30,6 +30,7 @@ from rag_mcp.models import (
 from rag_mcp.parsers.credential_redactor import redact_credentials
 from rag_mcp.parsers.java_parser import JavaParser
 from rag_mcp.parsers.markdown_parser import MarkdownParser
+from rag_mcp.parsers.text_extractor import BINARY_FORMATS, extract_text, TextExtractionError
 from rag_mcp.providers.base import EmbeddingProvider
 from rag_mcp.utils.snowflake import generate_id
 
@@ -73,7 +74,10 @@ def backfill_parent_chunk_ids(chunk_dicts: list[dict[str, Any]]) -> None:
     path_to_id: dict[str, int] = {}
     for chunk in chunk_dicts:
         position_path = (
-            chunk.get("section_path") or chunk.get("symbol_path") or ""
+            chunk.get("section_path")
+            or chunk.get("symbol_path")
+            or chunk.get("structure_path")
+            or ""
         )
         if position_path:
             path_to_id[position_path] = chunk["chunk_id"]
@@ -82,6 +86,7 @@ def backfill_parent_chunk_ids(chunk_dicts: list[dict[str, Any]]) -> None:
         parent_path = (
             chunk.get("parent_section_path")
             or chunk.get("parent_symbol_path")
+            or chunk.get("parent_structure_path")
             or ""
         )
         if not parent_path:
@@ -173,12 +178,29 @@ class IngestionService:
 
             stages: list[dict[str, Any]] = []
 
-            # 3. Read raw file
-            raw_content = await self._read_raw_file(source)
+            # 3. Read raw file as bytes
+            raw_bytes = await self._read_raw_bytes(source)
+
+            # 3b. Text extraction for binary formats (FR-011, before credential_scan)
+            if source.format in BINARY_FORMATS:
+                stage_start = datetime.now(timezone.utc)
+                try:
+                    text_content = extract_text(raw_bytes, source.format)
+                except TextExtractionError as exc:
+                    raise ValueError(str(exc)) from exc
+                stages.append({
+                    "stage": "text_extraction",
+                    "status": "completed",
+                    "started_at": stage_start.isoformat(),
+                    "completed_at": datetime.now(timezone.utc).isoformat(),
+                    "details": {"format": source.format},
+                })
+            else:
+                text_content = raw_bytes.decode("utf-8", errors="replace")
 
             # 4. Redact credentials
             stage_start = datetime.now(timezone.utc)
-            redacted_text = redact_credentials(raw_content)
+            redacted_text = redact_credentials(text_content)
             stages.append({
                 "stage": "credential_scan",
                 "status": "completed",
@@ -288,11 +310,13 @@ class IngestionService:
             # Create Chunk records in PostgreSQL
             chunk_records: list[Chunk] = []
             for i, chunk_dict in enumerate(chunk_dicts):
-                # Determine position_path based on format
-                if source.format == "markdown":
-                    position_path = chunk_dict.get("section_path", "")
-                else:
-                    position_path = chunk_dict.get("symbol_path", "")
+                # Determine position_path based on format — 003 extends to all path types
+                position_path = (
+                    chunk_dict.get("section_path")
+                    or chunk_dict.get("symbol_path")
+                    or chunk_dict.get("structure_path")
+                    or ""
+                )
 
                 chunk_record = Chunk(
                     chunk_id=chunk_dict["chunk_id"],
@@ -322,9 +346,10 @@ class IngestionService:
             # Upsert hybrid points to Qdrant (Dense + Sparse on same Point, FR-001/FR-002)
             for i, chunk_dict in enumerate(chunk_dicts):
                 position_path = (
-                    chunk_dict.get("section_path", "")
-                    if source.format == "markdown"
-                    else chunk_dict.get("symbol_path", "")
+                    chunk_dict.get("section_path")
+                    or chunk_dict.get("symbol_path")
+                    or chunk_dict.get("structure_path")
+                    or ""
                 )
                 payload = {
                     "knowledge_scope_id": str(scope_id),
@@ -435,7 +460,7 @@ class IngestionService:
         await self._session.flush()
         return run
 
-    async def _read_raw_file(self, source: KnowledgeSource) -> str:
+    async def _read_raw_bytes(self, source: KnowledgeSource) -> bytes:
         """Read the raw file content from the data root.
 
         File path convention: ``{data_root}/{scope_id}/{source_id}/{filename}``
@@ -453,7 +478,7 @@ class IngestionService:
                 f"Raw file not found at {file_path} for source {source.source_id}"
             )
 
-        content = file_path.read_text(encoding="utf-8")
+        content = file_path.read_bytes()
         if not content.strip():
             raise ValueError(
                 f"Empty file content for source {source.source_id} ({source.filename})"
@@ -466,31 +491,54 @@ class IngestionService:
         return content
 
     def _parse_content(
-        self, text: str, fmt: str, filename: str
+        self, content, fmt: str, filename: str
     ) -> list[dict[str, Any]]:
-        """Parse redacted text using the appropriate format parser.
+        """Parse content using the appropriate format parser (FR-009, 003 extends to 8 formats).
 
         Args:
-            text: Credential-redacted content.
-            fmt: Format string ('markdown' or 'java').
+            content: Credential-redacted text (str) for text formats, or raw
+                bytes for binary formats (word, pdf).
+            fmt: Format string ('markdown', 'java', 'openapi', 'ddl', 'go',
+                'python', 'word', 'pdf').
             filename: Original filename for diagnostics.
 
         Returns:
             List of chunk dicts from the parser.
 
         Raises:
-            ValueError: If the format is unsupported.
+            ValueError: If the format is unsupported or parsing fails.
         """
         if fmt == "markdown":
             parser = MarkdownParser()
-            return parser.parse(text)
+            return parser.parse(content)
         elif fmt == "java":
             parser = JavaParser()
-            return parser.parse(text, filename=filename)
+            return parser.parse(content, filename=filename)
+        elif fmt == "openapi":
+            from rag_mcp.parsers.openapi_parser import OpenAPIParser
+            return OpenAPIParser().parse(content, filename=filename)
+        elif fmt == "ddl":
+            from rag_mcp.parsers.ddl_parser import DDLParser
+            return DDLParser().parse(content, filename=filename)
+        elif fmt == "go":
+            from rag_mcp.parsers.go_parser import GoParser
+            return GoParser().parse(content, filename=filename)
+        elif fmt == "python":
+            from rag_mcp.parsers.python_parser import PythonParser
+            return PythonParser().parse(content, filename=filename)
+        elif fmt in ("word", "pdf"):
+            # Binary formats: content is the extracted+redacted text string
+            # (text_extraction stage already ran, preserving structure markers)
+            if fmt == "word":
+                from rag_mcp.parsers.word_parser import WordParser
+                return WordParser().parse(content, filename=filename)
+            else:
+                from rag_mcp.parsers.pdf_parser import PDFParser
+                return PDFParser().parse(content, filename=filename)
         else:
             raise ValueError(
-                f"Unsupported format '{fmt}' for file {filename}. "
-                f"Supported formats: markdown, java"
+                f"Unsupported format {fmt!r} for file {filename}. "
+                f"Supported: markdown, java, openapi, ddl, go, python, word, pdf"
             )
 
     async def _get_next_version_number(self, scope_id: int) -> int:

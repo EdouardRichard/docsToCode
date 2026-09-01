@@ -31,6 +31,12 @@ class RetrievalRun(Base):
             "(subpath_timings IS NOT NULL AND subpath_timings::text <> 'null')",
             name="chk_hybrid_timings",
         ),
+        # 003: format must be NULL or one of the 8 valid values (FR-027)
+        CheckConstraint(
+            "format IS NULL OR format IN "
+            "('markdown','java','openapi','ddl','go','python','word','pdf')",
+            name="chk_retrieval_run_format",
+        ),
         # Index for querying by mode + time range (data-model §6.2)
         Index("idx_rr_mode_created", "retrieval_mode", "created_at"),
     )
@@ -72,6 +78,12 @@ class RetrievalRun(Base):
         nullable=False,
         server_default=text("'[]'::jsonb"),
         comment="Returned evidence IDs for problem tracing",
+    )
+    # 003: format of top-1 evidence hit (FR-027, internal audit, not in MCP contract)
+    format: Mapped[str | None] = mapped_column(
+        String(8),
+        nullable=True,
+        comment="Format of top-1 evidence hit: markdown/java/openapi/ddl/go/python/word/pdf or NULL",
     )
     created_at: Mapped[str] = mapped_column(
         TIMESTAMP(timezone=True),

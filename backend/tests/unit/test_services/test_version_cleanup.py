@@ -44,7 +44,7 @@ class TestCleanupVersionDerivedData:
         await self._svc(session, qdrant)._cleanup_version_derived_data(777)
 
         qdrant.delete_points_by_version.assert_called_once_with(
-            "chunks_dense_bge-m3_v1", 777
+            "chunks_hybrid_bge-m3_v1", 777
         )
         assert session.execute.call_count == 2
 
@@ -61,8 +61,8 @@ class TestCleanupVersionDerivedData:
         await self._svc(session, qdrant)._cleanup_version_derived_data(888)
 
         assert qdrant.delete_points_by_version.call_count == 2
-        qdrant.delete_points_by_version.assert_any_call("chunks_dense_a_v1", 888)
-        qdrant.delete_points_by_version.assert_any_call("chunks_dense_b_v1", 888)
+        qdrant.delete_points_by_version.assert_any_call("chunks_hybrid_a_v1", 888)
+        qdrant.delete_points_by_version.assert_any_call("chunks_hybrid_b_v1", 888)
 
     @pytest.mark.asyncio
     async def test_qdrant_failure_does_not_block_pg_cleanup(self):

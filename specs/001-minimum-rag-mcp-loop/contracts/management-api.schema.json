@@ -51,7 +51,7 @@
       "properties": {
         "source_id": { "type": "string" },
         "filename": { "type": "string" },
-        "format": { "type": "string", "enum": ["markdown", "java"] },
+        "format": { "type": "string", "enum": ["markdown", "java", "openapi", "ddl", "go", "python", "word", "pdf"] },
         "size_bytes": { "type": "integer" },
         "content_hash": { "type": "string" },
         "status": { "type": "string", "enum": ["uploaded", "processing", "published", "failed", "deleted"] },

@@ -9,11 +9,24 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List
 
-from sqlalchemy import BigInteger, ForeignKey, Integer, String, Text, text
+from sqlalchemy import (
+    BigInteger,
+    CheckConstraint,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    text,
+)
 from sqlalchemy.dialects.postgresql import TIMESTAMP
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from rag_mcp.models import Base
+
+# All supported formats (003 extends 001/002 markdown+java to 8 values)
+_SUPPORTED_FORMATS = (
+    "markdown", "java", "openapi", "ddl", "go", "python", "word", "pdf",
+)
 
 if TYPE_CHECKING:
     from rag_mcp.models.chunk import Chunk
@@ -23,6 +36,12 @@ if TYPE_CHECKING:
 
 class KnowledgeSource(Base):
     __tablename__ = "knowledge_sources"
+    __table_args__ = (
+        CheckConstraint(
+            "format IN ('markdown','java','openapi','ddl','go','python','word','pdf')",
+            name="knowledge_sources_format_check",
+        ),
+    )
 
     source_id: Mapped[int] = mapped_column(
         BigInteger, primary_key=True, autoincrement=False, comment="Snowflake ID"
@@ -37,7 +56,8 @@ class KnowledgeSource(Base):
         String(64), nullable=False, comment="SHA-256 hex digest"
     )
     format: Mapped[str] = mapped_column(
-        String(16), nullable=False, comment="'markdown' or 'java'"
+        String(16), nullable=False,
+        comment="Source format: markdown, java, openapi, ddl, go, python, word, or pdf",
     )
     size_bytes: Mapped[int] = mapped_column(
         BigInteger, nullable=False, comment="File size in bytes, >= 0"

@@ -1,0 +1,1832 @@
+{
+  "report_type": "dense_retrieval_baseline",
+  "generated_at": "2026-08-29T09:13:34.259321+00:00",
+  "config": {
+    "embedding_model": "BAAI/bge-m3",
+    "qdrant_collection": "chunks_hybrid_bge-m3_v1",
+    "retrieval_mode": "hybrid",
+    "top_k": 5,
+    "dataset_path": "D:\\Project_new\\docsToCode\\eval\\eval_dataset.json",
+    "num_queries": 30
+  },
+  "metrics": {
+    "num_queries": 30,
+    "top_k": 5,
+    "recall_at_k": {
+      "mean": 0.9666666666666667,
+      "min": 0.0,
+      "max": 1.0
+    },
+    "mrr": {
+      "mean": 0.9166666666666666,
+      "min": 0.0,
+      "max": 1.0
+    },
+    "ndcg_at_k": {
+      "mean": 0.9297596420238124,
+      "min": 0.0,
+      "max": 1.0
+    },
+    "latency_ms": {
+      "p50": 153.66139999969164,
+      "p95": 211.76493000075422,
+      "mean": 159.18104000059733,
+      "min": 88.55100000073435,
+      "max": 232.4759000002814
+    }
+  },
+  "per_query_results": [
+    {
+      "query_index": 0,
+      "query": "Find the definition of com.example.service.UserService.",
+      "project_scope": [
+        "351193748123680768"
+      ],
+      "expected_evidence_ids": [
+        "352016027946582016"
+      ],
+      "retrieved_evidence_ids": [
+        "352016027946582016",
+        "352016027946582018",
+        "352016027946582019",
+        "352016027946582020",
+        "352016027946582017"
+      ],
+      "scores": [
+        0.03278688524590164,
+        0.016129032258064516,
+        0.015873015873015872,
+        0.015625,
+        0.015384615384615385
+      ],
+      "latency_ms": 232.4759000002814,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016027946582016",
+          "dense_score": 0.5638318,
+          "sparse_score": 8.298272,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.03278688524590164
+        },
+        {
+          "chunk_id": "352016027946582018",
+          "dense_score": 0.49755403,
+          "sparse_score": null,
+          "fused_score": 0.016129032258064516,
+          "rerank_score": 0.016129032258064516
+        },
+        {
+          "chunk_id": "352016027946582019",
+          "dense_score": 0.4343332,
+          "sparse_score": null,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": 0.015873015873015872
+        },
+        {
+          "chunk_id": "352016027946582020",
+          "dense_score": 0.4190141,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": 0.015625
+        },
+        {
+          "chunk_id": "352016027946582017",
+          "dense_score": 0.41572762,
+          "sparse_score": null,
+          "fused_score": 0.015384615384615385,
+          "rerank_score": 0.015384615384615385
+        }
+      ]
+    },
+    {
+      "query_index": 1,
+      "query": "What is the purpose of com.example.service.UserService#DB_PASSWORD?",
+      "project_scope": [
+        "351193748123680768"
+      ],
+      "expected_evidence_ids": [
+        "352016027946582017"
+      ],
+      "retrieved_evidence_ids": [
+        "352016027946582017",
+        "352016027946582016",
+        "352016027946582018",
+        "352016027946582019",
+        "352016027946582020"
+      ],
+      "scores": [
+        0.03278688524590164,
+        0.03225806451612903,
+        0.015873015873015872,
+        0.015625,
+        0.015384615384615385
+      ],
+      "latency_ms": 148.93540000048233,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016027946582017",
+          "dense_score": 0.63132393,
+          "sparse_score": 18.473557,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.03278688524590164
+        },
+        {
+          "chunk_id": "352016027946582016",
+          "dense_score": 0.6199944,
+          "sparse_score": 14.714318,
+          "fused_score": 0.03225806451612903,
+          "rerank_score": 0.03225806451612903
+        },
+        {
+          "chunk_id": "352016027946582018",
+          "dense_score": 0.4977479,
+          "sparse_score": null,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": 0.015873015873015872
+        },
+        {
+          "chunk_id": "352016027946582019",
+          "dense_score": 0.45250964,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": 0.015625
+        },
+        {
+          "chunk_id": "352016027946582020",
+          "dense_score": 0.4168055,
+          "sparse_score": null,
+          "fused_score": 0.015384615384615385,
+          "rerank_score": 0.015384615384615385
+        }
+      ]
+    },
+    {
+      "query_index": 2,
+      "query": "Show me the implementation of com.example.service.UserService#repository.",
+      "project_scope": [
+        "351193748123680768"
+      ],
+      "expected_evidence_ids": [
+        "352016027946582018"
+      ],
+      "retrieved_evidence_ids": [
+        "352016027946582018",
+        "352016027946582016",
+        "352016027946582019",
+        "352016027946582020",
+        "352016027946582017"
+      ],
+      "scores": [
+        0.03252247488101534,
+        0.03252247488101534,
+        0.03149801587301587,
+        0.03149801587301587,
+        0.015384615384615385
+      ],
+      "latency_ms": 216.08700000069803,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016027946582018",
+          "dense_score": 0.6369271,
+          "sparse_score": 4.2948565,
+          "fused_score": 0.03252247488101534,
+          "rerank_score": 0.03252247488101534
+        },
+        {
+          "chunk_id": "352016027946582016",
+          "dense_score": 0.6217958,
+          "sparse_score": 12.000137,
+          "fused_score": 0.03252247488101534,
+          "rerank_score": 0.03252247488101534
+        },
+        {
+          "chunk_id": "352016027946582019",
+          "dense_score": 0.51501554,
+          "sparse_score": 3.659453,
+          "fused_score": 0.03149801587301587,
+          "rerank_score": 0.03149801587301587
+        },
+        {
+          "chunk_id": "352016027946582020",
+          "dense_score": 0.4953874,
+          "sparse_score": 3.889634,
+          "fused_score": 0.03149801587301587,
+          "rerank_score": 0.03149801587301587
+        },
+        {
+          "chunk_id": "352016027946582017",
+          "dense_score": 0.47324246,
+          "sparse_score": null,
+          "fused_score": 0.015384615384615385,
+          "rerank_score": 0.015384615384615385
+        }
+      ]
+    },
+    {
+      "query_index": 3,
+      "query": "What does com.example.service.UserService#findById do?",
+      "project_scope": [
+        "351193748123680768"
+      ],
+      "expected_evidence_ids": [
+        "352016027946582019"
+      ],
+      "retrieved_evidence_ids": [
+        "352016027946582019",
+        "352016027946582016",
+        "352016027946582020",
+        "352016027946582018",
+        "352016027946582017"
+      ],
+      "scores": [
+        0.03252247488101534,
+        0.03252247488101534,
+        0.015873015873015872,
+        0.015625,
+        0.015384615384615385
+      ],
+      "latency_ms": 159.16550000110874,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016027946582019",
+          "dense_score": 0.6522032,
+          "sparse_score": 12.14209,
+          "fused_score": 0.03252247488101534,
+          "rerank_score": 0.03252247488101534
+        },
+        {
+          "chunk_id": "352016027946582016",
+          "dense_score": 0.6322503,
+          "sparse_score": 14.025585,
+          "fused_score": 0.03252247488101534,
+          "rerank_score": 0.03252247488101534
+        },
+        {
+          "chunk_id": "352016027946582020",
+          "dense_score": 0.53230536,
+          "sparse_score": null,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": 0.015873015873015872
+        },
+        {
+          "chunk_id": "352016027946582018",
+          "dense_score": 0.45831445,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": 0.015625
+        },
+        {
+          "chunk_id": "352016027946582017",
+          "dense_score": 0.44223082,
+          "sparse_score": null,
+          "fused_score": 0.015384615384615385,
+          "rerank_score": 0.015384615384615385
+        }
+      ]
+    },
+    {
+      "query_index": 4,
+      "query": "Explain the code at com.example.service.UserService#getActiveUsers.",
+      "project_scope": [
+        "351193748123680768"
+      ],
+      "expected_evidence_ids": [
+        "352016027946582020"
+      ],
+      "retrieved_evidence_ids": [
+        "352016027946582020",
+        "352016027946582016",
+        "352016027946582019",
+        "352016027946582021",
+        "352016027946582017"
+      ],
+      "scores": [
+        0.03252247488101534,
+        0.03252247488101534,
+        0.015873015873015872,
+        0.015625,
+        0.015384615384615385
+      ],
+      "latency_ms": 152.69379999881494,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016027946582020",
+          "dense_score": 0.7410897,
+          "sparse_score": 10.094835,
+          "fused_score": 0.03252247488101534,
+          "rerank_score": 0.03252247488101534
+        },
+        {
+          "chunk_id": "352016027946582016",
+          "dense_score": 0.6330942,
+          "sparse_score": 11.645322,
+          "fused_score": 0.03252247488101534,
+          "rerank_score": 0.03252247488101534
+        },
+        {
+          "chunk_id": "352016027946582019",
+          "dense_score": 0.5005491,
+          "sparse_score": null,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": 0.015873015873015872
+        },
+        {
+          "chunk_id": "352016027946582021",
+          "dense_score": 0.4539157,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": 0.015625
+        },
+        {
+          "chunk_id": "352016027946582017",
+          "dense_score": 0.44622785,
+          "sparse_score": null,
+          "fused_score": 0.015384615384615385,
+          "rerank_score": 0.015384615384615385
+        }
+      ]
+    },
+    {
+      "query_index": 5,
+      "query": "Find the definition of com.example.service.UserService#validateToken.",
+      "project_scope": [
+        "351193748123680768"
+      ],
+      "expected_evidence_ids": [
+        "352016027946582021"
+      ],
+      "retrieved_evidence_ids": [
+        "352016027946582016",
+        "352016027946582021",
+        "352016027946582018",
+        "352016027946582017",
+        "352016027946582019"
+      ],
+      "scores": [
+        0.03278688524590164,
+        0.03225806451612903,
+        0.015873015873015872,
+        0.015625,
+        0.015384615384615385
+      ],
+      "latency_ms": 154.62900000056834,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016027946582016",
+          "dense_score": 0.6151389,
+          "sparse_score": 8.372923,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.03278688524590164
+        },
+        {
+          "chunk_id": "352016027946582021",
+          "dense_score": 0.6132928,
+          "sparse_score": 1.0366623,
+          "fused_score": 0.03225806451612903,
+          "rerank_score": 0.03225806451612903
+        },
+        {
+          "chunk_id": "352016027946582018",
+          "dense_score": 0.46905667,
+          "sparse_score": null,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": 0.015873015873015872
+        },
+        {
+          "chunk_id": "352016027946582017",
+          "dense_score": 0.46638557,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": 0.015625
+        },
+        {
+          "chunk_id": "352016027946582019",
+          "dense_score": 0.45939714,
+          "sparse_score": null,
+          "fused_score": 0.015384615384615385,
+          "rerank_score": 0.015384615384615385
+        }
+      ]
+    },
+    {
+      "query_index": 6,
+      "query": "Show me the section # extra.",
+      "project_scope": [
+        "351207349697904640"
+      ],
+      "expected_evidence_ids": [
+        "352016115179716608"
+      ],
+      "retrieved_evidence_ids": [
+        "352016115179716608"
+      ],
+      "scores": [
+        0.03278688524590164
+      ],
+      "latency_ms": 95.42630000214558,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016115179716608",
+          "dense_score": 0.7660169,
+          "sparse_score": 2.8725564,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.03278688524590164
+        }
+      ]
+    },
+    {
+      "query_index": 7,
+      "query": "Show me the section # Test Content.",
+      "project_scope": [
+        "351221148429582336"
+      ],
+      "expected_evidence_ids": [
+        "352016116299595776"
+      ],
+      "retrieved_evidence_ids": [
+        "352016116299595776"
+      ],
+      "scores": [
+        0.03278688524590164
+      ],
+      "latency_ms": 88.55100000073435,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016116299595776",
+          "dense_score": 0.6973516,
+          "sparse_score": 2.369061,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.03278688524590164
+        }
+      ]
+    },
+    {
+      "query_index": 8,
+      "query": "Explain the content of # Test Content.",
+      "project_scope": [
+        "351222351527936000"
+      ],
+      "expected_evidence_ids": [
+        "352016117394309120"
+      ],
+      "retrieved_evidence_ids": [
+        "352016117394309120"
+      ],
+      "scores": [
+        0.03278688524590164
+      ],
+      "latency_ms": 103.57899999871734,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016117394309120",
+          "dense_score": 0.7158757,
+          "sparse_score": 2.369061,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.03278688524590164
+        }
+      ]
+    },
+    {
+      "query_index": 9,
+      "query": "What does # Test Content describe?",
+      "project_scope": [
+        "351222576757866496"
+      ],
+      "expected_evidence_ids": [
+        "352016118451273728"
+      ],
+      "retrieved_evidence_ids": [
+        "352016118451273728"
+      ],
+      "scores": [
+        0.03278688524590164
+      ],
+      "latency_ms": 91.86369999952149,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016118451273728",
+          "dense_score": 0.6359795,
+          "sparse_score": 2.369061,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.03278688524590164
+        }
+      ]
+    },
+    {
+      "query_index": 10,
+      "query": "Explain the content of # Test Content.",
+      "project_scope": [
+        "351222872145920000"
+      ],
+      "expected_evidence_ids": [
+        "352016119487266816"
+      ],
+      "retrieved_evidence_ids": [
+        "352016119487266816"
+      ],
+      "scores": [
+        0.03278688524590164
+      ],
+      "latency_ms": 100.02209999947809,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016119487266816",
+          "dense_score": 0.7158757,
+          "sparse_score": 2.369061,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.03278688524590164
+        }
+      ]
+    },
+    {
+      "query_index": 11,
+      "query": "查找validateToken方法的定义",
+      "project_scope": [
+        "351193748123680768"
+      ],
+      "expected_evidence_ids": [
+        "352016027946582021"
+      ],
+      "retrieved_evidence_ids": [
+        "352016027946582021",
+        "352016027946582016",
+        "352016027946582019",
+        "352016027946582017",
+        "352016027946582020"
+      ],
+      "scores": [
+        0.03252247488101534,
+        0.03252247488101534,
+        0.015873015873015872,
+        0.015625,
+        0.015384615384615385
+      ],
+      "latency_ms": 143.26870000149938,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016027946582021",
+          "dense_score": 0.62098706,
+          "sparse_score": 1.0366623,
+          "fused_score": 0.03252247488101534,
+          "rerank_score": 0.03252247488101534
+        },
+        {
+          "chunk_id": "352016027946582016",
+          "dense_score": 0.509596,
+          "sparse_score": 6.5626974,
+          "fused_score": 0.03252247488101534,
+          "rerank_score": 0.03252247488101534
+        },
+        {
+          "chunk_id": "352016027946582019",
+          "dense_score": 0.42903453,
+          "sparse_score": null,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": 0.015873015873015872
+        },
+        {
+          "chunk_id": "352016027946582017",
+          "dense_score": 0.40640825,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": 0.015625
+        },
+        {
+          "chunk_id": "352016027946582020",
+          "dense_score": 0.38806242,
+          "sparse_score": null,
+          "fused_score": 0.015384615384615385,
+          "rerank_score": 0.015384615384615385
+        }
+      ]
+    },
+    {
+      "query_index": 12,
+      "query": "UserService类的用途是什么",
+      "project_scope": [
+        "351193748123680768"
+      ],
+      "expected_evidence_ids": [
+        "352016027946582016"
+      ],
+      "retrieved_evidence_ids": [
+        "352016027946582016",
+        "352016027946582018",
+        "352016027946582019",
+        "352016027946582020",
+        "352016027946582017"
+      ],
+      "scores": [
+        0.03278688524590164,
+        0.016129032258064516,
+        0.015873015873015872,
+        0.015625,
+        0.015384615384615385
+      ],
+      "latency_ms": 138.1247000026633,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016027946582016",
+          "dense_score": 0.6091709,
+          "sparse_score": 7.5457745,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.03278688524590164
+        },
+        {
+          "chunk_id": "352016027946582018",
+          "dense_score": 0.50821483,
+          "sparse_score": null,
+          "fused_score": 0.016129032258064516,
+          "rerank_score": 0.016129032258064516
+        },
+        {
+          "chunk_id": "352016027946582019",
+          "dense_score": 0.40195632,
+          "sparse_score": null,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": 0.015873015873015872
+        },
+        {
+          "chunk_id": "352016027946582020",
+          "dense_score": 0.37500072,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": 0.015625
+        },
+        {
+          "chunk_id": "352016027946582017",
+          "dense_score": 0.3564031,
+          "sparse_score": null,
+          "fused_score": 0.015384615384615385,
+          "rerank_score": 0.015384615384615385
+        }
+      ]
+    },
+    {
+      "query_index": 13,
+      "query": "数据库密码DB_PASSWORD的用途",
+      "project_scope": [
+        "351193748123680768"
+      ],
+      "expected_evidence_ids": [
+        "352016027946582017"
+      ],
+      "retrieved_evidence_ids": [
+        "352016027946582017",
+        "352016027946582016",
+        "352016027946582018",
+        "352016027946582019",
+        "352016027946582021"
+      ],
+      "scores": [
+        0.03278688524590164,
+        0.03225806451612903,
+        0.015873015873015872,
+        0.015625,
+        0.015384615384615385
+      ],
+      "latency_ms": 139.93020000270917,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016027946582017",
+          "dense_score": 0.6747874,
+          "sparse_score": 18.473557,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.03278688524590164
+        },
+        {
+          "chunk_id": "352016027946582016",
+          "dense_score": 0.55284417,
+          "sparse_score": 7.4958353,
+          "fused_score": 0.03225806451612903,
+          "rerank_score": 0.03225806451612903
+        },
+        {
+          "chunk_id": "352016027946582018",
+          "dense_score": 0.45319736,
+          "sparse_score": null,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": 0.015873015873015872
+        },
+        {
+          "chunk_id": "352016027946582019",
+          "dense_score": 0.44013804,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": 0.015625
+        },
+        {
+          "chunk_id": "352016027946582021",
+          "dense_score": 0.39204687,
+          "sparse_score": null,
+          "fused_score": 0.015384615384615385,
+          "rerank_score": 0.015384615384615385
+        }
+      ]
+    },
+    {
+      "query_index": 14,
+      "query": "findById方法的实现逻辑",
+      "project_scope": [
+        "351193748123680768"
+      ],
+      "expected_evidence_ids": [
+        "352016027946582019"
+      ],
+      "retrieved_evidence_ids": [
+        "352016027946582019",
+        "352016027946582016",
+        "352016027946582020",
+        "352016027946582021",
+        "352016027946582017"
+      ],
+      "scores": [
+        0.03278688524590164,
+        0.03225806451612903,
+        0.015873015873015872,
+        0.015625,
+        0.015384615384615385
+      ],
+      "latency_ms": 155.79950000028475,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016027946582019",
+          "dense_score": 0.6103147,
+          "sparse_score": 12.14209,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.03278688524590164
+        },
+        {
+          "chunk_id": "352016027946582016",
+          "dense_score": 0.5068196,
+          "sparse_score": 6.1214314,
+          "fused_score": 0.03225806451612903,
+          "rerank_score": 0.03225806451612903
+        },
+        {
+          "chunk_id": "352016027946582020",
+          "dense_score": 0.4619837,
+          "sparse_score": null,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": 0.015873015873015872
+        },
+        {
+          "chunk_id": "352016027946582021",
+          "dense_score": 0.44015968,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": 0.015625
+        },
+        {
+          "chunk_id": "352016027946582017",
+          "dense_score": 0.43504626,
+          "sparse_score": null,
+          "fused_score": 0.015384615384615385,
+          "rerank_score": 0.015384615384615385
+        }
+      ]
+    },
+    {
+      "query_index": 15,
+      "query": "com.example.service.UserService#validateToken",
+      "project_scope": [
+        "351193748123680768"
+      ],
+      "expected_evidence_ids": [
+        "352016027946582021"
+      ],
+      "retrieved_evidence_ids": [
+        "352016027946582021",
+        "352016027946582016",
+        "352016027946582017",
+        "352016027946582019",
+        "352016027946582018"
+      ],
+      "scores": [
+        0.03252247488101534,
+        0.03252247488101534,
+        0.015873015873015872,
+        0.015625,
+        0.015384615384615385
+      ],
+      "latency_ms": 176.51670000122976,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016027946582021",
+          "dense_score": 0.6754324,
+          "sparse_score": 1.0366623,
+          "fused_score": 0.03252247488101534,
+          "rerank_score": 0.03252247488101534
+        },
+        {
+          "chunk_id": "352016027946582016",
+          "dense_score": 0.6043768,
+          "sparse_score": 8.372923,
+          "fused_score": 0.03252247488101534,
+          "rerank_score": 0.03252247488101534
+        },
+        {
+          "chunk_id": "352016027946582017",
+          "dense_score": 0.5012307,
+          "sparse_score": null,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": 0.015873015873015872
+        },
+        {
+          "chunk_id": "352016027946582019",
+          "dense_score": 0.4862655,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": 0.015625
+        },
+        {
+          "chunk_id": "352016027946582018",
+          "dense_score": 0.4848564,
+          "sparse_score": null,
+          "fused_score": 0.015384615384615385,
+          "rerank_score": 0.015384615384615385
+        }
+      ]
+    },
+    {
+      "query_index": 16,
+      "query": "validateToken token validation method",
+      "project_scope": [
+        "351193748123680768"
+      ],
+      "expected_evidence_ids": [
+        "352016027946582021"
+      ],
+      "retrieved_evidence_ids": [
+        "352016027946582021",
+        "352016027946582016",
+        "352016027946582019",
+        "352016027946582017",
+        "352016027946582018"
+      ],
+      "scores": [
+        0.03278688524590164,
+        0.03225806451612903,
+        0.015873015873015872,
+        0.015625,
+        0.015384615384615385
+      ],
+      "latency_ms": 145.36999999836553,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016027946582021",
+          "dense_score": 0.7203253,
+          "sparse_score": 2.9967744,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.03278688524590164
+        },
+        {
+          "chunk_id": "352016027946582016",
+          "dense_score": 0.5113756,
+          "sparse_score": 1.7608838,
+          "fused_score": 0.03225806451612903,
+          "rerank_score": 0.03225806451612903
+        },
+        {
+          "chunk_id": "352016027946582019",
+          "dense_score": 0.44511378,
+          "sparse_score": null,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": 0.015873015873015872
+        },
+        {
+          "chunk_id": "352016027946582017",
+          "dense_score": 0.42874143,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": 0.015625
+        },
+        {
+          "chunk_id": "352016027946582018",
+          "dense_score": 0.39696297,
+          "sparse_score": null,
+          "fused_score": 0.015384615384615385,
+          "rerank_score": 0.015384615384615385
+        }
+      ]
+    },
+    {
+      "query_index": 17,
+      "query": "getActiveUsers active users list",
+      "project_scope": [
+        "351193748123680768"
+      ],
+      "expected_evidence_ids": [
+        "352016027946582020"
+      ],
+      "retrieved_evidence_ids": [
+        "352016027946582020",
+        "352016027946582016",
+        "352016027946582019",
+        "352016027946582018",
+        "352016027946582017"
+      ],
+      "scores": [
+        0.03278688524590164,
+        0.03225806451612903,
+        0.015873015873015872,
+        0.015625,
+        0.015384615384615385
+      ],
+      "latency_ms": 143.37499999965075,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016027946582020",
+          "dense_score": 0.75820297,
+          "sparse_score": 28.922268,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.03278688524590164
+        },
+        {
+          "chunk_id": "352016027946582016",
+          "dense_score": 0.520045,
+          "sparse_score": 10.718657,
+          "fused_score": 0.03225806451612903,
+          "rerank_score": 0.03225806451612903
+        },
+        {
+          "chunk_id": "352016027946582019",
+          "dense_score": 0.44185102,
+          "sparse_score": null,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": 0.015873015873015872
+        },
+        {
+          "chunk_id": "352016027946582018",
+          "dense_score": 0.4018019,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": 0.015625
+        },
+        {
+          "chunk_id": "352016027946582017",
+          "dense_score": 0.3614846,
+          "sparse_score": null,
+          "fused_score": 0.015384615384615385,
+          "rerank_score": 0.015384615384615385
+        }
+      ]
+    },
+    {
+      "query_index": 18,
+      "query": "GET /api/v1/users",
+      "project_scope": [
+        "352014591405850625"
+      ],
+      "expected_evidence_ids": [
+        "352014592559284226"
+      ],
+      "retrieved_evidence_ids": [
+        "352014592559284226",
+        "352014592559284228",
+        "352014592559284225",
+        "352014592559284227",
+        "352014592559284229"
+      ],
+      "scores": [
+        0.032266458495966696,
+        0.01639344262295082,
+        0.016129032258064516,
+        0.015625,
+        0.015384615384615385
+      ],
+      "latency_ms": 150.6002999994962,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352014592559284226",
+          "dense_score": 0.55312264,
+          "sparse_score": 12.401229,
+          "fused_score": 0.032266458495966696,
+          "rerank_score": 0.032266458495966696
+        },
+        {
+          "chunk_id": "352014592559284228",
+          "dense_score": 0.6005074,
+          "sparse_score": null,
+          "fused_score": 0.01639344262295082,
+          "rerank_score": 0.01639344262295082
+        },
+        {
+          "chunk_id": "352014592559284225",
+          "dense_score": 0.58515495,
+          "sparse_score": null,
+          "fused_score": 0.016129032258064516,
+          "rerank_score": 0.016129032258064516
+        },
+        {
+          "chunk_id": "352014592559284227",
+          "dense_score": 0.53246915,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": 0.015625
+        },
+        {
+          "chunk_id": "352014592559284229",
+          "dense_score": 0.5073981,
+          "sparse_score": null,
+          "fused_score": 0.015384615384615385,
+          "rerank_score": 0.015384615384615385
+        }
+      ]
+    },
+    {
+      "query_index": 19,
+      "query": "User schema definition",
+      "project_scope": [
+        "352014591405850625"
+      ],
+      "expected_evidence_ids": [
+        "352014592559284224"
+      ],
+      "retrieved_evidence_ids": [
+        "352014592559284228",
+        "352014592559284227",
+        "352014592559284225",
+        "352014592559284229",
+        "352014592559284226"
+      ],
+      "scores": [
+        0.03252247488101534,
+        0.03252247488101534,
+        0.03125763125763126,
+        0.03125763125763126,
+        0.03125
+      ],
+      "latency_ms": 199.98860000123386,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352014592559284228",
+          "dense_score": 0.53683597,
+          "sparse_score": 3.512752,
+          "fused_score": 0.03252247488101534,
+          "rerank_score": 0.03252247488101534
+        },
+        {
+          "chunk_id": "352014592559284227",
+          "dense_score": 0.5269698,
+          "sparse_score": 3.591345,
+          "fused_score": 0.03252247488101534,
+          "rerank_score": 0.03252247488101534
+        },
+        {
+          "chunk_id": "352014592559284225",
+          "dense_score": 0.5263778,
+          "sparse_score": 0.5783744,
+          "fused_score": 0.03125763125763126,
+          "rerank_score": 0.03125763125763126
+        },
+        {
+          "chunk_id": "352014592559284229",
+          "dense_score": 0.46187466,
+          "sparse_score": 2.9577174,
+          "fused_score": 0.03125763125763126,
+          "rerank_score": 0.03125763125763126
+        },
+        {
+          "chunk_id": "352014592559284226",
+          "dense_score": 0.5150733,
+          "sparse_score": 2.7521808,
+          "fused_score": 0.03125,
+          "rerank_score": 0.03125
+        }
+      ]
+    },
+    {
+      "query_index": 20,
+      "query": "table:users",
+      "project_scope": [
+        "352016496592945153"
+      ],
+      "expected_evidence_ids": [
+        "352016498073534464"
+      ],
+      "retrieved_evidence_ids": [
+        "352016498073534464",
+        "352016498073534477",
+        "352016498073534471",
+        "352016498073534479",
+        "352016498073534481"
+      ],
+      "scores": [
+        0.03278688524590164,
+        0.03200204813108039,
+        0.031754032258064516,
+        0.015873015873015872,
+        0.015384615384615385
+      ],
+      "latency_ms": 201.31600000240724,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016498073534464",
+          "dense_score": 0.6103912,
+          "sparse_score": 16.689026,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.03278688524590164
+        },
+        {
+          "chunk_id": "352016498073534477",
+          "dense_score": 0.5733143,
+          "sparse_score": 10.368946,
+          "fused_score": 0.03200204813108039,
+          "rerank_score": 0.03200204813108039
+        },
+        {
+          "chunk_id": "352016498073534471",
+          "dense_score": 0.53573734,
+          "sparse_score": 11.758663,
+          "fused_score": 0.031754032258064516,
+          "rerank_score": 0.031754032258064516
+        },
+        {
+          "chunk_id": "352016498073534479",
+          "dense_score": 0.56285185,
+          "sparse_score": null,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": 0.015873015873015872
+        },
+        {
+          "chunk_id": "352016498073534481",
+          "dense_score": 0.502002,
+          "sparse_score": null,
+          "fused_score": 0.015384615384615385,
+          "rerank_score": 0.015384615384615385
+        }
+      ]
+    },
+    {
+      "query_index": 21,
+      "query": "orders table definition",
+      "project_scope": [
+        "352016496592945153"
+      ],
+      "expected_evidence_ids": [
+        "352016498073534471"
+      ],
+      "retrieved_evidence_ids": [
+        "352016498073534480",
+        "352016498073534471",
+        "352016498073534479",
+        "352016498073534481",
+        "352016498073534464",
+        "352016498073534477"
+      ],
+      "scores": [
+        0.03252247488101534,
+        0.032266458495966696,
+        0.03200204813108039,
+        0.031009615384615385,
+        0.015625,
+        0.015384615384615385
+      ],
+      "latency_ms": 206.48240000082296,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016498073534480",
+          "dense_score": 0.55651855,
+          "sparse_score": 12.234738,
+          "fused_score": 0.03252247488101534,
+          "rerank_score": 0.03252247488101534
+        },
+        {
+          "chunk_id": "352016498073534471",
+          "dense_score": 0.51938957,
+          "sparse_score": 12.994142,
+          "fused_score": 0.032266458495966696,
+          "rerank_score": 0.032266458495966696
+        },
+        {
+          "chunk_id": "352016498073534479",
+          "dense_score": 0.5243674,
+          "sparse_score": 11.179035,
+          "fused_score": 0.03200204813108039,
+          "rerank_score": 0.03200204813108039
+        },
+        {
+          "chunk_id": "352016498073534481",
+          "dense_score": 0.4326858,
+          "sparse_score": 10.291048,
+          "fused_score": 0.031009615384615385,
+          "rerank_score": 0.031009615384615385
+        },
+        {
+          "chunk_id": "352016498073534464",
+          "dense_score": null,
+          "sparse_score": 10.478713,
+          "fused_score": 0.015625,
+          "rerank_score": 0.015625
+        },
+        {
+          "chunk_id": "352016498073534477",
+          "dense_score": 0.41948783,
+          "sparse_score": null,
+          "fused_score": 0.015384615384615385,
+          "rerank_score": 0.015384615384615385
+        }
+      ]
+    },
+    {
+      "query_index": 22,
+      "query": "main.UserService#FindUser",
+      "project_scope": [
+        "351989134090305537"
+      ],
+      "expected_evidence_ids": [
+        "352017436767158274"
+      ],
+      "retrieved_evidence_ids": [
+        "352017436767158274",
+        "352017436767158273",
+        "352017436767158272",
+        "352017436767158276",
+        "352017436767158275"
+      ],
+      "scores": [
+        0.03278688524590164,
+        0.03225806451612903,
+        0.015873015873015872,
+        0.015625,
+        0.015384615384615385
+      ],
+      "latency_ms": 157.39269999903627,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352017436767158274",
+          "dense_score": 0.736678,
+          "sparse_score": 12.15675,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.03278688524590164
+        },
+        {
+          "chunk_id": "352017436767158273",
+          "dense_score": 0.68873143,
+          "sparse_score": 7.6190577,
+          "fused_score": 0.03225806451612903,
+          "rerank_score": 0.03225806451612903
+        },
+        {
+          "chunk_id": "352017436767158272",
+          "dense_score": 0.6140276,
+          "sparse_score": null,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": 0.015873015873015872
+        },
+        {
+          "chunk_id": "352017436767158276",
+          "dense_score": 0.48995543,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": 0.015625
+        },
+        {
+          "chunk_id": "352017436767158275",
+          "dense_score": 0.44933712,
+          "sparse_score": null,
+          "fused_score": 0.015384615384615385,
+          "rerank_score": 0.015384615384615385
+        }
+      ]
+    },
+    {
+      "query_index": 23,
+      "query": "FindUser method",
+      "project_scope": [
+        "351989134090305537"
+      ],
+      "expected_evidence_ids": [
+        "352017436767158274"
+      ],
+      "retrieved_evidence_ids": [
+        "352017436767158274",
+        "352017436767158272",
+        "352017436767158273",
+        "352017436767158276",
+        "352017436767158275"
+      ],
+      "scores": [
+        0.03278688524590164,
+        0.016129032258064516,
+        0.015873015873015872,
+        0.015625,
+        0.015384615384615385
+      ],
+      "latency_ms": 140.4203999991296,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352017436767158274",
+          "dense_score": 0.6860729,
+          "sparse_score": 8.790993,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.03278688524590164
+        },
+        {
+          "chunk_id": "352017436767158272",
+          "dense_score": 0.59709156,
+          "sparse_score": null,
+          "fused_score": 0.016129032258064516,
+          "rerank_score": 0.016129032258064516
+        },
+        {
+          "chunk_id": "352017436767158273",
+          "dense_score": 0.5852135,
+          "sparse_score": null,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": 0.015873015873015872
+        },
+        {
+          "chunk_id": "352017436767158276",
+          "dense_score": 0.4766584,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": 0.015625
+        },
+        {
+          "chunk_id": "352017436767158275",
+          "dense_score": 0.42365617,
+          "sparse_score": null,
+          "fused_score": 0.015384615384615385,
+          "rerank_score": 0.015384615384615385
+        }
+      ]
+    },
+    {
+      "query_index": 24,
+      "query": "module.User.validate",
+      "project_scope": [
+        "352016589224148993"
+      ],
+      "expected_evidence_ids": [
+        "352016589903626244"
+      ],
+      "retrieved_evidence_ids": [
+        "352016589903626244",
+        "352016589903626242",
+        "352016589903626249",
+        "352016589903626247",
+        "352016589903626246"
+      ],
+      "scores": [
+        0.03278688524590164,
+        0.03225806451612903,
+        0.031746031746031744,
+        0.03125,
+        0.03076923076923077
+      ],
+      "latency_ms": 182.9271000024164,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016589903626244",
+          "dense_score": 0.61546445,
+          "sparse_score": 10.5862055,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.03278688524590164
+        },
+        {
+          "chunk_id": "352016589903626242",
+          "dense_score": 0.5714574,
+          "sparse_score": 8.5803385,
+          "fused_score": 0.03225806451612903,
+          "rerank_score": 0.03225806451612903
+        },
+        {
+          "chunk_id": "352016589903626249",
+          "dense_score": 0.5663223,
+          "sparse_score": 8.033416,
+          "fused_score": 0.031746031746031744,
+          "rerank_score": 0.031746031746031744
+        },
+        {
+          "chunk_id": "352016589903626247",
+          "dense_score": 0.5277386,
+          "sparse_score": 6.7603436,
+          "fused_score": 0.03125,
+          "rerank_score": 0.03125
+        },
+        {
+          "chunk_id": "352016589903626246",
+          "dense_score": 0.49416214,
+          "sparse_score": 6.5218363,
+          "fused_score": 0.03076923076923077,
+          "rerank_score": 0.03076923076923077
+        }
+      ]
+    },
+    {
+      "query_index": 25,
+      "query": "parse_config function",
+      "project_scope": [
+        "352016589224148993"
+      ],
+      "expected_evidence_ids": [
+        "352016589903626240"
+      ],
+      "retrieved_evidence_ids": [
+        "352016589903626240",
+        "352016589903626241",
+        "352016589903626245",
+        "352016589903626248",
+        "352016589903626249",
+        "352016589903626242"
+      ],
+      "scores": [
+        0.03278688524590164,
+        0.03225806451612903,
+        0.03125763125763126,
+        0.015873015873015872,
+        0.015625,
+        0.015625
+      ],
+      "latency_ms": 200.78930000090622,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016589903626240",
+          "dense_score": 0.65910625,
+          "sparse_score": 27.568563,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.03278688524590164
+        },
+        {
+          "chunk_id": "352016589903626241",
+          "dense_score": 0.5753647,
+          "sparse_score": 25.572653,
+          "fused_score": 0.03225806451612903,
+          "rerank_score": 0.03225806451612903
+        },
+        {
+          "chunk_id": "352016589903626245",
+          "dense_score": 0.42471826,
+          "sparse_score": 7.4015965,
+          "fused_score": 0.03125763125763126,
+          "rerank_score": 0.03125763125763126
+        },
+        {
+          "chunk_id": "352016589903626248",
+          "dense_score": 0.45293874,
+          "sparse_score": null,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": 0.015873015873015872
+        },
+        {
+          "chunk_id": "352016589903626249",
+          "dense_score": 0.43542948,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": 0.015625
+        },
+        {
+          "chunk_id": "352016589903626242",
+          "dense_score": null,
+          "sparse_score": 5.152827,
+          "fused_score": 0.015625,
+          "rerank_score": 0.015625
+        }
+      ]
+    },
+    {
+      "query_index": 26,
+      "query": "# Architecture Design",
+      "project_scope": [
+        "352016598489366529"
+      ],
+      "expected_evidence_ids": [
+        "352016599349198848"
+      ],
+      "retrieved_evidence_ids": [
+        "352016599349198848",
+        "352016599349198853",
+        "352016599349198855",
+        "352016599349198850",
+        "352016599349198851",
+        "352016599349198849"
+      ],
+      "scores": [
+        0.03278688524590164,
+        0.03225806451612903,
+        0.015873015873015872,
+        0.015873015873015872,
+        0.015625,
+        0.015384615384615385
+      ],
+      "latency_ms": 201.32880000164732,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016599349198848",
+          "dense_score": 1.0000001,
+          "sparse_score": 34.167824,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.03278688524590164
+        },
+        {
+          "chunk_id": "352016599349198853",
+          "dense_score": 0.73556626,
+          "sparse_score": 17.083912,
+          "fused_score": 0.03225806451612903,
+          "rerank_score": 0.03225806451612903
+        },
+        {
+          "chunk_id": "352016599349198855",
+          "dense_score": 0.61274815,
+          "sparse_score": null,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": 0.015873015873015872
+        },
+        {
+          "chunk_id": "352016599349198850",
+          "dense_score": null,
+          "sparse_score": 12.293417,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": 0.015873015873015872
+        },
+        {
+          "chunk_id": "352016599349198851",
+          "dense_score": 0.56391513,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": 0.015625
+        },
+        {
+          "chunk_id": "352016599349198849",
+          "dense_score": 0.48394912,
+          "sparse_score": null,
+          "fused_score": 0.015384615384615385,
+          "rerank_score": 0.015384615384615385
+        }
+      ]
+    },
+    {
+      "query_index": 27,
+      "query": "Data Flow section",
+      "project_scope": [
+        "352016598489366529"
+      ],
+      "expected_evidence_ids": [
+        "352016599349198851"
+      ],
+      "retrieved_evidence_ids": [
+        "352016599349198851",
+        "352016599349198852",
+        "352016599349198853",
+        "352016599349198855",
+        "352016599349198857"
+      ],
+      "scores": [
+        0.03278688524590164,
+        0.03225806451612903,
+        0.015873015873015872,
+        0.015625,
+        0.015384615384615385
+      ],
+      "latency_ms": 144.29410000229836,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016599349198851",
+          "dense_score": 0.79845506,
+          "sparse_score": 35.083702,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.03278688524590164
+        },
+        {
+          "chunk_id": "352016599349198852",
+          "dense_score": 0.58915514,
+          "sparse_score": 6.860459,
+          "fused_score": 0.03225806451612903,
+          "rerank_score": 0.03225806451612903
+        },
+        {
+          "chunk_id": "352016599349198853",
+          "dense_score": 0.54213274,
+          "sparse_score": null,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": 0.015873015873015872
+        },
+        {
+          "chunk_id": "352016599349198855",
+          "dense_score": 0.5404614,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": 0.015625
+        },
+        {
+          "chunk_id": "352016599349198857",
+          "dense_score": 0.5394993,
+          "sparse_score": null,
+          "fused_score": 0.015384615384615385,
+          "rerank_score": 0.015384615384615385
+        }
+      ]
+    },
+    {
+      "query_index": 28,
+      "query": "page:1 §1 Introduction",
+      "project_scope": [
+        "352016602247462913"
+      ],
+      "expected_evidence_ids": [
+        "352016603132461057"
+      ],
+      "retrieved_evidence_ids": [
+        "352016603132461057",
+        "352016603132461060",
+        "352016603132461064",
+        "352016603132461065",
+        "352016603132461062",
+        "352016603132461068"
+      ],
+      "scores": [
+        0.03278688524590164,
+        0.03200204813108039,
+        0.016129032258064516,
+        0.015873015873015872,
+        0.015625,
+        0.015384615384615385
+      ],
+      "latency_ms": 201.80189999882714,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016603132461057",
+          "dense_score": 0.8665284,
+          "sparse_score": 48.97704,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.03278688524590164
+        },
+        {
+          "chunk_id": "352016603132461060",
+          "dense_score": 0.51882374,
+          "sparse_score": 17.256042,
+          "fused_score": 0.03200204813108039,
+          "rerank_score": 0.03200204813108039
+        },
+        {
+          "chunk_id": "352016603132461064",
+          "dense_score": 0.5247697,
+          "sparse_score": null,
+          "fused_score": 0.016129032258064516,
+          "rerank_score": 0.016129032258064516
+        },
+        {
+          "chunk_id": "352016603132461065",
+          "dense_score": null,
+          "sparse_score": 8.165506,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": 0.015873015873015872
+        },
+        {
+          "chunk_id": "352016603132461062",
+          "dense_score": 0.5145868,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": 0.015625
+        },
+        {
+          "chunk_id": "352016603132461068",
+          "dense_score": 0.5111464,
+          "sparse_score": null,
+          "fused_score": 0.015384615384615385,
+          "rerank_score": 0.015384615384615385
+        }
+      ]
+    },
+    {
+      "query_index": 29,
+      "query": "consensus algorithms",
+      "project_scope": [
+        "352016602247462913"
+      ],
+      "expected_evidence_ids": [
+        "352016603132461061"
+      ],
+      "retrieved_evidence_ids": [
+        "352016603132461060",
+        "352016603132461061",
+        "352016603132461069",
+        "352016603132461067",
+        "352016603132461068"
+      ],
+      "scores": [
+        0.03278688524590164,
+        0.03225806451612903,
+        0.031746031746031744,
+        0.03125,
+        0.015384615384615385
+      ],
+      "latency_ms": 202.27610000074492,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016603132461060",
+          "dense_score": 0.77444243,
+          "sparse_score": 35.420162,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.03278688524590164
+        },
+        {
+          "chunk_id": "352016603132461061",
+          "dense_score": 0.7240062,
+          "sparse_score": 22.355413,
+          "fused_score": 0.03225806451612903,
+          "rerank_score": 0.03225806451612903
+        },
+        {
+          "chunk_id": "352016603132461069",
+          "dense_score": 0.6737437,
+          "sparse_score": 10.1122265,
+          "fused_score": 0.031746031746031744,
+          "rerank_score": 0.031746031746031744
+        },
+        {
+          "chunk_id": "352016603132461067",
+          "dense_score": 0.601592,
+          "sparse_score": 5.4819946,
+          "fused_score": 0.03125,
+          "rerank_score": 0.03125
+        },
+        {
+          "chunk_id": "352016603132461068",
+          "dense_score": 0.52020574,
+          "sparse_score": null,
+          "fused_score": 0.015384615384615385,
+          "rerank_score": 0.015384615384615385
+        }
+      ]
+    }
+  ],
+  "reproducibility": {
+    "reproducible": true,
+    "tolerance": 0.01,
+    "checks": [
+      {
+        "metric": "recall_at_k.mean",
+        "run_1": 0.966667,
+        "run_2": 0.966667,
+        "relative_delta": 0.0,
+        "tolerance": 0.01,
+        "passed": true
+      },
+      {
+        "metric": "mrr.mean",
+        "run_1": 0.916667,
+        "run_2": 0.916667,
+        "relative_delta": 0.0,
+        "tolerance": 0.01,
+        "passed": true
+      },
+      {
+        "metric": "ndcg_at_k.mean",
+        "run_1": 0.92976,
+        "run_2": 0.92976,
+        "relative_delta": 0.0,
+        "tolerance": 0.01,
+        "passed": true
+      },
+      {
+        "metric": "latency_ms.p50",
+        "run_1": 153.6614,
+        "run_2": 154.4968,
+        "relative_delta": 0.005407,
+        "tolerance": 0.01,
+        "passed": true
+      },
+      {
+        "metric": "latency_ms.p95",
+        "run_1": 211.76493,
+        "run_2": 215.72359,
+        "relative_delta": 0.018351,
+        "tolerance": 0.01,
+        "passed": true
+      }
+    ]
+  }
+}

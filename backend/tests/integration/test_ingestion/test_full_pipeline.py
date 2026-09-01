@@ -72,7 +72,7 @@ class TestParseContentDispatch:
     def test_unsupported_format_raises(self):
         svc = self._svc()
         with pytest.raises(ValueError, match="Unsupported format"):
-            svc._parse_content("x", "pdf", "doc.pdf")
+            svc._parse_content("x", "xml", "doc.xml")
 
 
 class TestFullPipelineDeterministicCore:
