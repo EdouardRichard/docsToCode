@@ -102,7 +102,7 @@
   - ① Red: 测试三路 RRF 融合分数与图候选 rank 注入，当前失败（仅 Dense/Sparse 两路）
   - ② Green: 扩展 RRF 接受 graph 第 3 路，测试通过
 
-- [ ] T014 services/evidence_service.py extension — hard/soft relation annotation, no contract change (depends T008)
+- [X] T014 services/evidence_service.py extension — hard/soft relation annotation, no contract change (depends T008)
   - [路径] backend/src/rag_mcp/services/evidence_service.py | backend/tests/unit/test_evidence_relation_annotation.py
   - [AC] 图扩展召回的硬关系证据标注为可验证证据、软关系标注为推断关系，二者可区分；不改 search_knowledge/get_evidence 对外 Schema（FR-011，宪法 VII）；证据携带来源 ID/版本/位置（FR-012）
   - ① Red: 测试断言证据含硬/软标注且对外 Schema 校验通过，当前失败

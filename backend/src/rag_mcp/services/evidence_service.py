@@ -10,7 +10,7 @@ Conforms to mcp-get-evidence.schema.json output structure.
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,6 +19,12 @@ from rag_mcp.models.chunk import Chunk
 from rag_mcp.models.knowledge_scope import KnowledgeScope
 from rag_mcp.models.knowledge_version import KnowledgeVersion
 from rag_mcp.models.project import Project
+
+if TYPE_CHECKING:
+    # Graph models are only needed for type hints; importing them lazily here
+    # avoids pulling the graph ORM into the evidence retrieval path at runtime
+    # and sidesteps the models <-> graph.models import cycle.
+    from rag_mcp.graph.models import GraphEdge, SoftRelation
 
 logger = logging.getLogger(__name__)
 
@@ -148,6 +154,86 @@ class EvidenceService:
             evidence_id, chunk.knowledge_scope_id, source_version,
         )
         return response
+
+    def annotate_evidence(
+        self,
+        evidence_dict: dict[str, Any],
+        relation_edge: GraphEdge | None = None,
+        soft_relation: SoftRelation | None = None,
+    ) -> dict[str, Any]:
+        """Annotate an evidence dict with hard/soft relation metadata.
+
+        The annotation is strictly ADDITIVE: a ``relation`` field is attached
+        describing how the evidence was reached, but no existing MCP contract
+        field (evidence_id, full_content, source_version, source_position,
+        knowledge_scope_id, knowledge_scope_type, status, parent_context) is
+        ever changed or removed (FR-011, Constitution VII).
+
+        - A GraphEdge (hard relation) is annotated as *verifiable* evidence
+          (``type=hard``, ``is_hard=true``) carrying its deterministic
+          ``parse_evidence`` (AST/DDL provenance) so the consumer can audit
+          how the edge was extracted.
+        - A SoftRelation (LLM-inferred) is annotated as *inferred* evidence
+          (``type=soft``, ``is_hard=false``) carrying ``confidence``,
+          ``model_and_version`` and ``lifecycle_state`` so the consumer can
+          treat it as low-weight / disposable.
+        - Hard and soft are distinguishable via ``relation.type`` and
+          ``relation.is_hard`` (FR-004, SC-009).
+        - When both are supplied the hard relation wins: a soft relation never
+          masquerades as or overrides a hard fact (Constitution III).
+        - With neither supplied the dict is returned unchanged.
+
+        Args:
+            evidence_dict: A get_evidence() result dict (mutable copy taken;
+                the caller's dict is never modified in place).
+            relation_edge: A hard GraphEdge that produced/owns this evidence.
+            soft_relation: A soft SoftRelation that produced/owns this evidence.
+
+        Returns:
+            A new dict equal to ``evidence_dict`` plus a ``relation`` field,
+            or the original dict unchanged when no relation is supplied.
+        """
+        if relation_edge is None and soft_relation is None:
+            return evidence_dict
+
+        if relation_edge is not None:
+            relation = self._hard_relation_annotation(relation_edge)
+        else:
+            relation = self._soft_relation_annotation(soft_relation)
+
+        # Copy so the caller's dict is never mutated in place; only append the
+        # new additive 'relation' key — existing keys are left untouched.
+        annotated = dict(evidence_dict)
+        annotated["relation"] = relation
+        return annotated
+
+    @staticmethod
+    def _hard_relation_annotation(edge: GraphEdge) -> dict[str, Any]:
+        """Verifiable (hard) relation annotation from a deterministic GraphEdge."""
+        return {
+            "type": "hard",
+            "relation_type": edge.relation_type,
+            "edge_id": str(edge.edge_id),
+            "is_hard": True,
+            "parse_evidence": edge.parse_evidence,
+        }
+
+    @staticmethod
+    def _soft_relation_annotation(relation: SoftRelation) -> dict[str, Any]:
+        """Inferred (soft) relation annotation from an LLM SoftRelation."""
+        confidence = relation.confidence
+        if confidence is not None:
+            # Numeric columns may hold Decimal; normalize to float for JSON.
+            confidence = float(confidence)
+        return {
+            "type": "soft",
+            "relation_type": "inferred",
+            "edge_id": str(relation.edge_id),
+            "is_hard": False,
+            "confidence": confidence,
+            "model_and_version": relation.model_and_version,
+            "lifecycle_state": relation.lifecycle_state,
+        }
 
     # ------------------------------------------------------------------
     # Private helpers
