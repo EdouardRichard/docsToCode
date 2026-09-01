@@ -268,7 +268,7 @@
   - ① Red: 测试断言未声明 graph_ready 版本不走图扩展路径、声明版才走，当前失败
   - ② Green: 在检索路径接入能力门控，测试通过
 
-- [ ] T032 [US5] graph/store/postgres_graph_store.py — isolation enforcement + cleanup (depends T010)
+- [X] T032 [US5] graph/store/postgres_graph_store.py — isolation enforcement + cleanup (depends T010)
   - [路径] backend/src/rag_mcp/graph/store/postgres_graph_store.py | backend/tests/integration/test_us5_isolation_cleanup.py
   - [AC] 图扩展只在请求作用域内已发布 graph_ready 版本上执行、跨项目图边不返回（SC-003）；删除/清空先标记不可检索再异步删除图关系（蓝图 §5）；其他项目图关系不受影响
   - ① Red: 测试断言跨项目隔离与清空顺序，当前失败

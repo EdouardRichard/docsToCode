@@ -151,6 +151,50 @@ class PostgresGraphStore(GraphStore):
                 logger.warning("Failed to write edge %s: %s", edge_id, exc)
         return count
 
+    async def mark_graph_unretrievable(self, scope: GraphScope) -> None:
+        """Mark the scope's versions as graph_ready=false (non-retrievable).
+
+        Blueprint sec 5: cleanup first marks non-retrievable, then async deletes.
+        """
+        await self._session.execute(text(
+            "UPDATE knowledge_versions SET graph_ready = false "
+            "WHERE knowledge_scope_id = :ksid"
+        ), {"ksid": scope.knowledge_scope_id})
+        logger.info("Marked graph relations non-retrievable for scope %d",
+                     scope.knowledge_scope_id)
+
+    async def delete_graph_relations(self, scope: GraphScope) -> int:
+        """Delete graph_edge and soft_relation records for the scope.
+
+        Returns total deleted count. Only affects the given scope (FR-010).
+        """
+        result = await self._session.execute(text(
+            "DELETE FROM graph_edge WHERE knowledge_scope_id = :ksid "
+            "AND project_id = :pid AND index_version = :iv"
+        ), {"ksid": scope.knowledge_scope_id, "pid": scope.project_id,
+            "iv": scope.index_version})
+        hard_deleted = result.rowcount
+
+        try:
+            result2 = await self._session.execute(text(
+                "DELETE FROM soft_relation WHERE knowledge_scope_id = :ksid "
+                "AND project_id = :pid AND index_version = :iv"
+            ), {"ksid": scope.knowledge_scope_id, "pid": scope.project_id,
+                "iv": scope.index_version})
+            soft_deleted = result2.rowcount
+        except Exception:
+            soft_deleted = 0
+
+        total = hard_deleted + soft_deleted
+        logger.info("Deleted %d graph relations (hard=%d, soft=%d) for scope %d",
+                     total, hard_deleted, soft_deleted, scope.knowledge_scope_id)
+        return total
+
+    async def cleanup_scope(self, scope: GraphScope) -> None:
+        """Orchestrate cleanup: mark non-retrievable, then delete (blueprint sec 5)."""
+        await self.mark_graph_unretrievable(scope)
+        await self.delete_graph_relations(scope)
+
     def _forward_edges_cte(self, rt_filter: str) -> str:
         return (
             "SELECT source_chunk_id AS from_chunk, target_chunk_id AS to_chunk, "
