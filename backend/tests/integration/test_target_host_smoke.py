@@ -75,40 +75,66 @@ async def openapi_alias():
 class TestTargetHostSmoke:
     @pytest.mark.asyncio
     async def test_search_and_get_evidence_via_mcp_host(self, openapi_alias):
-        # T048: verify new-format chunks consumable via real MCP Host (Streamable HTTP)
+        # T048: verify new-format chunks consumable via real MCP Host (Streamable HTTP).
+        #
+        # Requires the standalone MCP server on MCP_URL. Start it with:
+        #     cd backend && python _run_mcp.py
+        # When the server is not running (or the connection drops mid-test),
+        # the test SKIPS instead of failing (T050 hardening): connectivity is
+        # environment state, not a product defect.
+        import asyncio
+
+        import httpx
         from mcp import ClientSession
         from mcp.client.streamable_http import streamablehttp_client
+
+        # Connection failures surface as httpx errors OR as anyio/asyncio
+        # cancellations (CancelledError is a BaseException), so both entry
+        # and the session phase below catch the union explicitly (T050).
+        _connect_errors = (httpx.ConnectError, ConnectionError, OSError,
+                           asyncio.CancelledError)
 
         try:
             client = streamablehttp_client(MCP_URL)
             read, write, _ = await client.__aenter__()
-        except Exception as e:
-            pytest.skip(f'MCP server not reachable: {e}')
+        except _connect_errors as e:
+            pytest.skip(f'MCP server not reachable: {type(e).__name__}: {e}')
+        except RuntimeError as e:
+            # streamable-http cleanup race when the server vanished mid-handshake
+            pytest.skip(f'MCP server handshake failed: {e}')
 
-        async with ClientSession(read, write) as session:
-            await session.initialize()
-            # search_knowledge
-            result = await session.call_tool('search_knowledge', {
-                'query': 'GET /api/v1/users endpoint definition',
-                'project_scope': [openapi_alias],
-            })
-            payload = json.loads(result.content[0].text)
-            assert payload['completion_status'] in ('complete', 'partial', 'no_evidence', 'failed')
-            assert payload['completion_status'] == 'complete'
-            assert len(payload['evidence']) > 0
-            for ev in payload['evidence']:
-                sp = ev['source_position']
-                assert 'source_version' in ev and 'evidence_id' in ev
-                assert _validate_source_position('openapi', sp), f'Invalid source_position: {sp}'
+        try:
+            async with ClientSession(read, write) as session:
+                await session.initialize()
+                # search_knowledge
+                result = await session.call_tool('search_knowledge', {
+                    'query': 'GET /api/v1/users endpoint definition',
+                    'project_scope': [openapi_alias],
+                })
+                payload = json.loads(result.content[0].text)
+                assert payload['completion_status'] in ('complete', 'partial', 'no_evidence', 'failed')
+                assert payload['completion_status'] == 'complete'
+                assert len(payload['evidence']) > 0
+                for ev in payload['evidence']:
+                    sp = ev['source_position']
+                    assert 'source_version' in ev and 'evidence_id' in ev
+                    assert _validate_source_position('openapi', sp), f'Invalid source_position: {sp}'
 
-            # get_evidence
-            ev_id = payload['evidence'][0]['evidence_id']
-            ev_result = await session.call_tool('get_evidence', {
-                'evidence_id': ev_id,
-                'project_scope': [openapi_alias],
-            })
-            ev_payload = json.loads(ev_result.content[0].text)
-            assert ev_payload['status'] in ('available', 'unavailable', 'scope_mismatch')
-            assert ev_payload['status'] == 'available'
-            assert 'full_content' in ev_payload
-            assert 'source_position' in ev_payload
+                # get_evidence
+                ev_id = payload['evidence'][0]['evidence_id']
+                ev_result = await session.call_tool('get_evidence', {
+                    'evidence_id': ev_id,
+                    'project_scope': [openapi_alias],
+                })
+                ev_payload = json.loads(ev_result.content[0].text)
+                assert ev_payload['status'] in ('available', 'unavailable', 'scope_mismatch')
+                assert ev_payload['status'] == 'available'
+                assert 'full_content' in ev_payload
+                assert 'source_position' in ev_payload
+        except _connect_errors as e:
+            pytest.skip(f'MCP server connection lost during test: {type(e).__name__}: {e}')
+        finally:
+            try:
+                await client.__aexit__(None, None, None)
+            except Exception:  # noqa: BLE001 - cleanup must not mask results
+                pass

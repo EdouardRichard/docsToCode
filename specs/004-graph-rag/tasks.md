@@ -422,3 +422,53 @@ Task: T010 postgres_graph_store → T011 expansion → T013 fusion
 - 每故事独立可测，故事级集成测试为验收闸口
 - 迁移任务以单元测试校验表/索引/约束为 Green
 - 宪法硬约束（泄漏=0/Schema 100%/定位 100%/显式作用域/上传非控制）贯穿所有任务
+
+---
+
+## Phase 9: Convergence
+
+**Purpose**: 收敛评估（2026 对照 spec/plan/tasks 与当前代码）识别出的剩余工作。组件层（图存储/扩展/提取器/软关系/能力门控/契约/评测报告构建器）已建成且测试通过，但**运行时集成缺失**：图扩展未接入检索链路、入库流程未触发图关系提取、能力门控/追踪/标注/清理未接入服务层、对照评测未真跑且报告未产出。完成本阶段后应重跑 /speckit-converge 复核。
+
+- [X] T042 Wire hard-relation extractors + offline soft-relation inference into the ingestion pipeline per FR-001/FR-003, US1/US2/US4 (missing)
+  - [路径] backend/src/rag_mcp/services/ingestion_service.py | backend/tests/integration/test_us1_ingestion_java.py, test_us2_ingestion_ddl.py, test_us4_ingestion_soft.py
+  - [AC] IngestionService.ingest() 在 Java/DDL Chunk 产出后调用 JavaCallGraphExtractor/DdlFkExtractor 写 graph_edge（隔离三元组+parse_evidence，AST 降级记录原因不伪造）；离线调用 SoftRelationInference 写 soft_relation（五元数据+四态）；既有"入库"集成测试改为真实经过 ingest() 而非直接调用提取器；发布时能力清单按重建结果声明（见 T044）
+  - [证据] ingestion_service.py 当前零图引用；边仅能经测试或显式 rebuild_graph_edges 写入
+
+- [X] T043 Wire graph expansion as the 3rd fusion input into the hybrid retrieval path per FR-006/FR-007/FR-008, US3/AS3.1-AS3.2 (missing)
+  - [路径] backend/src/rag_mcp/services/retrieval_service.py | backend/tests/integration/test_us1_java_callgraph_recall.py, test_us2_ddl_fk_recall.py, test_us3_graph_eval_comparison.py
+  - [AC] _try_hybrid_recall 在融合前对 Dense/Sparse 命中的起点 Chunk 执行 GraphExpansionEngine.expand（默认双向、跳数/总预算/子超时取自 graph 配置，FR-017），graph_results 以 graph_rank 并入 rrf_fuse 第 3 路（不改 rank-only 语义）；每条图候选保留 edge_path（FR-008）；图扩展失败/超时时记录 failed_paths 并返回 partial（混合证据不丢，FR-018）；故事集成测试经真实检索路径断言
+  - [证据] retrieval_service.py:678 仅 rrf_fuse(dense, sparse)；graph.expansion/store.expand 无 service/mcp 调用方
+
+- [X] T044 Enforce graph_ready capability gating at publish time and in the retrieval path per FR-013/FR-014/FR-015/FR-027, SC-010 (missing)
+  - [路径] backend/src/rag_mcp/services/ingestion_service.py, backend/src/rag_mcp/services/retrieval_service.py, backend/src/rag_mcp/graph/capabilities.py | backend/tests/integration/test_us5_capability_enforcement.py, test_us5_graph_ready_lifecycle.py
+  - [AC] 提供用户可触发的声明路径：重建/发布时按需写入 graph_ready（validate_capabilities 校验 graph_ready⇒dense+lexical，FR-015）；声明 graph_ready 的版本图关系未就绪不得发布为可检索（FR-013）；检索路径经 _has_graph_ready_versions/_has_graph_edges + can_enter_graph_expansion 决定是否执行图扩展，未声明版本仅走混合检索（FR-014）；不自动批量迁移已发布版本（FR-027）
+  - [证据] _has_graph_ready_versions/_has_graph_edges 定义后零调用；_publish_version 无能力校验；capabilities 固定为 {dense,lexical}
+
+- [X] T045 Wire the runtime graph-expansion trace ledger into the retrieval path per FR-026, T041/DM-1 (partial)
+  - [路径] backend/src/rag_mcp/graph/trace_recorder.py, backend/src/rag_mcp/services/retrieval_service.py | backend/tests/integration/test_graph_runtime_trace.py（新增）
+  - [AC] 每次图增强检索经 GraphTraceRecorder 记录 request_id/作用域/completion_status/护栏/subpath_timings(含 graph_recall)/graph_candidates/fused_candidates/failed_paths/证据引用，符合 graph-expansion-trace.schema.json；候选存活为证据时回填 evidence_id 并写 graph_expansion_path（DM-1 桥接）；补齐 T041 AC 指定但缺失的集成测试
+  - [证据] trace_recorder 仅自模块与单测引用；GraphExpansionPath 无运行时写入方；test_graph_runtime_trace.py 不存在
+
+- [X] T046 Flow hard/soft relation annotations into MCP evidence responses per FR-004/FR-012/SC-009, T014 (partial)
+  - [路径] backend/src/rag_mcp/services/evidence_service.py, backend/src/rag_mcp/services/retrieval_service.py | backend/tests/unit/test_evidence_relation_annotation.py, backend/tests/integration/test_us4_soft_relation.py
+  - [AC] 图扩展召回的证据经 annotate_evidence 附 relation 标注（硬=可验证/软=推断，可区分、软不覆盖硬）；标注仅增补不改既有契约字段（FR-011）；经真实检索/证据路径可观测（集成测试断言）
+  - [证据] annotate_evidence 当前零运行时调用方
+
+- [X] T047 Wire graph relation cleanup into delete/clear/version-supersede flows per FR-016, US5/AS5.3, T032 (missing)
+  - [路径] backend/src/rag_mcp/api/knowledge_sources.py, backend/src/rag_mcp/services/ingestion_service.py | backend/tests/integration/test_us5_isolation_cleanup.py, backend/tests/unit/test_services/test_deletion_cleanup.py
+  - [AC] 删除源/清空作用域先经 mark_graph_unretrievable 停止图参与新检索，再异步 delete_graph_relations（graph_edge/soft_relation/graph_expansion_path）；版本替换时 _cleanup_version_derived_data 同步清除该版本图派生数据；他项目图关系不受影响；既有删除/清空测试覆盖图标删
+  - [证据] purge/清理路径零图删除；cleanup_scope/mark_graph_unretrievable 仅被测试调用
+
+- [X] T048 Execute the real graph-enhanced comparison evaluation and persist the report per FR-022/FR-023/FR-025, SC-001/SC-002/SC-008/SC-013 (missing)
+  - [路径] eval/graph_comparison_runner.py（扩展执行器）, eval/graph_enhanced_comparison_report.json（新增产物） | backend/tests/integration/test_us3_graph_eval_comparison.py
+  - [AC] 同一环境会话内先重跑混合基线再跑图增强路径（FR-025），在扩充后评测集上实测 Recall@K/MRR/nDCG/P50/P95；逐查询记录基线与图增强排名、Dense/Sparse/融合/Rerank 分数与图扩展路径分数（关系类型/跳数/结构权重，FR-023）；产出经 eval-graph-comparison-report.schema.json 校验的报告并落盘，three_gate_pass 与 enters_default_path 基于实测数据；test_us3 以真实（或可复现的录制）数据驱动取代虚构指标
+  - [证据] eval/ 无图增强对照报告产物；runner 仅按传入指标拼装报告
+  - [依赖] T042/T043/T044（图路径与语料就绪后方可评测）
+
+- [X] T049 Add eval/README.md documenting the extended dataset and graph evaluation procedure per T026 (partial)
+  - [路径] eval/README.md（新增）
+  - [AC] 记录评测集构成（原 30 条 + ≥6 结构性受益查询含中文）、is_structural_benefit 约定、两档基线报告位置与图增强对照评测运行方式（FR-021 约定可追溯）
+
+- [X] T050 Harden the target-host smoke test skip guard per convergence pytest-green (partial)
+  - [路径] backend/tests/integration/test_target_host_smoke.py
+  - [AC] MCP 服务器（127.0.0.1:8080，backend/_run_mcp.py）未运行时整个用例稳健跳过（覆盖 __aenter__ 之后请求阶段的 ConnectError），不产生假失败；或文档化"运行全套前须先启动 _run_mcp.py"；已验证服务器运行时该用例通过
