@@ -240,7 +240,7 @@
   - ① Red: 测试断言五元数据缺失被拒、四态转换规则、supersede 触发、低置信度不 active，当前失败
   - ② Green: 实现推断+状态机+确定性 supersede，测试通过
 
-- [ ] T029 [US4] services/ingestion_service.py extension — invoke soft relation inference at ingest (depends T028)
+- [X] T029 [US4] services/ingestion_service.py extension — invoke soft relation inference at ingest (depends T028)
   - [路径] backend/src/rag_mcp/services/ingestion_service.py | backend/tests/integration/test_us4_ingestion_soft.py
   - [AC] 入库期触发软关系推断并写 soft_relation；model_and_version 记录所用 LLM；active 软关系进入默认检索路径作低权重补充（structure_weight 0.3）
   - ① Red: 集成测试断言入库后 soft_relation 含五元数据与状态，当前失败

@@ -97,6 +97,7 @@ class SoftRelationInference:
             ValueError: if the LLM omits a mandatory metadata field (e.g. None
                 confidence) - the 5-metadata contract is enforced by SoftRelation.
         """
+        scope = self._coerce_scope(scope)
         generated_at = datetime.now(timezone.utc)
         relations: list[SoftRelation] = []
         for raw in llm(chunks):
@@ -185,6 +186,19 @@ class SoftRelationInference:
         if supporting_evidence_ids is None:
             return None
         return list(supporting_evidence_ids)
+
+    @staticmethod
+    def _coerce_scope(scope: Any) -> dict:
+        """Accept a GraphScope object or a mapping; return a plain dict."""
+        if isinstance(scope, dict):
+            return scope
+        if hasattr(scope, "knowledge_scope_id"):
+            return {
+                "knowledge_scope_id": scope.knowledge_scope_id,
+                "project_id": scope.project_id,
+                "index_version": scope.index_version,
+            }
+        return dict(scope)
 
     @staticmethod
     def _same_triple(a: SoftRelation, b: SoftRelation) -> bool:
