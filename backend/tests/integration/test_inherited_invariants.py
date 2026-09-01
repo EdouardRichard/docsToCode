@@ -68,8 +68,11 @@ class TestInheritedInvariants:
 
         await svc.reprocess(999)
 
-        # reprocess must invoke the same pipeline (rebuild Dense+Sparse)
-        svc._run_pipeline.assert_called_once_with(999, run_type='retry')
+        # reprocess must invoke the same pipeline (rebuild Dense+Sparse);
+        # 004 adds the graph_ready declaration flag (default off, FR-027).
+        svc._run_pipeline.assert_called_once_with(
+            999, run_type='retry', request_graph_ready=False
+        )
 
     # FR-022: same dense_ready/lexical_ready capability flags, no new flags
     @pytest.mark.asyncio
