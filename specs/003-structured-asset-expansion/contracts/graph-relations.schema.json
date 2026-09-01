@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-engineering-rag-mcp.local/schemas/004/graph-relations.schema.json",
+  "title": "Graph Relations Schema (004)",
+  "description": "图关系数据契约（蓝图 §8.2/§10，FR-001..FR-005）。固化图边规范标识字段：edge_id/source_chunk_id/target_chunk_id/relation_type(枚举6)/direction(out|in)/is_hard(bool)/version + (knowledge_scope_id/project_id/index_version) 隔离字段；硬关系额外带确定性解析依据，软关系额外带五项元数据 + 四态状态。本契约为图存储与审计的内部数据契约（非对外 MCP 响应契约，宪法原则 IV/VII）；复用 003 common.schema.json 共享定义。物理置于 003/contracts（用户指示：契约变更集中、复用 common.schema.json），逻辑归属 004。不含 DB 审计时戳 `created_at`（属存储层，见 data-model §2.1），实现序列化图边对象时剔除该列。",
+  "type": "object",
+  "definitions": {
+    "RelationType": {
+      "type": "string",
+      "enum": ["calls", "called_by", "fk_references", "fk_referenced_by", "other_hard", "inferred"],
+      "description": "关系类型枚举（spec FR-002/Key Entities）。首期四类覆盖 Java 调用图与 DDL 外键；other_hard 保留框架扩展占位；inferred 为软关系。"
+    },
+    "EdgeDirection": {
+      "type": "string",
+      "enum": ["out", "in"],
+      "description": "图边方向"
+    },
+    "SoftRelationState": {
+      "type": "string",
+      "enum": ["inferred", "active", "superseded", "retired"],
+      "description": "软关系四态生命周期（FR-003）。inferred=推断产出；active=置信度≥阈值且支撑证据校验通过、进入默认检索路径作低权重补充；superseded=被同源硬关系取代或被新软关系覆盖、保留可追溯但不参与检索；retired=版本撤销/清空删除。"
+    },
+    "StructureWeight": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "结构权重（research §2）。硬关系起始 1.0、软关系起始 0.3，每跳衰减系数默认 0.5（config 键 structure_weight_hop_decay，可覆盖）；用于图候选内部排序与截断，不作独立融合系数。"
+    },
+    "EdgeId": {
+      "type": "string",
+      "pattern": "^[0-9]+$",
+      "minLength": 1,
+      "description": "图边唯一标识（Snowflake ID 字符串，与 chunk_id/knowledge_scope_id 同型，research §5）"
+    },
+    "IndexVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "索引版本（同嵌入模型+切片策略的派生索引版本，隔离字段）"
+    }
+  },
+  "properties": {
+    "edge_id": { "$ref": "#/definitions/EdgeId" },
+    "knowledge_scope_id": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/003/common.schema.json#/definitions/KnowledgeScopeId" },
+    "project_id": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/003/common.schema.json#/definitions/ProjectRef" },
+    "index_version": { "$ref": "#/definitions/IndexVersion" },
+    "source_chunk_id": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/003/common.schema.json#/definitions/ChunkId" },
+    "target_chunk_id": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/003/common.schema.json#/definitions/ChunkId" },
+    "relation_type": { "$ref": "#/definitions/RelationType" },
+    "direction": { "$ref": "#/definitions/EdgeDirection" },
+    "is_hard": { "type": "boolean" },
+    "version": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/003/common.schema.json#/definitions/SourceVersion" },
+    "parse_evidence": {
+      "type": "object",
+      "description": "硬关系确定性解析依据（AST 节点位置/DDL 约束名等），使关系可审计（宪法 IV）。仅硬关系必填。",
+      "properties": {
+        "source_format": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/003/common.schema.json#/definitions/SourceFormat" },
+        "locator": { "type": "string", "minLength": 1, "description": "解析定位（如 Java 符号路径、DDL 约束名）" },
+        "extractor": { "type": "string", "minLength": 1, "description": "确定性提取器标识" }
+      },
+      "required": ["source_format", "locator", "extractor"],
+      "additionalProperties": false
+    },
+    "inference_source": { "type": "string", "minLength": 1, "description": "软关系推断来源（五项元数据1）" },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1, "description": "置信度（五项元数据2）" },
+    "model_and_version": { "type": "string", "minLength": 1, "description": "模型与版本（五项元数据3）" },
+    "generated_at": { "type": "string", "format": "date-time", "description": "生成时间（五项元数据4）" },
+    "supporting_evidence_ids": {
+      "type": "array",
+      "items": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/003/common.schema.json#/definitions/EvidenceId" },
+      "minItems": 1,
+      "description": "支撑证据 ID（五项元数据5）"
+    },
+    "lifecycle_state": { "$ref": "#/definitions/SoftRelationState" },
+    "superseded_by": { "$ref": "#/definitions/EdgeId" },
+    "superseded_at": { "type": "string", "format": "date-time" }
+  },
+  "required": ["edge_id", "knowledge_scope_id", "project_id", "index_version", "source_chunk_id", "target_chunk_id", "relation_type", "direction", "is_hard", "version"],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "description": "硬关系约束：is_hard=true 时 relation_type 不得为 inferred、parse_evidence 必填、软关系元数据不得出现（宪法 III）",
+      "if": { "properties": { "is_hard": { "const": true } } },
+      "then": {
+        "properties": { "relation_type": { "enum": ["calls", "called_by", "fk_references", "fk_referenced_by", "other_hard"] } },
+        "required": ["parse_evidence"],
+        "not": { "required": ["lifecycle_state"] }
+      }
+    },
+    {
+      "description": "软关系约束：is_hard=false 时 relation_type 固定 inferred、五项元数据 + lifecycle_state 必填、parse_evidence 不得出现（FR-003）",
+      "if": { "properties": { "is_hard": { "const": false } } },
+      "then": {
+        "properties": { "relation_type": { "const": "inferred" } },
+        "required": ["inference_source", "confidence", "model_and_version", "generated_at", "supporting_evidence_ids", "lifecycle_state"],
+        "not": { "required": ["parse_evidence"] }
+      }
+    },
+    {
+      "description": "active 状态约束：lifecycle_state=active 时置信度 ≥ 阈值(默认0.6)、支撑证据非空（FR-005）",
+      "if": { "required": ["lifecycle_state"], "properties": { "lifecycle_state": { "const": "active" } } },
+      "then": {
+        "properties": { "confidence": { "minimum": 0.6 } },
+        "required": ["supporting_evidence_ids"]
+      }
+    },
+    {
+      "description": "superseded 可追溯：lifecycle_state=superseded 时 superseded_by 必填（FR-003）",
+      "if": { "required": ["lifecycle_state"], "properties": { "lifecycle_state": { "const": "superseded" } } },
+      "then": { "required": ["superseded_by"] }
+    }
+  ]
+}

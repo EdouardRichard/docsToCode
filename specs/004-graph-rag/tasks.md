@@ -108,25 +108,25 @@
   - ① Red: 测试断言证据含硬/软标注且对外 Schema 校验通过，当前失败
   - ② Green: 实现标注（不改对外契约），测试通过
 
-- [ ] T015 [P] Contract test: graph-relations.schema.json
+- [X] T015 [P] Contract test: graph-relations.schema.json
   - [路径] backend/tests/contract/test_graph_relations_schema.py | specs/003-structured-asset-expansion/contracts/graph-relations.schema.json
   - [AC] 合法/非法图边样例通过/失败校验；硬/软 allOf 约束、四态 superseded_by 必填均生效
   - ① Red: 测试用例断言非法样例被拒，当前失败
   - ② Green: 接入 json-schema 校验器，测试通过
 
-- [ ] T016 [P] Contract test: graph-expansion-trace.schema.json
+- [X] T016 [P] Contract test: graph-expansion-trace.schema.json
   - [路径] backend/tests/contract/test_graph_expansion_trace_schema.py | specs/003-structured-asset-expansion/contracts/graph-expansion-trace.schema.json
   - [AC] 追踪样例（含 graph_candidates/edge_path/三路 fused_candidates，候选 evidence_id 可空、存活时回填）通过校验；partial→failed_paths 必填生效（DM-1）
   - ① Red: 测试断言追踪样例校验，当前失败
   - ② Green: 接入校验，测试通过
 
-- [ ] T017 [P] Contract test: knowledge-capabilities.graph-extension.schema.json
+- [X] T017 [P] Contract test: knowledge-capabilities.graph-extension.schema.json
   - [路径] backend/tests/contract/test_capabilities_graph_extension_schema.py | specs/003-structured-asset-expansion/contracts/knowledge-capabilities.graph-extension.schema.json
   - [AC] graph_ready=true 必隐含 dense+lexical；非法组合（graph_ready 但 dense=false）被拒
   - ① Red: 测试断言门控样例校验，当前失败
   - ② Green: 接入校验，测试通过
 
-- [ ] T018 [P] Contract test: eval-graph-comparison-report.schema.json
+- [X] T018 [P] Contract test: eval-graph-comparison-report.schema.json
   - [路径] backend/tests/contract/test_eval_graph_comparison_schema.py | specs/003-structured-asset-expansion/contracts/eval-graph-comparison-report.schema.json
   - [AC] 报告样例（three_gate_pass/per_query graph 字段含 graph_edge_path_summary/reproducibility tolerance=0.01）通过校验（DM-2）
   - ① Red: 测试断言报告样例校验，当前失败
