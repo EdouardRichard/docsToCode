@@ -49,10 +49,14 @@ def _get_qdrant_store():
     return _qdrant_store
 
 
-async def _run_ingestion(source_id: int) -> None:
+async def _run_ingestion(
+    source_id: int, graph_ready: bool = False, retry: bool = False
+) -> None:
     """Run the ingestion pipeline for a source in a background task.
 
     Uses its own DB session (independent of the request-scoped session).
+    graph_ready forwards the user's 004 capability declaration (FR-013);
+    retry selects reprocess() (user-triggered rebuild) over ingest().
     """
     from rag_mcp.db import get_session_factory
     from rag_mcp.services.ingestion_service import IngestionService
@@ -65,12 +69,17 @@ async def _run_ingestion(source_id: int) -> None:
                 embedding_provider=_get_embedding_provider(),
                 qdrant_store=_get_qdrant_store(),
             )
-            await service.ingest(source_id)
+            if retry:
+                await service.reprocess(source_id, graph_ready=graph_ready)
+            else:
+                await service.ingest(source_id, graph_ready=graph_ready)
     except Exception:
         logger.exception("Ingestion failed for source %s", source_id)
 
 
-def _schedule_ingestion(source_id: int) -> None:
+def _schedule_ingestion(
+    source_id: int, graph_ready: bool = False, retry: bool = False
+) -> None:
     """Schedule ingestion as a fire-and-forget background task.
 
     When ``INGESTION_BACKGROUND=false`` (used by tests and any operationally
@@ -81,7 +90,9 @@ def _schedule_ingestion(source_id: int) -> None:
         logger.info("Background ingestion disabled; source %s stays 'uploaded'", source_id)
         return
     try:
-        asyncio.get_running_loop().create_task(_run_ingestion(source_id))
+        asyncio.get_running_loop().create_task(
+            _run_ingestion(source_id, graph_ready=graph_ready, retry=retry)
+        )
         logger.info("Scheduled ingestion for source %s", source_id)
     except RuntimeError:
         # No running loop (e.g., synchronous context) — skip scheduling
@@ -471,12 +482,17 @@ async def get_knowledge_source(
 @router.post("/{source_id}/reprocess", status_code=202)
 async def reprocess_knowledge_source(
     source_id: int,
+    graph_ready: bool = False,
     session: AsyncSession = Depends(get_session),
 ):
     """Trigger reprocessing of a knowledge source (blueprint §5).
 
     Creates a new ProcessingRun with run_type='retry'.
     Old version stays published until new version publish succeeds (FR-009).
+
+    004 (FR-013/FR-027): graph_ready=true is the user-triggered declaration
+    that the rebuilt version should gain the graph_ready capability; it is
+    granted only when graph relations are ready, never by auto migration.
     """
     from sqlalchemy import select
 
@@ -505,9 +521,13 @@ async def reprocess_knowledge_source(
     await session.commit()
 
     # Trigger background ingestion pipeline (same as upload path)
-    _schedule_ingestion(source_id)
+    _schedule_ingestion(source_id, graph_ready=graph_ready, retry=True)
 
-    return {"message": "Reprocessing triggered", "source_id": str(source_id)}
+    return {
+        "message": "Reprocessing triggered",
+        "source_id": str(source_id),
+        "graph_ready_requested": graph_ready,
+    }
 
 
 @router.delete("/{source_id}", status_code=204)

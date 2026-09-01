@@ -126,3 +126,32 @@ async def test_non_graph_scope_not_detected(db_session, two_scopes):
     # The non-graph scope should not have graph_ready
     has_graph = await service._has_graph_ready_versions([two_scopes["scope_no_graph"]])
     assert has_graph is False
+
+
+@pytest.mark.asyncio
+async def test_reprocess_endpoint_accepts_graph_ready_flag(test_client, db_session):
+    """FR-013/FR-027: user-triggered rebuild can declare graph_ready via the API."""
+    from tests.integration.graph_ingest_helpers import (
+        setup_graph_scope,
+        upload_source_file,
+    )
+
+    scope_id = generate_id()
+    project_id = generate_id()
+    source_id = generate_id()
+    await setup_graph_scope(db_session, scope_id, project_id)
+    await upload_source_file(
+        db_session, scope_id, source_id, "Svc.java",
+        "public class Svc { void a() { b(); } void b() {} }", "java",
+    )
+    await db_session.execute(text(
+        "UPDATE knowledge_sources SET status = 'published' WHERE source_id = :s"
+    ), {"s": source_id})
+    await db_session.commit()
+
+    resp = await test_client.post(
+        f"/api/knowledge-sources/{source_id}/reprocess",
+        params={"graph_ready": "true"},
+    )
+    assert resp.status_code == 202, resp.text
+

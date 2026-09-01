@@ -136,39 +136,50 @@ class IngestionService:
     # Public API
     # ------------------------------------------------------------------
 
-    async def ingest(self, source_id: int) -> None:
+    async def ingest(self, source_id: int, graph_ready: bool = False) -> None:
         """Run initial ingestion for a KnowledgeSource.
 
-        Creates a ProcessingRun with ``run_type='initial'`` and executes
+        Creates a ProcessingRun with run_type='initial' and executes
         the full ingestion pipeline.
 
         Args:
             source_id: Snowflake ID of the KnowledgeSource to ingest.
+            graph_ready: User declaration (004, FR-013/FR-027) that the new
+                version should declare the graph_ready capability. Publishing
+                still requires the graph relations to be ready; otherwise the
+                version is NOT published and the run fails (FR-013).
 
         Raises:
             ValueError: If the source does not exist.
         """
-        await self._run_pipeline(source_id, run_type="initial")
+        await self._run_pipeline(source_id, run_type="initial",
+                                 request_graph_ready=graph_ready)
 
-    async def reprocess(self, source_id: int) -> None:
+    async def reprocess(self, source_id: int, graph_ready: bool = False) -> None:
         """Re-process a previously failed or completed KnowledgeSource.
 
-        Creates a ProcessingRun with ``run_type='retry'`` and executes
-        the full ingestion pipeline.
+        Creates a ProcessingRun with run_type='retry' and executes
+        the full ingestion pipeline. This is the user-triggered rebuild path
+        by which an existing hybrid knowledge source gains graph_ready
+        (FR-027); no automatic batch migration ever sets it.
 
         Args:
             source_id: Snowflake ID of the KnowledgeSource to reprocess.
+            graph_ready: Optional user declaration for the new version.
 
         Raises:
             ValueError: If the source does not exist.
         """
-        await self._run_pipeline(source_id, run_type="retry")
+        await self._run_pipeline(source_id, run_type="retry",
+                                 request_graph_ready=graph_ready)
 
     # ------------------------------------------------------------------
     # Core pipeline
     # ------------------------------------------------------------------
 
-    async def _run_pipeline(self, source_id: int, run_type: str) -> None:
+    async def _run_pipeline(
+        self, source_id: int, run_type: str, request_graph_ready: bool = False
+    ) -> None:
         """Execute the full ingestion pipeline with error handling.
 
         On success the KnowledgeSource transitions to ``published`` and
@@ -412,6 +423,26 @@ class IngestionService:
                 "details": graph_details,
             })
 
+            # 11c. graph_ready user declaration gate (004, FR-013/FR-015):
+            # a version declaring graph_ready is only publishable once its
+            # graph relations are ready; the FR-015 capability implication is
+            # validated before the flag is granted.
+            if request_graph_ready:
+                if int(graph_details.get("hard_edges_written", 0)) <= 0:
+                    raise ValueError(
+                        "graph_ready declared but graph relations are not ready "
+                        "(no hard relations extracted); the version stays "
+                        "non-searchable (FR-013)"
+                    )
+                from rag_mcp.graph.capabilities import validate_capabilities
+
+                new_caps = dict(version.capabilities or {})
+                new_caps["graph_ready"] = True
+                validate_capabilities(new_caps)
+                version.capabilities = new_caps
+                version.graph_ready = True
+                await self._session.flush()
+
             # 12. Publish the new version — only after PG + Qdrant succeed
             #   FR-009: supersede old version AFTER new version is published
             await self._publish_version(version, scope_id)
@@ -611,7 +642,14 @@ class IngestionService:
         version has been successfully written to both PostgreSQL and Qdrant.
         This method performs the status transitions atomically within the
         current session.
+
+        004 (FR-015): the capability implication is validated defensively at
+        publish time — graph_ready=true requires dense_ready AND lexical_ready.
         """
+        from rag_mcp.graph.capabilities import validate_capabilities
+
+        validate_capabilities(version.capabilities)
+
         now = datetime.now(timezone.utc)
 
         # Supersede any currently-published version in this scope

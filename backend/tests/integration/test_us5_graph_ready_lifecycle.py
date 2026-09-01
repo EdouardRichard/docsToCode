@@ -155,3 +155,115 @@ async def test_as5_2_two_projects_isolated(db_session, us5_scope):
     result_ids = {r.chunk_id for r in results}
     for c in chunks_b.values():
         assert c["chunk_id"] not in result_ids, "Project B chunks leaked into project A"
+
+# ---------------------------------------------------------------------------
+# T044: publish-time capability gating + user-triggered graph_ready declaration
+# ---------------------------------------------------------------------------
+
+
+_JAVA_FOR_PUBLISH = """package com.example;
+public class Svc {
+    public void a() { b(); }
+    public void b() {}
+}
+"""
+
+
+class TestPublishTimeCapabilityGating:
+    """T044: FR-013 readiness gate + FR-015 implication enforced at publish."""
+
+    @pytest.mark.asyncio
+    async def test_publish_rejects_broken_capability_implication(self, db_session):
+        """FR-015: graph_ready without dense_ready MUST be rejected at publish."""
+        from rag_mcp.models.knowledge_version import KnowledgeVersion
+        from rag_mcp.services.ingestion_service import IngestionService
+        from tests.integration.graph_ingest_helpers import setup_graph_scope
+
+        scope_id = generate_id()
+        project_id = generate_id()
+        await setup_graph_scope(db_session, scope_id, project_id)
+        version_id = generate_id()
+        await db_session.execute(text(
+            "INSERT INTO knowledge_versions (version_id, knowledge_scope_id, "
+            "version_number, status, capabilities) "
+            "VALUES (:vid, :sid, 1, 'draft', CAST(:caps AS jsonb))"
+        ), {"vid": version_id, "sid": scope_id,
+            "caps": '{"graph_ready": true, "dense_ready": false, "lexical_ready": true}'})
+        await db_session.commit()
+
+        version = await db_session.get(KnowledgeVersion, version_id)
+        svc = IngestionService(db_session, None, None)
+        with pytest.raises(ValueError, match="dense_ready"):
+            await svc._publish_version(version, scope_id)
+
+    @pytest.mark.asyncio
+    async def test_ingest_declares_graph_ready_when_edges_ready(self, db_session):
+        """FR-013/FR-027: user-declared graph_ready granted when edges exist."""
+        from rag_mcp.services.ingestion_service import IngestionService
+        from tests.integration.graph_ingest_helpers import (
+            FakeEmbeddingProvider,
+            MockQdrantStore,
+            setup_graph_scope,
+            upload_source_file,
+        )
+
+        scope_id = generate_id()
+        project_id = generate_id()
+        source_id = generate_id()
+        await setup_graph_scope(db_session, scope_id, project_id)
+        await upload_source_file(
+            db_session, scope_id, source_id, "Svc.java", _JAVA_FOR_PUBLISH, "java"
+        )
+        await db_session.commit()
+
+        svc = IngestionService(db_session, FakeEmbeddingProvider(), MockQdrantStore())
+        await svc.ingest(source_id, graph_ready=True)
+
+        row = (await db_session.execute(text(
+            "SELECT graph_ready, capabilities, status FROM knowledge_versions "
+            "WHERE knowledge_scope_id = :s ORDER BY version_number DESC LIMIT 1"
+        ), {"s": scope_id})).fetchone()
+        assert row[0] is True, "graph_ready column must be set"
+        caps = row[1]
+        if isinstance(caps, str):
+            caps = json.loads(caps)
+        assert caps.get("graph_ready") is True
+        assert caps.get("dense_ready") is True and caps.get("lexical_ready") is True
+        assert row[2] == "published"
+
+    @pytest.mark.asyncio
+    async def test_ingest_graph_ready_refused_without_edges(self, db_session):
+        """FR-013: declaring graph_ready with no graph relations MUST NOT publish."""
+        from rag_mcp.services.ingestion_service import IngestionService
+        from tests.integration.graph_ingest_helpers import (
+            FakeEmbeddingProvider,
+            MockQdrantStore,
+            setup_graph_scope,
+            upload_source_file,
+        )
+
+        scope_id = generate_id()
+        project_id = generate_id()
+        source_id = generate_id()
+        await setup_graph_scope(db_session, scope_id, project_id)
+        # Markdown produces no hard relations -> graph_ready cannot be granted
+        await upload_source_file(
+            db_session, scope_id, source_id, "notes.md",
+            "# A\n\nsome text without relations\n", "markdown"
+        )
+        await db_session.commit()
+
+        svc = IngestionService(db_session, FakeEmbeddingProvider(), MockQdrantStore())
+        with pytest.raises(ValueError, match="graph"):
+            await svc.ingest(source_id, graph_ready=True)
+
+        row = (await db_session.execute(text(
+            "SELECT status FROM knowledge_sources WHERE source_id = :s"
+        ), {"s": source_id})).scalar()
+        assert row == "failed", "source must fail when graph relations are absent"
+        published = (await db_session.execute(text(
+            "SELECT count(*) FROM knowledge_versions "
+            "WHERE knowledge_scope_id = :s AND status = 'published' AND graph_ready"
+        ), {"s": scope_id})).scalar()
+        assert published == 0
+
