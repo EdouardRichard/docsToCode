@@ -312,7 +312,7 @@
   - ① Red: 测试断言可重复性，当前失败
   - ② Green: 确定性保证后通过
 
-- [ ] T038 [P] DeepSeek Harness end-to-end + schema validation (SC-012)
+- [X] T038 [P] DeepSeek Harness end-to-end + schema validation (SC-012)
   - [路径] backend/tests/integration/test_deepseek_harness_e2e.py
   - [AC] DeepSeek Harness 端到端调用图增强 search_knowledge/get_evidence 并通过输出 Schema 校验；30s 总超时 < Host 最低 Tool Call 超时；ChatGPT App/Claude Code 仅记录兼容性不阻塞（FR-028）
   - ① Red: 测试断言端到端调用与 Schema 校验通过，当前失败
