@@ -84,7 +84,7 @@
   - ① Red: 测试注入高扇出 fixture，断言返回候选 ≤ budget 且按权重排序、跨作用域边不返回，当前失败
   - ② Green: 实现递归 CTE + 护栏截断，测试通过
 
-- [ ] T011 graph/expansion.py — total-budget truncation, structure weight, edge_path, bidirectional default (depends T010)
+- [X] T011 graph/expansion.py — total-budget truncation, structure weight, edge_path, bidirectional default (depends T010)
   - [路径] backend/src/rag_mcp/graph/expansion.py | backend/tests/unit/test_graph_expansion.py
   - [AC] 单次图扩展总预算 10/20 全局截断；structure_weight 按关系类型+跳数衰减（硬 1.0→0.5→0.25，软 0.3，research §2）；默认双向遍历 calls+called_by/fk_references+fk_referenced_by；每条候选保留 edge_path 跳序列（FR-008）
   - ① Red: 测试断言总预算截断、权重衰减、双向默认、edge_path 结构，当前失败
