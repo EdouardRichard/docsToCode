@@ -78,7 +78,7 @@
   - ① Red: 测试抽象方法签名与隔离参数，当前失败
   - ② Green: 定义抽象基类与协议，测试通过
 
-- [ ] T010 graph/store/postgres_graph_store.py — recursive CTE 1~3 hop + guardrails (depends T004, T008, T009)
+- [X] T010 graph/store/postgres_graph_store.py — recursive CTE 1~3 hop + guardrails (depends T004, T008, T009)
   - [路径] backend/src/rag_mcp/graph/store/postgres_graph_store.py | backend/tests/unit/test_postgres_graph_store.py
   - [AC] WITH RECURSIVE 完成 1~3 跳；depth 谓词 + LIMIT 截断（总预算非逐跳，FR-017）；只在隔离三元组作用域内扩展；高扇出按 structure_weight 全局排序截断（蓝图 §12）
   - ① Red: 测试注入高扇出 fixture，断言返回候选 ≤ budget 且按权重排序、跨作用域边不返回，当前失败
