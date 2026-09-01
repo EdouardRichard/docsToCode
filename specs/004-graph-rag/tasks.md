@@ -149,7 +149,7 @@
 
 **Independent Test**: 对声明 graph_ready 的 Java 版本，运行图增强检索，验证调用者/被调用者证据被召回且标记为硬关系证据、MRR/nDCG 相对混合基线有提升、跨项目泄漏=0。
 
-- [ ] T019 [P] [US1] graph/extractors/java_call_graph.py — extract calls/called_by (reuse parsers/java_parser.py)
+- [X] T019 [P] [US1] graph/extractors/java_call_graph.py — extract calls/called_by (reuse parsers/java_parser.py)
   - [路径] backend/src/rag_mcp/graph/extractors/java_call_graph.py | backend/tests/unit/test_java_call_graph.py
   - [AC] 从 Java Chunk 确定性 AST 提取 calls/called_by 边（类/函数调用、方法调用、API 实现与调用，蓝图 §10.1）；写入 graph_edge(is_hard=true, parse_evidence 含 AST 定位)；AST 失败时报告降级不伪造（Edge Case）
   - ① Red: 测试用 fixture Java 源断言提取出预期 calls/called_by 边与 parse_evidence，当前失败
