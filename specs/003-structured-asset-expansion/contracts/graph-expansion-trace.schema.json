@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-engineering-rag-mcp.local/schemas/004/graph-expansion-trace.schema.json",
+  "title": "Graph Expansion Trace Schema (internal, 004)",
+  "description": "004 图增强内部链路追踪结构。在 002 hybrid-retrieval-trace 基础上扩展图扩展子路径：记录 Dense/Sparse/图扩展召回、RRF 融合（图作第3路输入）、Cross-Encoder Rerank 各子路径耗时与逐候选分数、图扩展路径（跳序列/关系类型/方向/结构权重）、护栏参数与失败路径。此为内部契约，不进入对外 MCP 响应（宪法原则 IV / FR-026 / FR-023）。复用 003 common.schema.json 与 004 graph-relations.schema.json 定义。",
+  "type": "object",
+  "definitions": {
+    "HopStep": {
+      "type": "object",
+      "description": "图扩展跳序列的一跳",
+      "properties": {
+        "hop": { "type": "integer", "minimum": 1, "maximum": 3 },
+        "edge_id": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/004/graph-relations.schema.json#/definitions/EdgeId" },
+        "relation_type": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/004/graph-relations.schema.json#/definitions/RelationType" },
+        "direction": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/004/graph-relations.schema.json#/definitions/EdgeDirection" },
+        "is_hard": { "type": "boolean" }
+      },
+      "required": ["hop", "edge_id", "relation_type", "direction", "is_hard"],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "request_id": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/003/common.schema.json#/definitions/RequestId" },
+    "retrieval_mode": {
+      "allOf": [
+        { "$ref": "https://ai-engineering-rag-mcp.local/schemas/003/common.schema.json#/definitions/RetrievalMode" },
+        { "enum": ["hybrid"] }
+      ],
+      "description": "图增强只在 hybrid 模式叠加（图扩展为第3信号）"
+    },
+    "knowledge_scope_ids": {
+      "type": "array",
+      "items": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/003/common.schema.json#/definitions/KnowledgeScopeId" },
+      "minItems": 1
+    },
+    "completion_status": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/003/common.schema.json#/definitions/CompletionStatus" },
+    "guardrails": {
+      "type": "object",
+      "description": "图增强护栏参数（FR-017，research §3）",
+      "properties": {
+        "hop_default": { "type": "integer", "minimum": 1, "maximum": 3 },
+        "hop_max": { "type": "integer", "const": 3 },
+        "candidate_budget": { "type": "integer", "minimum": 1, "maximum": 20, "description": "单次图扩展总预算（非逐跳）" },
+        "graph_sub_timeout_ms": { "type": "integer", "minimum": 0 },
+        "total_timeout_ms": { "type": "integer", "const": 30000 },
+        "direction_default": { "type": "string", "enum": ["bidirectional", "out", "in"], "description": "默认双向（spec 澄清 Q2）" }
+      },
+      "required": ["hop_default", "candidate_budget", "graph_sub_timeout_ms", "total_timeout_ms", "direction_default"],
+      "additionalProperties": false
+    },
+    "subpath_timings": {
+      "type": "object",
+      "description": "各子路径耗时（毫秒）。图增强扩展 graph_recall_ms。",
+      "properties": {
+        "dense_recall_ms": { "type": "number", "minimum": 0 },
+        "sparse_recall_ms": { "type": "number", "minimum": 0 },
+        "graph_recall_ms": { "type": "number", "minimum": 0, "description": "图扩展召回耗时（含递归 CTE + 护栏截断）" },
+        "fusion_ms": { "type": "number", "minimum": 0, "description": "RRF 融合（Dense+Sparse+图 三路）" },
+        "rerank_ms": { "type": "number", "minimum": 0 },
+        "total_ms": { "type": "number", "minimum": 0 }
+      },
+      "required": ["dense_recall_ms", "sparse_recall_ms", "graph_recall_ms", "fusion_ms", "rerank_ms", "total_ms"],
+      "additionalProperties": false
+    },
+    "failed_paths": {
+      "type": "array",
+      "description": "失败或超时子路径（仅 partial 状态非空）。取值如 graph_recall_failed、graph_recall_timeout、rerank_failed。",
+      "items": { "type": "string" }
+    },
+    "graph_candidates": {
+      "type": "array",
+      "description": "图扩展召回候选（按结构权重全局排序、总预算截断后）。每条保留跳序列与 graph_rank，并入 RRF 第3路（FR-008/FR-023）。按 chunk_id 定位；存活为最终返回证据的候选回填 evidence_id，与持久表 graph_expansion_path 经 chunk_id↔evidence_id 双向关联（FR-026，DM-1 修复）。",
+      "items": {
+        "type": "object",
+        "properties": {
+          "chunk_id": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/003/common.schema.json#/definitions/ChunkId" },
+          "knowledge_scope_id": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/003/common.schema.json#/definitions/KnowledgeScopeId" },
+          "start_chunk_id": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/003/common.schema.json#/definitions/ChunkId" },
+          "edge_path": {
+            "type": "array",
+            "items": { "$ref": "#/definitions/HopStep" },
+            "minItems": 1,
+            "maxItems": 3,
+            "description": "图关系扩展路径跳序列（FR-008）"
+          },
+          "hop_count": { "type": "integer", "minimum": 1, "maximum": 3 },
+          "structure_weight": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/004/graph-relations.schema.json#/definitions/StructureWeight" },
+          "graph_rank": { "type": "integer", "minimum": 1, "description": "图候选内部排名（并入 RRF 用）" },
+          "relation_is_hard": { "type": "boolean", "description": "路径含硬关系(true)或纯软关系(false)" },
+          "evidence_id": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/003/common.schema.json#/definitions/EvidenceId", "description": "该候选存活为最终返回证据时回填其 evidence_id，否则缺省；用于与 graph_expansion_path 持久行双向关联（FR-026，DM-1）" }
+        },
+        "required": ["chunk_id", "knowledge_scope_id", "start_chunk_id", "edge_path", "hop_count", "structure_weight", "graph_rank"],
+        "additionalProperties": false
+      }
+    },
+    "fused_candidates": {
+      "type": "array",
+      "description": "RRF 融合后候选（按融合分数降序）。source_retrievers 扩展 graph；保留各路分数使排名变化可解释（SC-008）。",
+      "items": {
+        "type": "object",
+        "properties": {
+          "chunk_id": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/003/common.schema.json#/definitions/ChunkId" },
+          "knowledge_scope_id": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/003/common.schema.json#/definitions/KnowledgeScopeId" },
+          "source_retrievers": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["dense", "sparse", "graph"] },
+            "minItems": 1
+          },
+          "dense_score": { "type": ["number", "null"] },
+          "sparse_score": { "type": ["number", "null"] },
+          "graph_structure_weight": { "type": ["number", "null"], "description": "图候选结构权重；仅 graph 命中时有值" },
+          "graph_rank": { "type": ["integer", "null"], "minimum": 1 },
+          "fused_score": { "type": "number", "description": "RRF 融合分数 Σ 1/(k_rrf + rank_r)（Dense+Sparse+graph 三路）" },
+          "rerank_score": { "type": ["number", "null"] },
+          "final_rank": { "type": "integer", "minimum": 1 }
+        },
+        "required": ["chunk_id", "knowledge_scope_id", "source_retrievers", "fused_score", "final_rank"],
+        "additionalProperties": false
+      }
+    },
+    "evidence_ref_ids": {
+      "type": "array",
+      "description": "最终返回证据 ID，与对外 search_knowledge 响应 evidence[].evidence_id 一致（图扩展证据增补硬/软关系标注，不改对外契约 FR-011）",
+      "items": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/003/common.schema.json#/definitions/EvidenceId" }
+    }
+  },
+  "required": ["request_id", "retrieval_mode", "knowledge_scope_ids", "completion_status", "guardrails", "fused_candidates", "evidence_ref_ids"],
+  "additionalProperties": false,
+  "allOf": [
+    { "if": { "properties": { "completion_status": { "const": "partial" } } }, "then": { "required": ["failed_paths"] } },
+    {
+      "description": "图扩展召回有结果时记录 graph_candidates（无图召回可为空数组）",
+      "if": { "properties": { "completion_status": { "const": "complete" } } },
+      "then": { "required": ["subpath_timings"] }
+    }
+  ]
+}

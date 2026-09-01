@@ -1,0 +1,201 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-engineering-rag-mcp.local/schemas/004/eval-graph-comparison-report.schema.json",
+  "title": "Graph-Enhanced Evaluation Comparison Report Schema (004)",
+  "description": "图增强对照评测报告契约。在 002 eval-comparison-report 基础上扩展：新增图增强配置、三段通过判定（SC-001 提升/SC-002 001非劣/SC-013 002非结构性非劣）、逐查询图扩展路径分数（FR-023/SC-008）、可重复性（SC-007）、进入默认路径判定（FR-024）。非延迟指标在 1% 相对容差内可重复；延迟环境敏感。复用 003 common.schema.json 与 004 graph-relations 定义。",
+  "type": "object",
+  "properties": {
+    "report_type": { "type": "string", "const": "graph_enhanced_comparison" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "config": {
+      "type": "object",
+      "description": "评测配置：嵌入/Rerank、Qdrant 集合、融合算法、002混合基线参数 + 004图增强护栏",
+      "properties": {
+        "embedding_model": { "type": "string" },
+        "reranker_model": { "type": "string" },
+        "dense_collection": { "type": "string" },
+        "hybrid_collection": { "type": "string" },
+        "fusion_algorithm": { "type": "string", "enum": ["rrf", "dbsf"] },
+        "rrf_k": { "type": "integer", "minimum": 1 },
+        "rerank_budget": { "type": "integer", "minimum": 1 },
+        "dataset_path": { "type": "string" },
+        "num_queries": { "type": "integer", "minimum": 1 },
+        "structural_subset_size": { "type": "integer", "minimum": 6, "description": "结构性受益子集查询数（新增≥6，含≥1中文，FR-021）" },
+        "graph_hop_default": { "type": "integer", "minimum": 1, "maximum": 3 },
+        "graph_hop_max": { "type": "integer", "const": 3 },
+        "graph_candidate_budget": { "type": "integer", "minimum": 1, "maximum": 20 },
+        "graph_sub_timeout_ms": { "type": "integer", "minimum": 0 },
+        "graph_total_timeout_ms": { "type": "integer", "const": 30000 },
+        "graph_direction_default": { "type": "string", "enum": ["bidirectional", "out", "in"] },
+        "graph_structure_weight_hard": { "type": "number", "minimum": 0, "maximum": 1 },
+        "graph_structure_weight_soft": { "type": "number", "minimum": 0, "maximum": 1 },
+        "graph_structure_weight_hop_decay": { "type": "number", "minimum": 0, "maximum": 1, "description": "结构权重每跳衰减系数（默认 0.5，research §2）；硬 1.0→0.5→0.25，软 0.3 同衰减" },
+        "soft_confidence_threshold": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "required": ["embedding_model", "reranker_model", "hybrid_collection", "fusion_algorithm", "dataset_path", "num_queries", "structural_subset_size", "graph_candidate_budget", "graph_total_timeout_ms"],
+      "additionalProperties": false
+    },
+    "baseline_metrics": {
+      "type": "object",
+      "description": "002 混合基线指标（同会话重跑，延迟增量公平 FR-025）",
+      "properties": {
+        "recall_at_k": { "$ref": "#/$defs/metricBlock" },
+        "mrr": { "$ref": "#/$defs/metricBlock" },
+        "ndcg_at_k": { "$ref": "#/$defs/metricBlock" },
+        "latency_ms": { "$ref": "#/$defs/latencyBlock" }
+      },
+      "required": ["recall_at_k", "mrr", "ndcg_at_k", "latency_ms"],
+      "additionalProperties": false
+    },
+    "graph_metrics": {
+      "type": "object",
+      "description": "图增强检索指标",
+      "properties": {
+        "recall_at_k": { "$ref": "#/$defs/metricBlock" },
+        "mrr": { "$ref": "#/$defs/metricBlock" },
+        "ndcg_at_k": { "$ref": "#/$defs/metricBlock" },
+        "latency_ms": { "$ref": "#/$defs/latencyBlock" }
+      },
+      "required": ["recall_at_k", "mrr", "ndcg_at_k", "latency_ms"],
+      "additionalProperties": false
+    },
+    "structural_subset_metrics": {
+      "type": "object",
+      "description": "结构性受益子集指标（SC-001 提升闸口计算基数）",
+      "properties": {
+        "baseline_mrr_mean": { "type": "number" },
+        "graph_mrr_mean": { "type": "number" },
+        "mrr_relative_improvement": { "type": "number", "description": "相对提升百分比；进入默认路径要求 ≥ 3%" },
+        "baseline_ndcg_mean": { "type": "number" },
+        "graph_ndcg_mean": { "type": "number" },
+        "ndcg_relative_improvement": { "type": "number", "description": "相对提升百分比；进入默认路径要求 ≥ 3%" },
+        "recall_at_k_non_decreasing": { "type": "boolean" }
+      },
+      "required": ["mrr_relative_improvement", "ndcg_relative_improvement", "recall_at_k_non_decreasing"],
+      "additionalProperties": false
+    },
+    "deltas": {
+      "type": "object",
+      "description": "图增强相对混合基线的逐项增量（graph - baseline）",
+      "properties": {
+        "mrr_mean_delta": { "type": "number" },
+        "ndcg_mean_delta": { "type": "number" },
+        "recall_mean_delta": { "type": "number" },
+        "latency_p50_delta_ms": { "type": "number" },
+        "latency_p95_delta_ms": { "type": "number" }
+      },
+      "required": ["mrr_mean_delta", "ndcg_mean_delta", "recall_mean_delta"],
+      "additionalProperties": false
+    },
+    "hard_constraints": {
+      "type": "object",
+      "description": "硬性验收指标（蓝图 §24.2，必须全过）",
+      "properties": {
+        "cross_project_leakage_events": { "type": "integer", "minimum": 0 },
+        "schema_validity_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "source_locatability_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "all_passed": { "type": "boolean" }
+      },
+      "required": ["cross_project_leakage_events", "schema_validity_rate", "source_locatability_rate", "all_passed"],
+      "additionalProperties": false
+    },
+    "three_gate_pass": {
+      "type": "object",
+      "description": "进入默认检索路径的三段通过判定（FR-024/SC-001/SC-002/SC-013）",
+      "properties": {
+        "sc001_structural_improvement": { "type": "boolean", "description": "结构性子集 MRR/nDCG 相对提升 ≥ 3% 且 Recall@K 不下降" },
+        "sc002_001_noninferior": { "type": "boolean", "description": "001 11条 Recall@K 精确持平、MRR/nDCG 非劣（1% 容差）" },
+        "sc013_002_nonstructural_noninferior": { "type": "boolean", "description": "002 原有非结构性查询 MRR/nDCG 非劣、Recall@K 不下降" },
+        "hard_constraints_passed": { "type": "boolean" },
+        "all_passed": { "type": "boolean", "description": "三段 + 硬性指标全过才 enters_default_path=true" }
+      },
+      "required": ["sc001_structural_improvement", "sc002_001_noninferior", "sc013_002_nonstructural_noninferior", "hard_constraints_passed", "all_passed"],
+      "additionalProperties": false
+    },
+    "per_query_comparison": {
+      "type": "array",
+      "description": "逐查询对照：混合基线排名 vs 图增强排名 + Dense/Sparse/融合/Rerank 分数 + 图扩展路径分数，使排名变化可解释（FR-023/SC-008）",
+      "items": {
+        "type": "object",
+        "properties": {
+          "query_index": { "type": "integer", "minimum": 0 },
+          "query": { "type": "string" },
+          "is_structural_benefit": { "type": "boolean", "description": "是否属结构性受益子集" },
+          "project_scope": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/003/common.schema.json#/definitions/KnowledgeScopeId" },
+          "expected_evidence_ids": {
+            "type": "array",
+            "items": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/003/common.schema.json#/definitions/EvidenceId" }
+          },
+          "baseline_rank": { "type": ["integer", "null"], "minimum": 1, "description": "002 混合基线中期望证据排名；未命中 null" },
+          "graph_rank": { "type": ["integer", "null"], "minimum": 1, "description": "图增强中期望证据排名" },
+          "baseline_dense_score": { "type": ["number", "null"] },
+          "baseline_sparse_score": { "type": ["number", "null"] },
+          "baseline_fused_score": { "type": ["number", "null"] },
+          "baseline_rerank_score": { "type": ["number", "null"] },
+          "graph_dense_score": { "type": ["number", "null"] },
+          "graph_sparse_score": { "type": ["number", "null"] },
+          "graph_recall_structure_weight": { "type": ["number", "null"], "description": "图扩展召回的结构权重；仅图命中时有值" },
+          "graph_recall_hop_count": { "type": ["integer", "null"], "minimum": 1, "maximum": 3 },
+          "graph_edge_path_summary": {
+            "type": "array",
+            "description": "图扩展路径摘要（FR-023/SC-008：关系类型、跳数、结构权重可解释）。每跳复用 graph-expansion-trace HopStep（hop/edge_id/relation_type/direction/is_hard）；仅图命中时有值，否则空数组。",
+            "items": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/004/graph-expansion-trace.schema.json#/definitions/HopStep" },
+            "maxItems": 3
+          },
+          "graph_fused_score": { "type": ["number", "null"], "description": "RRF 融合分数（Dense+Sparse+graph 三路）" },
+          "graph_rerank_score": { "type": ["number", "null"] },
+          "rank_improved": { "type": "boolean", "description": "图增强排名是否优于混合基线" }
+        },
+        "required": ["query_index", "query", "is_structural_benefit", "expected_evidence_ids", "baseline_rank", "graph_rank", "rank_improved", "graph_edge_path_summary"],
+        "additionalProperties": false
+      }
+    },
+    "reproducibility": {
+      "type": "object",
+      "description": "可重复性检查（SC-007）：非延迟指标 1% 相对容差（research §6 = 0.01）；延迟环境敏感",
+      "properties": {
+        "non_latency_reproducible": { "type": "boolean" },
+        "tolerance": { "type": "number", "const": 0.01 },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "metric": { "type": "string" },
+              "run_1": { "type": "number" },
+              "run_2": { "type": "number" },
+              "relative_delta": { "type": "number" },
+              "tolerance": { "type": "number" },
+              "passed": { "type": "boolean" },
+              "env_sensitive": { "type": "boolean" }
+            },
+            "required": ["metric", "run_1", "run_2", "relative_delta", "tolerance", "passed"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": ["non_latency_reproducible", "tolerance", "checks"],
+      "additionalProperties": false
+    },
+    "enters_default_path": {
+      "type": "boolean",
+      "description": "是否进入默认检索路径：三段通过判定全过 + 硬性指标全过（FR-024，宪法原则 X）。未达则图扩展作为可选检索路径保留。"
+    }
+  },
+  "required": ["report_type", "generated_at", "config", "baseline_metrics", "graph_metrics", "structural_subset_metrics", "deltas", "hard_constraints", "three_gate_pass", "per_query_comparison", "enters_default_path"],
+  "additionalProperties": false,
+  "$defs": {
+    "metricBlock": {
+      "type": "object",
+      "properties": { "mean": { "type": "number" }, "min": { "type": "number" }, "max": { "type": "number" } },
+      "required": ["mean", "min", "max"],
+      "additionalProperties": false
+    },
+    "latencyBlock": {
+      "type": "object",
+      "properties": { "p50": { "type": "number" }, "p95": { "type": "number" }, "mean": { "type": "number" }, "min": { "type": "number" }, "max": { "type": "number" } },
+      "required": ["p50", "p95", "mean"],
+      "additionalProperties": false
+    }
+  }
+}

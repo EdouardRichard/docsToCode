@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-engineering-rag-mcp.local/schemas/004/knowledge-capabilities.graph-extension.schema.json",
+  "title": "Knowledge Capabilities Graph Extension (004)",
+  "description": "004 扩展 002 knowledge-capabilities.schema.json 的能力清单对象，新增 graph_ready 布尔能力（蓝图 §5，FR-013/FR-014/FR-015/SC-010）。声明 graph_ready 的版本在图关系（硬关系，声明软关系时含软关系）就绪后才可变为可检索状态；graph_ready 隐含 dense_ready + lexical_ready（同一 bge-m3 嵌入与切片策略上的派生能力，不触发宪法原则 VIII 不可混用）。查询规划只调用已发布版本明确声明的能力。本契约为能力清单契约（非对外 MCP 契约）；复用 003 common.schema.json。实现时将 002 knowledge-capabilities.schema.json 对象新增 graph_ready 字段并应用下列门控。",
+  "type": "object",
+  "properties": {
+    "dense_ready": { "type": "boolean", "description": "Dense 向量索引就绪（001/002 已立）" },
+    "lexical_ready": { "type": "boolean", "description": "Sparse/BM25 词法索引就绪（002 已立）" },
+    "graph_ready": {
+      "type": "boolean",
+      "description": "图关系能力就绪（004 新增）。声明 true 的版本启用图扩展路径；未声明或 false 的版本 MUST NOT 参与图扩展路径但继续支持 Dense/混合检索（FR-014）。声明 true 前图关系须就绪（FR-013）。"
+    }
+  },
+  "required": ["dense_ready", "graph_ready"],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "description": "发布门控：dense_ready 必须为 true 才能发布（Dense 是基础能力，沿用 002）",
+      "if": { "properties": { "dense_ready": { "const": false } } },
+      "then": false
+    },
+    {
+      "description": "lexical_ready 隐含 dense_ready（沿用 002）",
+      "if": { "properties": { "lexical_ready": { "const": true } } },
+      "then": { "properties": { "dense_ready": { "const": true } } }
+    },
+    {
+      "description": "graph_ready 隐含 dense_ready + lexical_ready：图扩展叠加于混合检索之上，无 Dense/Sparse 无意义（FR-015）",
+      "if": { "properties": { "graph_ready": { "const": true } } },
+      "then": { "properties": { "dense_ready": { "const": true }, "lexical_ready": { "const": true } } }
+    }
+  ],
+  "examples": [
+    { "dense_ready": true, "lexical_ready": true, "graph_ready": true },
+    { "dense_ready": true, "lexical_ready": true, "graph_ready": false },
+    { "dense_ready": true, "lexical_ready": false, "graph_ready": false }
+  ]
+}
