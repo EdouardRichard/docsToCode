@@ -132,7 +132,7 @@
   - ① Red: 测试断言报告样例校验，当前失败
   - ② Green: 接入校验，测试通过
 
-- [ ] T041 [P] Runtime graph-expansion-trace ledger — wire per-request trace (depends T010, T011, T013, T014)
+- [X] T041 [P] Runtime graph-expansion-trace ledger — wire per-request trace (depends T010, T011, T013, T014)
   - [路径] backend/src/rag_mcp/graph/trace_recorder.py | backend/src/rag_mcp/services/evidence_service.py | backend/tests/integration/test_graph_runtime_trace.py
   - [AC] 每次图增强检索记录 request_id/knowledge_scope_ids/completion_status/guardrails/subpath_timings(dense/sparse/graph_recall/fusion/rerank/total)/graph_candidates(含可空 evidence_id)/fused_candidates/failed_paths/evidence_ref_ids，符合 graph-expansion-trace.schema.json；partial 时 failed_paths 非空；候选存活为证据时回填 evidence_id 并写 graph_expansion_path（DM-1 桥接）；沿用 001/002/003 证据账本扩展（蓝图 §13，FR-026）
   - ① Red: 集成测试断言一次图增强检索产出完整 trace 且 evidence_id 回填与 graph_expansion_path 一致，当前失败
