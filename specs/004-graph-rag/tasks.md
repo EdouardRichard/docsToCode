@@ -472,3 +472,15 @@ Task: T010 postgres_graph_store → T011 expansion → T013 fusion
 - [X] T050 Harden the target-host smoke test skip guard per convergence pytest-green (partial)
   - [路径] backend/tests/integration/test_target_host_smoke.py
   - [AC] MCP 服务器（127.0.0.1:8080，backend/_run_mcp.py）未运行时整个用例稳健跳过（覆盖 __aenter__ 之后请求阶段的 ConnectError），不产生假失败；或文档化"运行全套前须先启动 _run_mcp.py"；已验证服务器运行时该用例通过
+
+---
+
+## Phase 10: Convergence
+
+**Purpose**: 第二轮收敛评估（对照 spec/plan/tasks 与当前代码）。Phase 9（T042–T050）的运行时集成已全部落地：入库触发硬关系提取+软关系推断、图扩展并入 RRF 第 3 路、能力门控/追踪账本/证据标注/清空删除均已接入服务层；图增强对照评测已真跑并产出经 eval-graph-comparison-report.schema.json 校验的报告（three_gate_pass 全 true，enters_default_path=true）。全套 pytest 769 passed，唯余 1 个 ERROR：target-host smoke 测试在 setup 阶段以错误终止而非稳健跳过，套件未全绿。完成本阶段后应重跑 /speckit-converge 复核。
+
+- [X] T051 Make the target-host smoke test skip robustly in standard full-suite runs per T050/FR-028/SC-012 (partial)
+  - [路径] backend/tests/integration/test_target_host_smoke.py
+  - [AC] 从仓库根运行 `python -m pytest backend/tests`（MCP 服务器 127.0.0.1:8080 未启动）时该用例 cleanly SKIPPED 而非 ERROR：① `openapi_alias` fixture 改经 `Path(get_settings().data_root)` 写 raw 文件（对齐 graph_ingest_helpers.py / test_capability_isolation.py 约定），消除与 `IngestionService._read_raw_bytes` CWD 相对解析不一致导致的 FileNotFoundError；② MCP 服务器可达性探测前置到 fixture/setup 阶段，不可达先于 ingest 执行 `pytest.skip`；③ fixture 清理其创建的 project/source/向量（或文档化残留可接受）；服务器运行且 CWD 为 backend/ 或仓库根时该用例正常通过
+  - [证据] 全套 pytest 结果 "769 passed, 7 warnings, 1 error in 87.91s"（exit 1）；ERROR backend/tests/integration/test_target_host_smoke.py::TestTargetHostSmoke::test_search_and_get_evidence_via_mcp_host——setup 阶段 FileNotFoundError: Raw file not found at data\uploads\<scope>\<source>\openapi.json（fixture 硬编码写入 PROJECT_ROOT/backend/data/uploads，而 ingest 读取相对 CWD 的 settings.data_root='./data/uploads'）；T050 跳过守卫仅覆盖测试体连接/请求阶段，未覆盖 fixture setup
+
