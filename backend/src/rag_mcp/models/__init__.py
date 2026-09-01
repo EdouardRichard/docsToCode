@@ -22,6 +22,7 @@ from rag_mcp.models.knowledge_version import KnowledgeVersion  # noqa: E402, F40
 from rag_mcp.models.chunk import Chunk  # noqa: E402, F401
 from rag_mcp.models.processing_run import ProcessingRun  # noqa: E402, F401
 from rag_mcp.models.retrieval_run import RetrievalRun  # noqa: E402, F401
+from rag_mcp.graph.models import GraphEdge, SoftRelation, GraphExpansionPath  # noqa: E402, F401
 
 __all__ = [
     "Base",
@@ -32,4 +33,7 @@ __all__ = [
     "Chunk",
     "ProcessingRun",
     "RetrievalRun",
+    "GraphEdge",
+    "SoftRelation",
+    "GraphExpansionPath",
 ]

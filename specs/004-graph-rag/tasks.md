@@ -66,13 +66,13 @@
   - ① Red: 测试断言 graph_ready 列存在，当前失败
   - ② Green: 编写并应用迁移，测试通过
 
-- [ ] T008 [P] graph/models.py — GraphEdge / SoftRelation / GraphExpansionPath
+- [X] T008 [P] graph/models.py — GraphEdge / SoftRelation / GraphExpansionPath
   - [路径] backend/src/rag_mcp/graph/models.py | backend/tests/unit/test_graph_models.py
   - [AC] 三模型字段与迁移列一一对应；GraphEdge.relation_type 限定硬枚举、SoftRelation 四态枚举与五元数据必填；GraphExpansionPath 含 chunk_id 与 evidence_id 双向关联字段（DM-1）；符合 graph-relations.schema.json allOf 约束
   - ① Red: 测试构造非法 relation_type/lifecycle_state 与缺失元数据应抛错，当前失败
   - ② Green: 实现模型与校验，测试通过
 
-- [ ] T009 [P] graph/store/base.py — GraphStore abstract interface
+- [X] T009 [P] graph/store/base.py — GraphStore abstract interface
   - [路径] backend/src/rag_mcp/graph/store/base.py | backend/tests/unit/test_graph_store_abstract.py
   - [AC] 抽象定义 get_neighbors(chunk_id, relation_types, direction, hop, budget, scope)/expand(...)/isolation 契约；蓝图 §8.3 保留迁移能力
   - ① Red: 测试抽象方法签名与隔离参数，当前失败
