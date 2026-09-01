@@ -317,10 +317,10 @@
   {
     "query": "Which tables have foreign keys referencing the users table?",
     "project_scope": [
-      "352016598489366529"
+      "352016496592945153"
     ],
     "expected_evidence_ids": [
-      "352016027946582030"
+      "352016498073534471"
     ],
     "format": "ddl",
     "is_structural_benefit": true
@@ -328,10 +328,10 @@
   {
     "query": "Tables that reference users.id through foreign keys",
     "project_scope": [
-      "352016598489366529"
+      "352016496592945153"
     ],
     "expected_evidence_ids": [
-      "352016027946582030"
+      "352016498073534471"
     ],
     "format": "ddl",
     "is_structural_benefit": true
@@ -350,10 +350,10 @@
   {
     "query": "哪些表通过外键引用了users表？",
     "project_scope": [
-      "352016598489366529"
+      "352016496592945153"
     ],
     "expected_evidence_ids": [
-      "352016027946582030"
+      "352016498073534471"
     ],
     "format": "ddl",
     "is_structural_benefit": true

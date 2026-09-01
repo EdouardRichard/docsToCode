@@ -1,0 +1,1024 @@
+{
+  "report_type": "graph_enhanced_comparison",
+  "generated_at": "2026-09-01T19:10:17.651730+00:00",
+  "config": {
+    "embedding_model": "BAAI/bge-m3",
+    "reranker_model": "BAAI/bge-reranker-v2-m3",
+    "hybrid_collection": "chunks_hybrid_bge-m3_v1",
+    "fusion_algorithm": "rrf",
+    "dataset_path": "D:\\Project_new\\docsToCode\\eval\\eval_dataset.json",
+    "num_queries": 37,
+    "structural_subset_size": 7,
+    "graph_candidate_budget": 10,
+    "graph_total_timeout_ms": 30000
+  },
+  "baseline_metrics": {
+    "recall_at_k": {
+      "mean": 0.973,
+      "min": 0.0,
+      "max": 1.0
+    },
+    "mrr": {
+      "mean": 0.8748,
+      "min": 0.0,
+      "max": 1.0
+    },
+    "ndcg_at_k": {
+      "mean": 0.8994,
+      "min": 0.0,
+      "max": 1.0
+    },
+    "latency_ms": {
+      "p50": 171.48,
+      "p95": 227.22,
+      "mean": 179.1,
+      "min": 110.05,
+      "max": 235.62
+    }
+  },
+  "graph_metrics": {
+    "recall_at_k": {
+      "mean": 0.9459,
+      "min": 0.0,
+      "max": 1.0
+    },
+    "mrr": {
+      "mean": 0.8964,
+      "min": 0.0,
+      "max": 1.0
+    },
+    "ndcg_at_k": {
+      "mean": 0.906,
+      "min": 0.0,
+      "max": 1.0
+    },
+    "latency_ms": {
+      "p50": 181.34,
+      "p95": 243.35,
+      "mean": 189.46,
+      "min": 111.55,
+      "max": 246.26
+    }
+  },
+  "structural_subset_metrics": {
+    "baseline_mrr_mean": 0.7381,
+    "graph_mrr_mean": 0.8571,
+    "mrr_relative_improvement": 16.122476629183037,
+    "baseline_ndcg_mean": 0.8044,
+    "graph_ndcg_mean": 0.8946,
+    "ndcg_relative_improvement": 11.213326703132763,
+    "recall_at_k_non_decreasing": true
+  },
+  "deltas": {
+    "mrr_mean_delta": 0.021599999999999953,
+    "ndcg_mean_delta": 0.00660000000000005,
+    "recall_mean_delta": -0.027100000000000013,
+    "latency_p50_delta_ms": 9.860000000000014,
+    "latency_p95_delta_ms": 16.129999999999995
+  },
+  "hard_constraints": {
+    "cross_project_leakage_events": 0,
+    "schema_validity_rate": 1.0,
+    "source_locatability_rate": 1.0,
+    "all_passed": true
+  },
+  "three_gate_pass": {
+    "sc001_structural_improvement": true,
+    "sc002_001_noninferior": true,
+    "sc013_002_nonstructural_noninferior": true,
+    "hard_constraints_passed": true,
+    "all_passed": true
+  },
+  "per_query_comparison": [
+    {
+      "query_index": 0,
+      "query": "Find the definition of com.example.service.UserService.",
+      "is_structural_benefit": false,
+      "project_scope": "351193748123680768",
+      "expected_evidence_ids": [
+        "352016027946582016"
+      ],
+      "baseline_rank": 1,
+      "graph_rank": 1,
+      "baseline_dense_score": 0.5638318,
+      "baseline_sparse_score": 10.464549,
+      "baseline_fused_score": 0.03278688524590164,
+      "baseline_rerank_score": 0.03278688524590164,
+      "graph_dense_score": 0.5638318,
+      "graph_sparse_score": 10.464549,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.03278688524590164,
+      "graph_rerank_score": 0.03278688524590164,
+      "rank_improved": false
+    },
+    {
+      "query_index": 1,
+      "query": "What is the purpose of com.example.service.UserService#DB_PASSWORD?",
+      "is_structural_benefit": false,
+      "project_scope": "351193748123680768",
+      "expected_evidence_ids": [
+        "352016027946582017"
+      ],
+      "baseline_rank": 1,
+      "graph_rank": 1,
+      "baseline_dense_score": 0.63132393,
+      "baseline_sparse_score": 60.69374,
+      "baseline_fused_score": 0.03278688524590164,
+      "baseline_rerank_score": 0.03278688524590164,
+      "graph_dense_score": 0.63132393,
+      "graph_sparse_score": 60.69374,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.03278688524590164,
+      "graph_rerank_score": 0.03278688524590164,
+      "rank_improved": false
+    },
+    {
+      "query_index": 2,
+      "query": "Show me the implementation of com.example.service.UserService#repository.",
+      "is_structural_benefit": false,
+      "project_scope": "351193748123680768",
+      "expected_evidence_ids": [
+        "352016027946582018"
+      ],
+      "baseline_rank": 1,
+      "graph_rank": 1,
+      "baseline_dense_score": 0.6369271,
+      "baseline_sparse_score": 46.971527,
+      "baseline_fused_score": 0.03278688524590164,
+      "baseline_rerank_score": 0.03278688524590164,
+      "graph_dense_score": 0.6369271,
+      "graph_sparse_score": 46.971527,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.03278688524590164,
+      "graph_rerank_score": 0.03278688524590164,
+      "rank_improved": false
+    },
+    {
+      "query_index": 3,
+      "query": "What does com.example.service.UserService#findById do?",
+      "is_structural_benefit": false,
+      "project_scope": "351193748123680768",
+      "expected_evidence_ids": [
+        "352016027946582019"
+      ],
+      "baseline_rank": 1,
+      "graph_rank": 1,
+      "baseline_dense_score": 0.6522032,
+      "baseline_sparse_score": 56.632202,
+      "baseline_fused_score": 0.03278688524590164,
+      "baseline_rerank_score": 0.03278688524590164,
+      "graph_dense_score": 0.6522032,
+      "graph_sparse_score": 56.632202,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.03278688524590164,
+      "graph_rerank_score": 0.03278688524590164,
+      "rank_improved": false
+    },
+    {
+      "query_index": 4,
+      "query": "Explain the code at com.example.service.UserService#getActiveUsers.",
+      "is_structural_benefit": false,
+      "project_scope": "351193748123680768",
+      "expected_evidence_ids": [
+        "352016027946582020"
+      ],
+      "baseline_rank": 1,
+      "graph_rank": 1,
+      "baseline_dense_score": 0.7410897,
+      "baseline_sparse_score": 42.948647,
+      "baseline_fused_score": 0.03278688524590164,
+      "baseline_rerank_score": 0.03278688524590164,
+      "graph_dense_score": 0.7410897,
+      "graph_sparse_score": 42.948647,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.03278688524590164,
+      "graph_rerank_score": 0.03278688524590164,
+      "rank_improved": false
+    },
+    {
+      "query_index": 5,
+      "query": "Find the definition of com.example.service.UserService#validateToken.",
+      "is_structural_benefit": false,
+      "project_scope": "351193748123680768",
+      "expected_evidence_ids": [
+        "352016027946582021"
+      ],
+      "baseline_rank": 2,
+      "graph_rank": 2,
+      "baseline_dense_score": 0.6132928,
+      "baseline_sparse_score": 2.2486122,
+      "baseline_fused_score": 0.03225806451612903,
+      "baseline_rerank_score": 0.03225806451612903,
+      "graph_dense_score": 0.6132928,
+      "graph_sparse_score": 2.2486122,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.03225806451612903,
+      "graph_rerank_score": 0.03225806451612903,
+      "rank_improved": false
+    },
+    {
+      "query_index": 6,
+      "query": "Show me the section # extra.",
+      "is_structural_benefit": false,
+      "project_scope": "351207349697904640",
+      "expected_evidence_ids": [
+        "352016115179716608"
+      ],
+      "baseline_rank": 1,
+      "graph_rank": 1,
+      "baseline_dense_score": 0.7660171,
+      "baseline_sparse_score": 136.65898,
+      "baseline_fused_score": 0.03278688524590164,
+      "baseline_rerank_score": 0.03278688524590164,
+      "graph_dense_score": 0.7660171,
+      "graph_sparse_score": 136.65898,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.03278688524590164,
+      "graph_rerank_score": 0.03278688524590164,
+      "rank_improved": false
+    },
+    {
+      "query_index": 7,
+      "query": "Show me the section # Test Content.",
+      "is_structural_benefit": false,
+      "project_scope": "351221148429582336",
+      "expected_evidence_ids": [
+        "352016116299595776"
+      ],
+      "baseline_rank": 1,
+      "graph_rank": 1,
+      "baseline_dense_score": 0.6973518,
+      "baseline_sparse_score": 60.67908,
+      "baseline_fused_score": 0.03278688524590164,
+      "baseline_rerank_score": 0.03278688524590164,
+      "graph_dense_score": 0.6973518,
+      "graph_sparse_score": 60.67908,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.03278688524590164,
+      "graph_rerank_score": 0.03278688524590164,
+      "rank_improved": false
+    },
+    {
+      "query_index": 8,
+      "query": "Explain the content of # Test Content.",
+      "is_structural_benefit": false,
+      "project_scope": "351222351527936000",
+      "expected_evidence_ids": [
+        "352016117394309120"
+      ],
+      "baseline_rank": 1,
+      "graph_rank": 1,
+      "baseline_dense_score": 0.7158759,
+      "baseline_sparse_score": 60.67908,
+      "baseline_fused_score": 0.03278688524590164,
+      "baseline_rerank_score": 0.03278688524590164,
+      "graph_dense_score": 0.7158759,
+      "graph_sparse_score": 60.67908,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.03278688524590164,
+      "graph_rerank_score": 0.03278688524590164,
+      "rank_improved": false
+    },
+    {
+      "query_index": 9,
+      "query": "What does # Test Content describe?",
+      "is_structural_benefit": false,
+      "project_scope": "351222576757866496",
+      "expected_evidence_ids": [
+        "352016118451273728"
+      ],
+      "baseline_rank": 1,
+      "graph_rank": 1,
+      "baseline_dense_score": 0.6359798,
+      "baseline_sparse_score": 60.67908,
+      "baseline_fused_score": 0.03278688524590164,
+      "baseline_rerank_score": 0.03278688524590164,
+      "graph_dense_score": 0.6359798,
+      "graph_sparse_score": 60.67908,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.03278688524590164,
+      "graph_rerank_score": 0.03278688524590164,
+      "rank_improved": false
+    },
+    {
+      "query_index": 10,
+      "query": "Explain the content of # Test Content.",
+      "is_structural_benefit": false,
+      "project_scope": "351222872145920000",
+      "expected_evidence_ids": [
+        "352016119487266816"
+      ],
+      "baseline_rank": 1,
+      "graph_rank": 1,
+      "baseline_dense_score": 0.7158759,
+      "baseline_sparse_score": 60.67908,
+      "baseline_fused_score": 0.03278688524590164,
+      "baseline_rerank_score": 0.03278688524590164,
+      "graph_dense_score": 0.7158759,
+      "graph_sparse_score": 60.67908,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.03278688524590164,
+      "graph_rerank_score": 0.03278688524590164,
+      "rank_improved": false
+    },
+    {
+      "query_index": 11,
+      "query": "查找validateToken方法的定义",
+      "is_structural_benefit": false,
+      "project_scope": "351193748123680768",
+      "expected_evidence_ids": [
+        "352016027946582021"
+      ],
+      "baseline_rank": 1,
+      "graph_rank": 1,
+      "baseline_dense_score": 0.62098706,
+      "baseline_sparse_score": 2.2486122,
+      "baseline_fused_score": 0.03252247488101534,
+      "baseline_rerank_score": 0.03252247488101534,
+      "graph_dense_score": 0.62098706,
+      "graph_sparse_score": 2.2486122,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.03252247488101534,
+      "graph_rerank_score": 0.03252247488101534,
+      "rank_improved": false
+    },
+    {
+      "query_index": 12,
+      "query": "UserService类的用途是什么",
+      "is_structural_benefit": false,
+      "project_scope": "351193748123680768",
+      "expected_evidence_ids": [
+        "352016027946582016"
+      ],
+      "baseline_rank": 1,
+      "graph_rank": 1,
+      "baseline_dense_score": 0.6091709,
+      "baseline_sparse_score": 8.77751,
+      "baseline_fused_score": 0.03278688524590164,
+      "baseline_rerank_score": 0.03278688524590164,
+      "graph_dense_score": 0.6091709,
+      "graph_sparse_score": 8.77751,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.03278688524590164,
+      "graph_rerank_score": 0.03278688524590164,
+      "rank_improved": false
+    },
+    {
+      "query_index": 13,
+      "query": "数据库密码DB_PASSWORD的用途",
+      "is_structural_benefit": false,
+      "project_scope": "351193748123680768",
+      "expected_evidence_ids": [
+        "352016027946582017"
+      ],
+      "baseline_rank": 1,
+      "graph_rank": 1,
+      "baseline_dense_score": 0.6747874,
+      "baseline_sparse_score": 60.69374,
+      "baseline_fused_score": 0.03278688524590164,
+      "baseline_rerank_score": 0.03278688524590164,
+      "graph_dense_score": 0.6747874,
+      "graph_sparse_score": 60.69374,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.03278688524590164,
+      "graph_rerank_score": 0.03278688524590164,
+      "rank_improved": false
+    },
+    {
+      "query_index": 14,
+      "query": "findById方法的实现逻辑",
+      "is_structural_benefit": false,
+      "project_scope": "351193748123680768",
+      "expected_evidence_ids": [
+        "352016027946582019"
+      ],
+      "baseline_rank": 1,
+      "graph_rank": 1,
+      "baseline_dense_score": 0.6103147,
+      "baseline_sparse_score": 56.632202,
+      "baseline_fused_score": 0.03278688524590164,
+      "baseline_rerank_score": 0.03278688524590164,
+      "graph_dense_score": 0.6103147,
+      "graph_sparse_score": 56.632202,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.03278688524590164,
+      "graph_rerank_score": 0.03278688524590164,
+      "rank_improved": false
+    },
+    {
+      "query_index": 15,
+      "query": "com.example.service.UserService#validateToken",
+      "is_structural_benefit": false,
+      "project_scope": "351193748123680768",
+      "expected_evidence_ids": [
+        "352016027946582021"
+      ],
+      "baseline_rank": 1,
+      "graph_rank": 1,
+      "baseline_dense_score": 0.6754324,
+      "baseline_sparse_score": 2.2486122,
+      "baseline_fused_score": 0.03252247488101534,
+      "baseline_rerank_score": 0.03252247488101534,
+      "graph_dense_score": 0.6754324,
+      "graph_sparse_score": 2.2486122,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.03252247488101534,
+      "graph_rerank_score": 0.03252247488101534,
+      "rank_improved": false
+    },
+    {
+      "query_index": 16,
+      "query": "validateToken token validation method",
+      "is_structural_benefit": false,
+      "project_scope": "351193748123680768",
+      "expected_evidence_ids": [
+        "352016027946582021"
+      ],
+      "baseline_rank": 1,
+      "graph_rank": 1,
+      "baseline_dense_score": 0.7203253,
+      "baseline_sparse_score": 9.641216,
+      "baseline_fused_score": 0.03278688524590164,
+      "baseline_rerank_score": 0.03278688524590164,
+      "graph_dense_score": 0.7203253,
+      "graph_sparse_score": 9.641216,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.03278688524590164,
+      "graph_rerank_score": 0.03278688524590164,
+      "rank_improved": false
+    },
+    {
+      "query_index": 17,
+      "query": "getActiveUsers active users list",
+      "is_structural_benefit": false,
+      "project_scope": "351193748123680768",
+      "expected_evidence_ids": [
+        "352016027946582020"
+      ],
+      "baseline_rank": 1,
+      "graph_rank": 1,
+      "baseline_dense_score": 0.75820297,
+      "baseline_sparse_score": 116.909775,
+      "baseline_fused_score": 0.03278688524590164,
+      "baseline_rerank_score": 0.03278688524590164,
+      "graph_dense_score": 0.75820297,
+      "graph_sparse_score": 116.909775,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.03278688524590164,
+      "graph_rerank_score": 0.03278688524590164,
+      "rank_improved": false
+    },
+    {
+      "query_index": 18,
+      "query": "GET /api/v1/users",
+      "is_structural_benefit": false,
+      "project_scope": "352014591405850625",
+      "expected_evidence_ids": [
+        "352014592559284226"
+      ],
+      "baseline_rank": 1,
+      "graph_rank": 1,
+      "baseline_dense_score": 0.55312264,
+      "baseline_sparse_score": 20.21593,
+      "baseline_fused_score": 0.032266458495966696,
+      "baseline_rerank_score": 0.032266458495966696,
+      "graph_dense_score": 0.55312264,
+      "graph_sparse_score": 20.21593,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.032266458495966696,
+      "graph_rerank_score": 0.032266458495966696,
+      "rank_improved": false
+    },
+    {
+      "query_index": 19,
+      "query": "User schema definition",
+      "is_structural_benefit": false,
+      "project_scope": "352014591405850625",
+      "expected_evidence_ids": [
+        "352014592559284224"
+      ],
+      "baseline_rank": null,
+      "graph_rank": null,
+      "baseline_dense_score": null,
+      "baseline_sparse_score": null,
+      "baseline_fused_score": null,
+      "baseline_rerank_score": null,
+      "graph_dense_score": null,
+      "graph_sparse_score": null,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": null,
+      "graph_rerank_score": null,
+      "rank_improved": false
+    },
+    {
+      "query_index": 20,
+      "query": "table:users",
+      "is_structural_benefit": false,
+      "project_scope": "352016496592945153",
+      "expected_evidence_ids": [
+        "352016498073534464"
+      ],
+      "baseline_rank": 1,
+      "graph_rank": 1,
+      "baseline_dense_score": 0.6103912,
+      "baseline_sparse_score": 21.50879,
+      "baseline_fused_score": 0.03278688524590164,
+      "baseline_rerank_score": 0.03278688524590164,
+      "graph_dense_score": 0.6103912,
+      "graph_sparse_score": 21.50879,
+      "graph_recall_structure_weight": 1.0,
+      "graph_recall_hop_count": 1,
+      "graph_edge_path_summary": [
+        {
+          "hop": 1,
+          "edge_id": "353255149352779776",
+          "relation_type": "fk_references",
+          "direction": "out",
+          "is_hard": true
+        }
+      ],
+      "graph_fused_score": 0.04918032786885246,
+      "graph_rerank_score": 0.04918032786885246,
+      "rank_improved": false
+    },
+    {
+      "query_index": 21,
+      "query": "orders table definition",
+      "is_structural_benefit": false,
+      "project_scope": "352016496592945153",
+      "expected_evidence_ids": [
+        "352016498073534471"
+      ],
+      "baseline_rank": 5,
+      "graph_rank": 6,
+      "baseline_dense_score": 0.5193894,
+      "baseline_sparse_score": null,
+      "baseline_fused_score": 0.015873015873015872,
+      "baseline_rerank_score": 0.015873015873015872,
+      "graph_dense_score": 0.5193894,
+      "graph_sparse_score": null,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.015873015873015872,
+      "graph_rerank_score": 0.015873015873015872,
+      "rank_improved": false
+    },
+    {
+      "query_index": 22,
+      "query": "main.UserService#FindUser",
+      "is_structural_benefit": false,
+      "project_scope": "351989134090305537",
+      "expected_evidence_ids": [
+        "352017436767158274"
+      ],
+      "baseline_rank": 1,
+      "graph_rank": 1,
+      "baseline_dense_score": 0.736678,
+      "baseline_sparse_score": 37.98208,
+      "baseline_fused_score": 0.03278688524590164,
+      "baseline_rerank_score": 0.03278688524590164,
+      "graph_dense_score": 0.736678,
+      "graph_sparse_score": 37.98208,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.03278688524590164,
+      "graph_rerank_score": 0.03278688524590164,
+      "rank_improved": false
+    },
+    {
+      "query_index": 23,
+      "query": "FindUser method",
+      "is_structural_benefit": false,
+      "project_scope": "351989134090305537",
+      "expected_evidence_ids": [
+        "352017436767158274"
+      ],
+      "baseline_rank": 1,
+      "graph_rank": 1,
+      "baseline_dense_score": 0.68607306,
+      "baseline_sparse_score": 30.155252,
+      "baseline_fused_score": 0.03278688524590164,
+      "baseline_rerank_score": 0.03278688524590164,
+      "graph_dense_score": 0.68607306,
+      "graph_sparse_score": 30.155252,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.03278688524590164,
+      "graph_rerank_score": 0.03278688524590164,
+      "rank_improved": false
+    },
+    {
+      "query_index": 24,
+      "query": "module.User.validate",
+      "is_structural_benefit": false,
+      "project_scope": "352016589224148993",
+      "expected_evidence_ids": [
+        "352016589903626244"
+      ],
+      "baseline_rank": 1,
+      "graph_rank": 1,
+      "baseline_dense_score": 0.61546445,
+      "baseline_sparse_score": 50.06555,
+      "baseline_fused_score": 0.03252247488101534,
+      "baseline_rerank_score": 0.03252247488101534,
+      "graph_dense_score": 0.61546445,
+      "graph_sparse_score": 50.06555,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.03252247488101534,
+      "graph_rerank_score": 0.03252247488101534,
+      "rank_improved": false
+    },
+    {
+      "query_index": 25,
+      "query": "parse_config function",
+      "is_structural_benefit": false,
+      "project_scope": "352016589224148993",
+      "expected_evidence_ids": [
+        "352016589903626240"
+      ],
+      "baseline_rank": 1,
+      "graph_rank": 1,
+      "baseline_dense_score": 0.65910625,
+      "baseline_sparse_score": 60.720222,
+      "baseline_fused_score": 0.03278688524590164,
+      "baseline_rerank_score": 0.03278688524590164,
+      "graph_dense_score": 0.65910625,
+      "graph_sparse_score": 60.720222,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.03278688524590164,
+      "graph_rerank_score": 0.03278688524590164,
+      "rank_improved": false
+    },
+    {
+      "query_index": 26,
+      "query": "# Architecture Design",
+      "is_structural_benefit": false,
+      "project_scope": "352016598489366529",
+      "expected_evidence_ids": [
+        "352016599349198848"
+      ],
+      "baseline_rank": 1,
+      "graph_rank": 1,
+      "baseline_dense_score": 1.0000001,
+      "baseline_sparse_score": 185.88293,
+      "baseline_fused_score": 0.03278688524590164,
+      "baseline_rerank_score": 0.03278688524590164,
+      "graph_dense_score": 1.0000001,
+      "graph_sparse_score": 185.88293,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.03278688524590164,
+      "graph_rerank_score": 0.03278688524590164,
+      "rank_improved": false
+    },
+    {
+      "query_index": 27,
+      "query": "Data Flow section",
+      "is_structural_benefit": false,
+      "project_scope": "352016598489366529",
+      "expected_evidence_ids": [
+        "352016599349198851"
+      ],
+      "baseline_rank": 1,
+      "graph_rank": 1,
+      "baseline_dense_score": 0.79845506,
+      "baseline_sparse_score": 149.76471,
+      "baseline_fused_score": 0.03278688524590164,
+      "baseline_rerank_score": 0.03278688524590164,
+      "graph_dense_score": 0.79845506,
+      "graph_sparse_score": 149.76471,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.03278688524590164,
+      "graph_rerank_score": 0.03278688524590164,
+      "rank_improved": false
+    },
+    {
+      "query_index": 28,
+      "query": "page:1 §1 Introduction",
+      "is_structural_benefit": false,
+      "project_scope": "352016602247462913",
+      "expected_evidence_ids": [
+        "352016603132461057"
+      ],
+      "baseline_rank": 1,
+      "graph_rank": 1,
+      "baseline_dense_score": 0.8665284,
+      "baseline_sparse_score": 134.11038,
+      "baseline_fused_score": 0.03278688524590164,
+      "baseline_rerank_score": 0.03278688524590164,
+      "graph_dense_score": 0.8665284,
+      "graph_sparse_score": 134.11038,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.03278688524590164,
+      "graph_rerank_score": 0.03278688524590164,
+      "rank_improved": false
+    },
+    {
+      "query_index": 29,
+      "query": "consensus algorithms",
+      "is_structural_benefit": false,
+      "project_scope": "352016602247462913",
+      "expected_evidence_ids": [
+        "352016603132461061"
+      ],
+      "baseline_rank": 2,
+      "graph_rank": 2,
+      "baseline_dense_score": 0.7240062,
+      "baseline_sparse_score": 59.637863,
+      "baseline_fused_score": 0.03225806451612903,
+      "baseline_rerank_score": 0.03225806451612903,
+      "graph_dense_score": 0.7240062,
+      "graph_sparse_score": 59.637863,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.03225806451612903,
+      "graph_rerank_score": 0.03225806451612903,
+      "rank_improved": false
+    },
+    {
+      "query_index": 30,
+      "query": "Who calls com.example.service.UserService#validateToken?",
+      "is_structural_benefit": true,
+      "project_scope": "351193748123680768",
+      "expected_evidence_ids": [
+        "352016027946582021"
+      ],
+      "baseline_rank": 1,
+      "graph_rank": 1,
+      "baseline_dense_score": 0.62312216,
+      "baseline_sparse_score": 2.0673575,
+      "baseline_fused_score": 0.03252247488101534,
+      "baseline_rerank_score": 0.03252247488101534,
+      "graph_dense_score": 0.62312216,
+      "graph_sparse_score": 2.0673575,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.03252247488101534,
+      "graph_rerank_score": 0.03252247488101534,
+      "rank_improved": false
+    },
+    {
+      "query_index": 31,
+      "query": "Which methods are called by com.example.service.UserService#findById?",
+      "is_structural_benefit": true,
+      "project_scope": "351193748123680768",
+      "expected_evidence_ids": [
+        "352016027946582019"
+      ],
+      "baseline_rank": 1,
+      "graph_rank": 1,
+      "baseline_dense_score": 0.62934196,
+      "baseline_sparse_score": 48.1833,
+      "baseline_fused_score": 0.03278688524590164,
+      "baseline_rerank_score": 0.03278688524590164,
+      "graph_dense_score": 0.62934196,
+      "graph_sparse_score": 48.1833,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.03278688524590164,
+      "graph_rerank_score": 0.03278688524590164,
+      "rank_improved": false
+    },
+    {
+      "query_index": 32,
+      "query": "Show all callers of the validateToken method",
+      "is_structural_benefit": true,
+      "project_scope": "351193748123680768",
+      "expected_evidence_ids": [
+        "352016027946582021"
+      ],
+      "baseline_rank": 1,
+      "graph_rank": 1,
+      "baseline_dense_score": 0.61048293,
+      "baseline_sparse_score": 2.726745,
+      "baseline_fused_score": 0.03278688524590164,
+      "baseline_rerank_score": 0.03278688524590164,
+      "graph_dense_score": 0.61048293,
+      "graph_sparse_score": 2.726745,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.03278688524590164,
+      "graph_rerank_score": 0.03278688524590164,
+      "rank_improved": false
+    },
+    {
+      "query_index": 33,
+      "query": "Which tables have foreign keys referencing the users table?",
+      "is_structural_benefit": true,
+      "project_scope": "352016496592945153",
+      "expected_evidence_ids": [
+        "352016498073534471"
+      ],
+      "baseline_rank": 3,
+      "graph_rank": 2,
+      "baseline_dense_score": 0.52753186,
+      "baseline_sparse_score": 15.924949,
+      "baseline_fused_score": 0.03200204813108039,
+      "baseline_rerank_score": 0.03200204813108039,
+      "graph_dense_score": 0.52753186,
+      "graph_sparse_score": 15.924949,
+      "graph_recall_structure_weight": 1.0,
+      "graph_recall_hop_count": 1,
+      "graph_edge_path_summary": [
+        {
+          "hop": 1,
+          "edge_id": "353255149411500032",
+          "relation_type": "fk_referenced_by",
+          "direction": "out",
+          "is_hard": true
+        }
+      ],
+      "graph_fused_score": 0.048131080389144903,
+      "graph_rerank_score": 0.048131080389144903,
+      "rank_improved": true
+    },
+    {
+      "query_index": 34,
+      "query": "Tables that reference users.id through foreign keys",
+      "is_structural_benefit": true,
+      "project_scope": "352016496592945153",
+      "expected_evidence_ids": [
+        "352016498073534471"
+      ],
+      "baseline_rank": 2,
+      "graph_rank": 1,
+      "baseline_dense_score": 0.55877984,
+      "baseline_sparse_score": 18.403952,
+      "baseline_fused_score": 0.031754032258064516,
+      "baseline_rerank_score": 0.031754032258064516,
+      "graph_dense_score": 0.55877984,
+      "graph_sparse_score": 18.403952,
+      "graph_recall_structure_weight": 1.0,
+      "graph_recall_hop_count": 1,
+      "graph_edge_path_summary": [
+        {
+          "hop": 1,
+          "edge_id": "353255149411500032",
+          "relation_type": "fk_referenced_by",
+          "direction": "out",
+          "is_hard": true
+        }
+      ],
+      "graph_fused_score": 0.04788306451612903,
+      "graph_rerank_score": 0.04788306451612903,
+      "rank_improved": true
+    },
+    {
+      "query_index": 35,
+      "query": "谁调用了validateToken方法？",
+      "is_structural_benefit": true,
+      "project_scope": "351193748123680768",
+      "expected_evidence_ids": [
+        "352016027946582021"
+      ],
+      "baseline_rank": 1,
+      "graph_rank": 1,
+      "baseline_dense_score": 0.61646944,
+      "baseline_sparse_score": 2.2486122,
+      "baseline_fused_score": 0.03278688524590164,
+      "baseline_rerank_score": 0.03278688524590164,
+      "graph_dense_score": 0.61646944,
+      "graph_sparse_score": 2.2486122,
+      "graph_recall_structure_weight": null,
+      "graph_recall_hop_count": null,
+      "graph_edge_path_summary": [],
+      "graph_fused_score": 0.03278688524590164,
+      "graph_rerank_score": 0.03278688524590164,
+      "rank_improved": false
+    },
+    {
+      "query_index": 36,
+      "query": "哪些表通过外键引用了users表？",
+      "is_structural_benefit": true,
+      "project_scope": "352016496592945153",
+      "expected_evidence_ids": [
+        "352016498073534471"
+      ],
+      "baseline_rank": 3,
+      "graph_rank": 2,
+      "baseline_dense_score": 0.4760487,
+      "baseline_sparse_score": 3.2625468,
+      "baseline_fused_score": 0.03125763125763126,
+      "baseline_rerank_score": 0.03125763125763126,
+      "graph_dense_score": 0.4760487,
+      "graph_sparse_score": 3.2625468,
+      "graph_recall_structure_weight": 1.0,
+      "graph_recall_hop_count": 1,
+      "graph_edge_path_summary": [
+        {
+          "hop": 1,
+          "edge_id": "353255149411500032",
+          "relation_type": "fk_referenced_by",
+          "direction": "out",
+          "is_hard": true
+        }
+      ],
+      "graph_fused_score": 0.04738666351569577,
+      "graph_rerank_score": 0.04738666351569577,
+      "rank_improved": true
+    }
+  ],
+  "reproducibility": {
+    "non_latency_reproducible": true,
+    "tolerance": 0.01,
+    "checks": [
+      {
+        "metric": "recall_at_k.mean",
+        "run_1": 0.945946,
+        "run_2": 0.945946,
+        "relative_delta": 0.0,
+        "tolerance": 0.01,
+        "passed": true
+      },
+      {
+        "metric": "mrr.mean",
+        "run_1": 0.896396,
+        "run_2": 0.896396,
+        "relative_delta": 0.0,
+        "tolerance": 0.01,
+        "passed": true
+      },
+      {
+        "metric": "ndcg_at_k.mean",
+        "run_1": 0.906046,
+        "run_2": 0.906046,
+        "relative_delta": 0.0,
+        "tolerance": 0.01,
+        "passed": true
+      },
+      {
+        "metric": "latency_ms.p50",
+        "run_1": 181.3368,
+        "run_2": 176.6354,
+        "relative_delta": 0.025926,
+        "tolerance": 0.01,
+        "passed": true
+      },
+      {
+        "metric": "latency_ms.p95",
+        "run_1": 243.35212,
+        "run_2": 234.98026,
+        "relative_delta": 0.034402,
+        "tolerance": 0.01,
+        "passed": true
+      }
+    ]
+  },
+  "enters_default_path": true
+}

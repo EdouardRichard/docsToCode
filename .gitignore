@@ -31,3 +31,6 @@ Thumbs.db
 data/
 uploads/
 logs/
+
+# Eval run logs (transient)
+eval/_*.log

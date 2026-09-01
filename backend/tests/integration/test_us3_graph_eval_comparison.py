@@ -9,6 +9,7 @@ This test MUST FAIL before the eval runner is complete (TDD).
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -138,3 +139,93 @@ class TestThreeGatePass:
         # 0.70 -> 0.75 = 7.14% relative improvement
         assert ssm["mrr_relative_improvement"] == pytest.approx(7.14, abs=0.01)
         assert ssm["ndcg_relative_improvement"] == pytest.approx(7.14, abs=0.01)
+
+
+# ---------------------------------------------------------------------------
+# T048: the real comparison report artifact (produced by
+# eval/run_graph_comparison.py) — measured data, not fabricated metrics.
+# ---------------------------------------------------------------------------
+
+_REPORT_PATH = _REPO_ROOT / "eval" / "graph_enhanced_comparison_report.json"
+
+
+@pytest.fixture(scope="module")
+def real_report():
+    if not _REPORT_PATH.exists():
+        pytest.skip("real report not generated yet; run eval/run_graph_comparison.py")
+    with open(_REPORT_PATH, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+@pytest.fixture(scope="module")
+def report_schema():
+    import sys as _sys
+    _sys.path.insert(0, str(_REPO_ROOT / "backend"))
+    from tests.contract._graph_schema_helper import (
+        common_schema,
+        eval_report_schema,
+        graph_relations_schema,
+        graph_trace_schema,
+        inline_refs,
+    )
+    return inline_refs(
+        eval_report_schema(),
+        common_schema(),
+        graph_relations_schema(),
+        graph_trace_schema(),
+        eval_report_schema(),
+    )
+
+
+class TestRealComparisonReport:
+    """T048: the persisted report MUST be schema-valid and internally consistent."""
+
+    def test_report_conforms_to_contract_schema(self, real_report, report_schema):
+        import jsonschema
+
+        jsonschema.validate(real_report, report_schema)
+
+    def test_report_type_and_gate_structure(self, real_report):
+        assert real_report["report_type"] == "graph_enhanced_comparison"
+        gate = real_report["three_gate_pass"]
+        for key in (
+            "sc001_structural_improvement",
+            "sc002_001_noninferior",
+            "sc013_002_nonstructural_noninferior",
+            "hard_constraints_passed",
+            "all_passed",
+        ):
+            assert isinstance(gate[key], bool)
+        assert real_report["enters_default_path"] == gate["all_passed"]
+
+    def test_per_query_covers_full_dataset(self, real_report):
+        cfg = real_report["config"]
+        per_query = real_report["per_query_comparison"]
+        assert len(per_query) == cfg["num_queries"]
+        structural = [q for q in per_query if q.get("is_structural_benefit")]
+        assert len(structural) == cfg["structural_subset_size"]
+        assert cfg["structural_subset_size"] >= 6
+
+    def test_per_query_carries_graph_path_scores(self, real_report):
+        """FR-023: graph-hit queries carry structure weight/hops/edge path."""
+        graph_hits = [
+            q for q in real_report["per_query_comparison"]
+            if q.get("graph_recall_structure_weight") is not None
+        ]
+        for q in graph_hits:
+            assert q["graph_edge_path_summary"], "graph hit must explain its path"
+            assert 1 <= q["graph_recall_hop_count"] <= 3
+
+    def test_hard_constraints_measured(self, real_report):
+        hc = real_report["hard_constraints"]
+        assert hc["cross_project_leakage_events"] == 0
+        assert hc["schema_validity_rate"] == 1.0
+        assert hc["source_locatability_rate"] == 1.0
+        assert hc["all_passed"] is True
+
+    def test_reproducibility_checked(self, real_report):
+        repro = real_report["reproducibility"]
+        assert repro["tolerance"] == 0.01
+        assert repro["checks"], "reproducibility must be checked against a second run"
+        assert isinstance(repro["non_latency_reproducible"], bool)
+
