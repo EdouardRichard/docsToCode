@@ -31,6 +31,8 @@ class FusedCandidate:
     sparse_score: float | None = None
     dense_rank: int | None = None
     sparse_rank: int | None = None
+    graph_rank: int | None = None
+    graph_structure_weight: float | None = None
     fused_score: float = 0.0
     rerank_score: float | None = None
     final_rank: int = 0
@@ -40,6 +42,7 @@ def rrf_fuse(
     dense_results: list[dict[str, Any]],
     sparse_results: list[dict[str, Any]],
     k: int = 60,
+    graph_results: list[dict[str, Any]] | None = None,
 ) -> list[FusedCandidate]:
     """Fuse Dense and Sparse ranked lists using Reciprocal Rank Fusion.
 
@@ -107,13 +110,33 @@ def rrf_fuse(
         if "sparse" not in cand.source_retrievers:
             cand.source_retrievers.append("sparse")
 
-    # Compute fused score: Σ 1/(k + rank)
+    # Process Graph ranked list (1-based rank, 004 3rd retriever)
+    if graph_results:
+        for rank, result in enumerate(graph_results, start=1):
+            chunk_id = str(result.get("chunk_id", ""))
+            if not chunk_id:
+                continue
+            if chunk_id not in candidates:
+                candidates[chunk_id] = FusedCandidate(
+                    chunk_id=chunk_id,
+                    knowledge_scope_id=str(result.get("knowledge_scope_id", "")),
+                )
+            cand = candidates[chunk_id]
+            cand.graph_rank = int(result.get("graph_rank", rank))
+            if "structure_weight" in result:
+                cand.graph_structure_weight = float(result["structure_weight"])
+            if "graph" not in cand.source_retrievers:
+                cand.source_retrievers.append("graph")
+
+    # Compute fused score: sum 1/(k + rank) over Dense+Sparse+graph
     for cand in candidates.values():
         score = 0.0
         if cand.dense_rank is not None:
             score += 1.0 / (k + cand.dense_rank)
         if cand.sparse_rank is not None:
             score += 1.0 / (k + cand.sparse_rank)
+        if cand.graph_rank is not None:
+            score += 1.0 / (k + cand.graph_rank)
         cand.fused_score = score
 
     # Sort with deterministic tie-breaker:
@@ -124,6 +147,7 @@ def rrf_fuse(
             -c.fused_score,  # descending fused score
             c.dense_rank if c.dense_rank is not None else float("inf"),  # ascending
             c.sparse_rank if c.sparse_rank is not None else float("inf"),  # ascending
+            c.graph_rank if c.graph_rank is not None else float("inf"),  # ascending
             c.chunk_id,  # ascending chunk_id (string comparison)
         )
 

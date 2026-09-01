@@ -96,7 +96,7 @@
   - ① Red: 测试声明 graph_ready 但图未就绪应拒绝可检索、不隐含 dense 应拒绝，当前失败
   - ② Green: 实现能力门控，测试通过
 
-- [ ] T013 fusion/rrf.py extension — graph as 3rd retriever input, rank-only (depends T011)
+- [X] T013 fusion/rrf.py extension — graph as 3rd retriever input, rank-only (depends T011)
   - [路径] backend/src/rag_mcp/fusion/rrf.py | backend/tests/unit/test_rrf_graph_input.py
   - [AC] RRF 融合分数 Σ 1/(k_rrf+rank_r) 覆盖 Dense/Sparse/graph 三路；graph 候选以 graph_rank 并入；结构权重只影响图候选内部排序不作独立融合系数（research §2）；确定性无随机扰动（FR-019）
   - ① Red: 测试三路 RRF 融合分数与图候选 rank 注入，当前失败（仅 Dense/Sparse 两路）
