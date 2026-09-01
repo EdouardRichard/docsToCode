@@ -177,7 +177,7 @@
 
 **Independent Test**: 对声明 graph_ready 的 DDL 版本，运行图增强检索，验证被引用/引用方表证据被召回且标记为硬关系证据、跨项目泄漏=0。
 
-- [ ] T022 [P] [US2] graph/extractors/ddl_fk.py — extract fk_references/fk_referenced_by (reuse parsers/ddl_parser.py)
+- [X] T022 [P] [US2] graph/extractors/ddl_fk.py — extract fk_references/fk_referenced_by (reuse parsers/ddl_parser.py)
   - [路径] backend/src/rag_mcp/graph/extractors/ddl_fk.py | backend/tests/unit/test_ddl_fk.py
   - [AC] 从 DDL Chunk 确定性提取 fk_references/fk_referenced_by 边（表、字段与外键，蓝图 §10.1）；无外键或引用对象不在本项目时只对可确定关系产生硬边（Edge Case）
   - ① Red: 测试用 fixture DDL 断言提取出预期外键边，当前失败
