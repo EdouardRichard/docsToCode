@@ -149,3 +149,87 @@ async def test_isolation_triple_on_edges(db_session, java_scope):
         assert pid == java_scope["project_id"]
         assert iv == 1
         assert pe is not None
+
+class TestIngestPipelineGraphWiring:
+    """T042: the ingestion pipeline itself MUST trigger call-graph extraction.
+
+    Unlike the extractor-level tests above, these drive a real
+    IngestionService.ingest() end-to-end (FR-001: hard relations are
+    extracted *in the ingestion flow*), with a fake embedding provider and an
+    in-memory Qdrant stand-in.
+    """
+
+    @pytest.mark.asyncio
+    async def test_ingest_java_source_writes_graph_edges(self, db_session):
+        from rag_mcp.services.ingestion_service import IngestionService
+        from tests.integration.graph_ingest_helpers import (
+            FakeEmbeddingProvider,
+            MockQdrantStore,
+            setup_graph_scope,
+            upload_source_file,
+        )
+
+        scope_id = generate_id()
+        project_id = generate_id()
+        source_id = generate_id()
+        await setup_graph_scope(db_session, scope_id, project_id)
+        await upload_source_file(
+            db_session, scope_id, source_id, "Calculator.java", _JAVA_SOURCE, "java"
+        )
+        await db_session.commit()
+
+        svc = IngestionService(db_session, FakeEmbeddingProvider(), MockQdrantStore())
+        await svc.ingest(source_id)
+
+        rows = (await db_session.execute(text(
+            "SELECT relation_type, is_hard, knowledge_scope_id, project_id, "
+            "index_version, parse_evidence "
+            "FROM graph_edge WHERE knowledge_scope_id = :k"
+        ), {"k": scope_id})).fetchall()
+        assert rows, "ingest() MUST write graph_edge rows for Java sources (T042)"
+
+        rel_types = {r[0] for r in rows}
+        assert "calls" in rel_types and "called_by" in rel_types
+        for rel_type, is_hard, ksid, pid, iv, pe in rows:
+            assert is_hard is True
+            assert ksid == scope_id
+            assert pid == project_id
+            assert iv == 1, "graph index_version MUST equal the version_number"
+            assert pe.get("extractor") == "java_call_graph"
+
+    @pytest.mark.asyncio
+    async def test_ingest_records_graph_relations_stage(self, db_session):
+        """ProcessingRun.stages MUST include the graph_relations stage (FR-026)."""
+        import json
+
+        from rag_mcp.services.ingestion_service import IngestionService
+        from tests.integration.graph_ingest_helpers import (
+            FakeEmbeddingProvider,
+            MockQdrantStore,
+            setup_graph_scope,
+            upload_source_file,
+        )
+
+        scope_id = generate_id()
+        project_id = generate_id()
+        source_id = generate_id()
+        await setup_graph_scope(db_session, scope_id, project_id)
+        await upload_source_file(
+            db_session, scope_id, source_id, "Calculator.java", _JAVA_SOURCE, "java"
+        )
+        await db_session.commit()
+
+        svc = IngestionService(db_session, FakeEmbeddingProvider(), MockQdrantStore())
+        await svc.ingest(source_id)
+
+        row = (await db_session.execute(text(
+            "SELECT stages FROM processing_runs WHERE source_id = :s "
+            "ORDER BY started_at DESC NULLS LAST LIMIT 1"
+        ), {"s": source_id})).fetchone()
+        assert row is not None
+        stages = row[0]
+        if isinstance(stages, str):
+            stages = json.loads(stages)
+        names = [s.get("stage") for s in stages]
+        assert "graph_relations" in names, f"missing graph_relations stage: {names}"
+

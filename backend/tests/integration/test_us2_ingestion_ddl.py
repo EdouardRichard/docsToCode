@@ -101,3 +101,46 @@ async def test_fk_edges_isolation(db_session, ddl_scope):
         assert row[1] == scope.project_id
         assert row[2] == 1
         assert row[3] is True
+
+class TestIngestPipelineGraphWiring:
+    """T042: the ingestion pipeline itself MUST trigger DDL FK extraction."""
+
+    @pytest.mark.asyncio
+    async def test_ingest_ddl_source_writes_fk_edges(self, db_session):
+        from rag_mcp.services.ingestion_service import IngestionService
+        from tests.integration.graph_ingest_helpers import (
+            FakeEmbeddingProvider,
+            MockQdrantStore,
+            setup_graph_scope,
+            upload_source_file,
+        )
+
+        scope_id = generate_id()
+        project_id = generate_id()
+        source_id = generate_id()
+        await setup_graph_scope(db_session, scope_id, project_id)
+        await upload_source_file(
+            db_session, scope_id, source_id, "schema.sql", _DDL_SOURCE, "ddl"
+        )
+        await db_session.commit()
+
+        svc = IngestionService(db_session, FakeEmbeddingProvider(), MockQdrantStore())
+        await svc.ingest(source_id)
+
+        rows = (await db_session.execute(text(
+            "SELECT relation_type, is_hard, knowledge_scope_id, project_id, "
+            "index_version, parse_evidence "
+            "FROM graph_edge WHERE knowledge_scope_id = :k"
+        ), {"k": scope_id})).fetchall()
+        assert rows, "ingest() MUST write graph_edge rows for DDL sources (T042)"
+
+        rel_types = {r[0] for r in rows}
+        assert "fk_references" in rel_types
+        assert "fk_referenced_by" in rel_types
+        for rel_type, is_hard, ksid, pid, iv, pe in rows:
+            assert is_hard is True
+            assert ksid == scope_id
+            assert pid == project_id
+            assert iv == 1
+            assert pe.get("extractor") == "ddl_fk"
+

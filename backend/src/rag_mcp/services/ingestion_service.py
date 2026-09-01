@@ -109,10 +109,27 @@ class IngestionService:
         session: AsyncSession,
         embedding_provider: EmbeddingProvider,
         qdrant_store: QdrantStore,
+        soft_relation_llm: Any | None = None,
+        soft_relation_model_and_version: str = "offline-llm-v1",
     ) -> None:
+        """Initialise the ingestion service.
+
+        Args:
+            session: Async SQLAlchemy session.
+            embedding_provider: Dense embedding provider.
+            qdrant_store: Qdrant vector store.
+            soft_relation_llm: Optional offline LLM callable for soft-relation
+                inference (004, FR-003). Signature: llm(chunks) -> sequence of
+                (source_chunk_id, target_chunk_id, confidence,
+                supporting_evidence_ids). When None, soft inference is skipped.
+            soft_relation_model_and_version: Provenance metadata recorded on
+                inferred soft relations (metadata field 3).
+        """
         self._session = session
         self._embedding_provider = embedding_provider
         self._qdrant_store = qdrant_store
+        self._soft_relation_llm = soft_relation_llm
+        self._soft_relation_model_and_version = soft_relation_model_and_version
         self._settings = get_settings()
 
     # ------------------------------------------------------------------
@@ -374,6 +391,26 @@ class IngestionService:
                 "Upserted %d hybrid points to Qdrant collection %s",
                 len(chunk_dicts), collection_name,
             )
+
+            # 11b. Extract graph relations (004, FR-001/FR-003): deterministic
+            # hard edges from Java/DDL chunks + optional offline soft-relation
+            # inference. Runs BEFORE publish so graph relations are ready when
+            # the version becomes searchable (FR-013 readiness prerequisite).
+            stage_start = datetime.now(timezone.utc)
+            graph_details = await self._extract_graph_relations(
+                source=source,
+                redacted_text=redacted_text,
+                chunk_dicts=chunk_dicts,
+                scope_id=scope_id,
+                version_number=version_number,
+            )
+            stages.append({
+                "stage": "graph_relations",
+                "status": "completed",
+                "started_at": stage_start.isoformat(),
+                "completed_at": datetime.now(timezone.utc).isoformat(),
+                "details": graph_details,
+            })
 
             # 12. Publish the new version — only after PG + Qdrant succeed
             #   FR-009: supersede old version AFTER new version is published
@@ -638,3 +675,135 @@ class IngestionService:
         await self._session.execute(
             sa_delete(Chunk).where(Chunk.version_id == version_id)
         )
+
+    # ------------------------------------------------------------------
+    # 004: graph relation extraction at ingest (FR-001/FR-003)
+    # ------------------------------------------------------------------
+
+    async def _resolve_project_id(self, scope_id: int) -> int | None:
+        """Resolve the owning project_id of a knowledge scope, if any.
+
+        Graph edges require the full isolation triple
+        (knowledge_scope_id, project_id, index_version). Scopes without a
+        project (e.g. reserved public scopes) skip graph extraction.
+        """
+        from rag_mcp.models.project import Project
+
+        result = await self._session.execute(
+            select(Project.project_id).where(
+                Project.knowledge_scope_id == scope_id
+            ).limit(1)
+        )
+        return result.scalar_one_or_none()
+
+    async def _extract_graph_relations(
+        self,
+        source: KnowledgeSource,
+        redacted_text: str,
+        chunk_dicts: list[dict[str, Any]],
+        scope_id: int,
+        version_number: int,
+    ) -> dict[str, Any]:
+        """Extract graph relations for the ingested source (004, FR-001/FR-003).
+
+        Deterministic hard-relation extraction runs inside the ingestion flow:
+        Java sources contribute calls/called_by edges (JavaCallGraphExtractor),
+        DDL sources contribute fk_references/fk_referenced_by edges
+        (DdlFkExtractor). When an offline soft-relation LLM is configured,
+        SoftRelationInference materialises inferred relations with the five
+        mandatory metadata.
+
+        Degradation (Constitution III): AST/parse failures report a reason and
+        produce zero edges rather than fabricating relations; they do not fail
+        the ingestion.
+        """
+        from rag_mcp.graph.store.base import GraphScope
+        from rag_mcp.graph.store.postgres_graph_store import PostgresGraphStore
+
+        details: dict[str, Any] = {
+            "format": source.format,
+            "hard_edges_written": 0,
+            "soft_relations_written": 0,
+        }
+
+        project_id = await self._resolve_project_id(scope_id)
+        if project_id is None:
+            details["skipped"] = "no_project_for_scope"
+            logger.info(
+                "Graph extraction skipped for scope %s: no owning project",
+                scope_id,
+            )
+            return details
+
+        scope = GraphScope(
+            knowledge_scope_id=scope_id,
+            project_id=project_id,
+            index_version=version_number,
+        )
+        store = PostgresGraphStore(self._session)
+
+        # 1) Deterministic hard-relation extraction (FR-001)
+        if source.format in ("java", "ddl"):
+            try:
+                if source.format == "java":
+                    from rag_mcp.graph.extractors.java_call_graph import (
+                        JavaCallGraphExtractor,
+                    )
+                    extractor = JavaCallGraphExtractor()
+                else:
+                    from rag_mcp.graph.extractors.ddl_fk import DdlFkExtractor
+                    extractor = DdlFkExtractor()
+
+                edges = extractor.extract(redacted_text, chunk_dicts, scope)
+                # Stamp the ingested version number onto every edge so the
+                # isolation triple (scope, project, index_version) matches the
+                # published version it belongs to.
+                for edge in edges:
+                    edge["version"] = version_number
+                written = await store.write_edges(edges, scope)
+                details["hard_edges_written"] = written
+                logger.info(
+                    "Graph hard relations extracted: source=%s format=%s edges=%d",
+                    source.source_id, source.format, written,
+                )
+            except Exception as exc:  # noqa: BLE001 - degrade, never fabricate
+                details["hard_degraded_reason"] = f"{type(exc).__name__}: {exc}"
+                logger.warning(
+                    "Graph hard-relation extraction degraded for source %s: %s",
+                    source.source_id, exc,
+                )
+
+        # 2) Offline soft-relation inference (FR-003; only with a configured LLM)
+        if self._soft_relation_llm is not None:
+            try:
+                from rag_mcp.graph.soft_relation_inference import (
+                    SoftRelationInference,
+                )
+
+                inference = SoftRelationInference()
+                relations = inference.infer(
+                    chunks=chunk_dicts,
+                    scope=scope,
+                    llm=self._soft_relation_llm,
+                    model_and_version=self._soft_relation_model_and_version,
+                    inference_source="llm-offline",
+                    version=version_number,
+                )
+                for relation in relations:
+                    self._session.add(relation)
+                await self._session.flush()
+                details["soft_relations_written"] = len(relations)
+                logger.info(
+                    "Soft relations inferred at ingest: source=%s count=%d",
+                    source.source_id, len(relations),
+                )
+            except Exception as exc:  # noqa: BLE001 - degrade, never fabricate
+                details["soft_degraded_reason"] = f"{type(exc).__name__}: {exc}"
+                logger.warning(
+                    "Soft-relation inference degraded for source %s: %s",
+                    source.source_id, exc,
+                )
+        else:
+            details["soft_skipped"] = "no_llm_configured"
+
+        return details

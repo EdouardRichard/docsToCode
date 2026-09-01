@@ -126,3 +126,90 @@ async def test_low_confidence_not_active(db_session, soft_scope):
     )
     for rel in relations:
         assert rel.lifecycle_state != "active", "Low confidence must not be active"
+
+_JAVA_CALCULATOR_SOURCE = "package com.example;\n\npublic class Calculator {\n    public int compute(int x) {\n        return square(add(x, 1));\n    }\n    public int add(int a, int b) {\n        return a + b;\n    }\n    public int square(int x) {\n        return x * x;\n    }\n}\n"
+
+
+class TestIngestPipelineSoftWiring:
+    """T042: ingestion MUST run offline soft-relation inference when an LLM is
+    configured, persisting the five mandatory metadata (FR-003)."""
+
+    @pytest.mark.asyncio
+    async def test_ingest_with_llm_writes_soft_relations(self, db_session):
+        from rag_mcp.services.ingestion_service import IngestionService
+        from tests.integration.graph_ingest_helpers import (
+            FakeEmbeddingProvider,
+            MockQdrantStore,
+            setup_graph_scope,
+            upload_source_file,
+        )
+
+        scope_id = generate_id()
+        project_id = generate_id()
+        source_id = generate_id()
+        await setup_graph_scope(db_session, scope_id, project_id)
+        await upload_source_file(
+            db_session, scope_id, source_id, "Calculator.java",
+            _JAVA_CALCULATOR_SOURCE, "java",
+        )
+        await db_session.commit()
+
+        def fake_llm(chunks):
+            ids = [c["chunk_id"] for c in chunks]
+            if len(ids) < 2:
+                return []
+            return [(ids[0], ids[1], 0.85, [ids[0]])]
+
+        svc = IngestionService(
+            db_session, FakeEmbeddingProvider(), MockQdrantStore(),
+            soft_relation_llm=fake_llm,
+        )
+        await svc.ingest(source_id)
+
+        rows = (await db_session.execute(text(
+            "SELECT relation_type, is_hard, lifecycle_state, confidence, "
+            "model_and_version, inference_source, supporting_evidence_ids, "
+            "knowledge_scope_id, project_id, index_version "
+            "FROM soft_relation WHERE knowledge_scope_id = :k"
+        ), {"k": scope_id})).fetchall()
+        assert rows, "ingest() MUST write soft_relation rows when LLM configured (T042)"
+        for rt, is_hard, state, conf, mv, ins, ev, ksid, pid, iv in rows:
+            assert rt == "inferred"
+            assert is_hard is False
+            assert state in ("inferred", "active")
+            assert mv
+            assert ins
+            assert ev is not None
+            assert ksid == scope_id
+            assert pid == project_id
+            assert iv == 1
+
+    @pytest.mark.asyncio
+    async def test_ingest_without_llm_skips_soft_relations(self, db_session):
+        """No configured LLM -> no soft rows and ingestion still succeeds."""
+        from rag_mcp.services.ingestion_service import IngestionService
+        from tests.integration.graph_ingest_helpers import (
+            FakeEmbeddingProvider,
+            MockQdrantStore,
+            setup_graph_scope,
+            upload_source_file,
+        )
+
+        scope_id = generate_id()
+        project_id = generate_id()
+        source_id = generate_id()
+        await setup_graph_scope(db_session, scope_id, project_id)
+        await upload_source_file(
+            db_session, scope_id, source_id, "Calculator.java",
+            _JAVA_CALCULATOR_SOURCE, "java",
+        )
+        await db_session.commit()
+
+        svc = IngestionService(db_session, FakeEmbeddingProvider(), MockQdrantStore())
+        await svc.ingest(source_id)
+
+        count = (await db_session.execute(text(
+            "SELECT count(*) FROM soft_relation WHERE knowledge_scope_id = :k"
+        ), {"k": scope_id})).scalar()
+        assert count == 0
+
