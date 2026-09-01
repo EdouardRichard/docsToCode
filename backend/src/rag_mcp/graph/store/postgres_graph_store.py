@@ -7,6 +7,7 @@ guardrail truncation (total budget, not per-hop, FR-017), scope isolation
 
 from __future__ import annotations
 
+import json
 import logging
 from typing import Any
 
@@ -123,13 +124,16 @@ class PostgresGraphStore(GraphStore):
         for edge_data in edges:
             edge_id = edge_data.get("edge_id") or generate_id()
             try:
+                pe = edge_data.get("parse_evidence", {})
+                if isinstance(pe, dict):
+                    pe = json.dumps(pe)
                 await self._session.execute(text(
                     "INSERT INTO graph_edge (edge_id, knowledge_scope_id, "
                     "project_id, index_version, source_chunk_id, "
                     "target_chunk_id, relation_type, direction, is_hard, "
                     "version, parse_evidence) "
                     "VALUES (:eid, :ksid, :pid, :iv, :src, :tgt, :rt, "
-                    ":dir, true, :v, :pe) ON CONFLICT (edge_id) DO NOTHING"
+                    ":dir, true, :v, CAST(:pe AS jsonb)) ON CONFLICT DO NOTHING"
                 ), {
                     "eid": edge_id,
                     "ksid": scope.knowledge_scope_id,
@@ -140,7 +144,7 @@ class PostgresGraphStore(GraphStore):
                     "rt": edge_data["relation_type"],
                     "dir": edge_data.get("direction", "out"),
                     "v": edge_data.get("version", 1),
-                    "pe": edge_data.get("parse_evidence", {}),
+                    "pe": pe,
                 })
                 count += 1
             except Exception as exc:

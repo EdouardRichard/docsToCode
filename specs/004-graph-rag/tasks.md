@@ -155,7 +155,7 @@
   - ① Red: 测试用 fixture Java 源断言提取出预期 calls/called_by 边与 parse_evidence，当前失败
   - ② Green: 复用 java_parser AST 实现确定性提取，测试通过
 
-- [ ] T020 [US1] services/ingestion_service.py extension — invoke java_call_graph extractor at ingest (depends T019, T008, T010)
+- [X] T020 [US1] services/ingestion_service.py extension — invoke java_call_graph extractor at ingest (depends T019, T008, T010)
   - [路径] backend/src/rag_mcp/services/ingestion_service.py | backend/tests/integration/test_us1_ingestion_java.py
   - [AC] Java 知识源入库时触发调用图提取并写 graph_edge；硬边带隔离三元组；AST 降级时记录原因（宪法 III）
   - ① Red: 集成测试断言入库后 graph_edge 含预期硬边且隔离字段齐全，当前失败
