@@ -62,6 +62,33 @@ class HybridRetrievalConfig:
 
 
 @dataclass(frozen=True)
+class GraphConfig:
+    """Graph-enhanced retrieval guardrails (004, research §2/§3, FR-017).
+
+    - hop_default=2 / hop_max=3 (spec clarification Q1)
+    - candidate_budget=10 (single total budget, not per-hop)
+    - candidate_budget_max=20 (upper bound)
+    - graph_sub_timeout_ms=3_000 (graph expansion sub-path guard)
+    - total_timeout_ms=30_000 (whole-call guardrail, blueprint §19)
+    - direction_default='bidirectional' (calls+called_by, fk_references+fk_referenced_by)
+    - structure_weight_hard=1.0, soft=0.3, hop_decay=0.5 (research §2)
+    - soft_confidence_threshold=0.6 (research §4, active gating)
+    """
+
+    hop_default: int = 2
+    hop_max: int = 3
+    candidate_budget: int = 10
+    candidate_budget_max: int = 20
+    graph_sub_timeout_ms: int = 3_000
+    total_timeout_ms: int = 30_000
+    direction_default: str = "bidirectional"
+    structure_weight_hard: float = 1.0
+    structure_weight_soft: float = 0.3
+    structure_weight_hop_decay: float = 0.5
+    soft_confidence_threshold: float = 0.6
+
+
+@dataclass(frozen=True)
 class IngestionConfig:
     """Ingestion pipeline parameters."""
 
@@ -128,6 +155,58 @@ class Settings:
     retrieval: RetrievalConfig = field(default_factory=RetrievalConfig)
     hybrid_retrieval: HybridRetrievalConfig = field(default_factory=HybridRetrievalConfig)
     ingestion: IngestionConfig = field(default_factory=IngestionConfig)
+
+    # 004: Graph-enhanced retrieval (environment-overridable)
+    graph_hop_default: int = field(
+        default_factory=lambda: int(os.getenv("GRAPH_HOP_DEFAULT", "2"))
+    )
+    graph_hop_max: int = field(
+        default_factory=lambda: int(os.getenv("GRAPH_HOP_MAX", "3"))
+    )
+    graph_candidate_budget: int = field(
+        default_factory=lambda: int(os.getenv("GRAPH_CANDIDATE_BUDGET", "10"))
+    )
+    graph_candidate_budget_max: int = field(
+        default_factory=lambda: int(os.getenv("GRAPH_CANDIDATE_BUDGET_MAX", "20"))
+    )
+    graph_sub_timeout_ms: int = field(
+        default_factory=lambda: int(os.getenv("GRAPH_SUB_TIMEOUT_MS", "3000"))
+    )
+    graph_total_timeout_ms: int = field(
+        default_factory=lambda: int(os.getenv("GRAPH_TOTAL_TIMEOUT_MS", "30000"))
+    )
+    graph_direction_default: str = field(
+        default_factory=lambda: os.getenv("GRAPH_DIRECTION_DEFAULT", "bidirectional")
+    )
+    graph_structure_weight_hard: float = field(
+        default_factory=lambda: float(os.getenv("GRAPH_STRUCTURE_WEIGHT_HARD", "1.0"))
+    )
+    graph_structure_weight_soft: float = field(
+        default_factory=lambda: float(os.getenv("GRAPH_STRUCTURE_WEIGHT_SOFT", "0.3"))
+    )
+    graph_structure_weight_hop_decay: float = field(
+        default_factory=lambda: float(os.getenv("GRAPH_STRUCTURE_WEIGHT_HOP_DECAY", "0.5"))
+    )
+    graph_soft_confidence_threshold: float = field(
+        default_factory=lambda: float(os.getenv("GRAPH_SOFT_CONFIDENCE_THRESHOLD", "0.6"))
+    )
+
+    @property
+    def graph(self) -> "GraphConfig":
+        """Assemble a frozen GraphConfig from environment-overridable fields."""
+        return GraphConfig(
+            hop_default=self.graph_hop_default,
+            hop_max=self.graph_hop_max,
+            candidate_budget=self.graph_candidate_budget,
+            candidate_budget_max=self.graph_candidate_budget_max,
+            graph_sub_timeout_ms=self.graph_sub_timeout_ms,
+            total_timeout_ms=self.graph_total_timeout_ms,
+            direction_default=self.graph_direction_default,
+            structure_weight_hard=self.graph_structure_weight_hard,
+            structure_weight_soft=self.graph_structure_weight_soft,
+            structure_weight_hop_decay=self.graph_structure_weight_hop_decay,
+            soft_confidence_threshold=self.graph_soft_confidence_threshold,
+        )
 
 
 def get_settings() -> Settings:
