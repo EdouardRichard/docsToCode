@@ -211,7 +211,7 @@
   - ① Red: 测试用样例结果断言报告字段与三段判定逻辑，当前失败
   - ② Green: 实现图增强评测 runner，测试通过
 
-- [ ] T026 [US3] Extend eval dataset with ≥6 structural-benefit queries (≥1 Chinese)
+- [X] T026 [US3] Extend eval dataset with ≥6 structural-benefit queries (≥1 Chinese)
   - [路径] eval/eval_dataset.json | eval/README.md
   - [AC] 新增 ≥6 条结构性受益查询（Java 调用链如 validateToken 调用者/被调用者、DDL 外键链路如引用 users 的表、≥1 中文等价）；遵循 001 AI 生成+人工审核+JSON 约定；原既有查询保留（FR-021）
   - ① Red: 测试断言新增条数≥6、含中文、字段合法、原有条数不变，当前失败

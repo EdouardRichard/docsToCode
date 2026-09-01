@@ -132,6 +132,11 @@ class TestFormatExpansionQueries:
         assert len(new) >= 12, f"Expected >= 12 new entries, got {len(new)}"
         for i, e in enumerate(new):
             assert "format" in e, f"New entry {i + 18} missing format field"
+            # 004 structural queries may reuse original formats (java/ddl) for
+            # graph call-chain / FK-chain questions (T026); exempt them from
+            # the 003-new-format restriction.
+            if e.get("is_structural_benefit") is True:
+                continue
             assert e["format"] in _NEW_FORMATS, (
                 f"New entry {i + 18} has unexpected format: {e['format']}"
             )

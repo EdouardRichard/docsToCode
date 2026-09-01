@@ -280,5 +280,82 @@
       "352016603132461061"
     ],
     "format": "pdf"
+  },
+  {
+    "query": "Who calls com.example.service.UserService#validateToken?",
+    "project_scope": [
+      "351193748123680768"
+    ],
+    "expected_evidence_ids": [
+      "352016027946582021"
+    ],
+    "format": "java",
+    "is_structural_benefit": true
+  },
+  {
+    "query": "Which methods are called by com.example.service.UserService#findById?",
+    "project_scope": [
+      "351193748123680768"
+    ],
+    "expected_evidence_ids": [
+      "352016027946582019"
+    ],
+    "format": "java",
+    "is_structural_benefit": true
+  },
+  {
+    "query": "Show all callers of the validateToken method",
+    "project_scope": [
+      "351193748123680768"
+    ],
+    "expected_evidence_ids": [
+      "352016027946582021"
+    ],
+    "format": "java",
+    "is_structural_benefit": true
+  },
+  {
+    "query": "Which tables have foreign keys referencing the users table?",
+    "project_scope": [
+      "352016598489366529"
+    ],
+    "expected_evidence_ids": [
+      "352016027946582030"
+    ],
+    "format": "ddl",
+    "is_structural_benefit": true
+  },
+  {
+    "query": "Tables that reference users.id through foreign keys",
+    "project_scope": [
+      "352016598489366529"
+    ],
+    "expected_evidence_ids": [
+      "352016027946582030"
+    ],
+    "format": "ddl",
+    "is_structural_benefit": true
+  },
+  {
+    "query": "谁调用了validateToken方法？",
+    "project_scope": [
+      "351193748123680768"
+    ],
+    "expected_evidence_ids": [
+      "352016027946582021"
+    ],
+    "format": "java",
+    "is_structural_benefit": true
+  },
+  {
+    "query": "哪些表通过外键引用了users表？",
+    "project_scope": [
+      "352016598489366529"
+    ],
+    "expected_evidence_ids": [
+      "352016027946582030"
+    ],
+    "format": "ddl",
+    "is_structural_benefit": true
   }
 ]
