@@ -195,6 +195,41 @@ class PostgresGraphStore(GraphStore):
         await self.mark_graph_unretrievable(scope)
         await self.delete_graph_relations(scope)
 
+    async def rebuild_graph_edges(
+        self,
+        source_code: str,
+        chunks: list[dict[str, Any]],
+        scope: GraphScope,
+        format: str = "java",
+    ) -> int:
+        """Rebuild all graph derived data from source + version (FR-016, sec 8.4).
+
+        Deletes existing edges for the scope, re-extracts from source using
+        the appropriate deterministic extractor, and writes new edges.
+        User-triggered, not auto batch migration (FR-027).
+        """
+        # Delete existing edges
+        await self.delete_graph_relations(scope)
+
+        # Select extractor by format
+        if format == "java":
+            from rag_mcp.graph.extractors.java_call_graph import JavaCallGraphExtractor
+            extractor = JavaCallGraphExtractor()
+        elif format == "ddl":
+            from rag_mcp.graph.extractors.ddl_fk import DdlFkExtractor
+            extractor = DdlFkExtractor()
+        else:
+            logger.warning("No graph extractor for format %s; skipping rebuild", format)
+            return 0
+
+        edges = extractor.extract(source_code, chunks, scope)
+        count = await self.write_edges(edges, scope)
+        logger.info(
+            "Rebuilt %d graph edges for scope %d (format=%s)",
+            count, scope.knowledge_scope_id, format,
+        )
+        return count
+
     def _forward_edges_cte(self, rt_filter: str) -> str:
         return (
             "SELECT source_chunk_id AS from_chunk, target_chunk_id AS to_chunk, "

@@ -274,7 +274,7 @@
   - ① Red: 测试断言跨项目隔离与清空顺序，当前失败
   - ② Green: 实现隔离与清空策略，测试通过
 
-- [ ] T033 [US5] graph rebuild — rebuild all graph derived data from source + version (depends T019, T022, T028)
+- [X] T033 [US5] graph rebuild — rebuild all graph derived data from source + version (depends T019, T022, T028)
   - [路径] backend/src/rag_mcp/graph/store/postgres_graph_store.py（rebuild 方法）| backend/tests/integration/test_us5_rebuild.py
   - [AC] 从原始 Java/DDL 知识源+版本信息经确定性解析重建全部 graph_edge；软关系从原始源+同 model_and_version 重推断重建（FR-016，蓝图 §8.4）；已有混合版本经用户触发重建获 graph_ready、不自动批量迁移（FR-027）
   - ① Red: 测试删除图数据后重建结果与原一致，当前失败
