@@ -51,6 +51,12 @@ class KnowledgeVersion(Base):
         server_default=text("'draft'"),
         comment="'draft', 'published', or 'superseded'",
     )
+    # 004: graph_ready capability flag (migration 0044, FR-013/FR-014)
+    graph_ready: Mapped[bool] = mapped_column(
+        nullable=False,
+        server_default=text("false"),
+        comment="Graph relation capability ready (004, FR-013/FR-014)",
+    )
     published_at: Mapped[str | None] = mapped_column(
         TIMESTAMP(timezone=True), nullable=True
     )

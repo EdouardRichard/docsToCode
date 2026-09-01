@@ -576,6 +576,31 @@ class RetrievalService:
 
         return gaps
 
+    async def _has_graph_ready_versions(self, scope_ids: list[int]) -> bool:
+        """Check if any published version in the given scopes has graph_ready.
+
+        FR-013/FR-014: only graph_ready versions participate in graph expansion.
+        """
+        result = await self._session.execute(
+            select(KnowledgeVersion.version_id).where(
+                KnowledgeVersion.knowledge_scope_id.in_(scope_ids),
+                KnowledgeVersion.status == "published",
+                KnowledgeVersion.graph_ready == True,  # noqa: E712
+            ).limit(1)
+        )
+        return result.scalar_one_or_none() is not None
+
+    async def _has_graph_edges(self, scope_ids: list[int]) -> bool:
+        """Check if graph_edge records exist for the given scopes (FR-013)."""
+        from sqlalchemy import text as sa_text
+        result = await self._session.execute(
+            sa_text(
+                "SELECT 1 FROM graph_edge WHERE knowledge_scope_id = ANY(:sids) LIMIT 1"
+            ),
+            {"sids": list(scope_ids)},
+        )
+        return result.scalar_one_or_none() is not None
+
     async def _has_lexical_ready_versions(self, scope_ids: list[int]) -> bool:
         """Check if any published version in the given scopes has lexical_ready.
 

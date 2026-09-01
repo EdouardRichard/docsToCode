@@ -205,7 +205,7 @@
 
 **Independent Test**: 固定评测集运行图增强，产出 eval-graph-comparison-report，验证 SC-001/SC-002/SC-013 + 硬性指标 + SC-007 可重复性。
 
-- [ ] T025 [US3] eval runner extension — graph-enhanced comparison report + three_gate_pass (depends T013, T011)
+- [X] T025 [US3] eval runner extension — graph-enhanced comparison report + three_gate_pass (depends T013, T011)
   - [路径] eval/graph_comparison_runner.py | backend/tests/unit/test_graph_eval_runner.py
   - [AC] 复用 002 评测 runner，扩展为 graph_enhanced_comparison 报告：config 含图护栏、three_gate_pass 三段判定、per_query 含 graph_rank/structure_weight/hop_count、reproducibility tolerance=0.01；符合 eval-graph-comparison-report.schema.json
   - ① Red: 测试用样例结果断言报告字段与三段判定逻辑，当前失败
@@ -262,7 +262,7 @@
 
 **Independent Test**: 发布 graph_ready 版本，验证就绪才可检索、按作用域隔离、清空后停止检索、可从原始源重建。
 
-- [ ] T031 [US5] graph/capabilities.py enforcement in retrieval path — only graph_ready versions enter graph expansion (depends T012, T013)
+- [X] T031 [US5] graph/capabilities.py enforcement in retrieval path — only graph_ready versions enter graph expansion (depends T012, T013)
   - [路径] backend/src/rag_mcp/graph/capabilities.py | backend/tests/integration/test_us5_capability_enforcement.py
   - [AC] 查询规划只调用已发布版本明确声明的能力；未声明 graph_ready 的版本不参与图扩展但继续混合检索（FR-014）；graph_ready 隐含 dense+lexical
   - ① Red: 测试断言未声明 graph_ready 版本不走图扩展路径、声明版才走，当前失败
