@@ -29,7 +29,27 @@ class GraphTraceRecorder:
         self._timings = dict(timings)
 
     def record_graph_candidates(self, candidates):
-        self._graph_candidates = [dict(c) for c in candidates]
+        """Record graph candidates, normalising IDs to schema string form.
+
+        graph-expansion-trace.schema.json requires ChunkId/KnowledgeScopeId/
+        EdgeId as numeric strings; PG returns bigints, so normalise here at
+        the single recording point.
+        """
+        normalised = []
+        for cand in candidates:
+            c = dict(cand)
+            for key in ("chunk_id", "knowledge_scope_id", "start_chunk_id"):
+                if c.get(key) is not None:
+                    c[key] = str(c[key])
+            path = []
+            for step in c.get("edge_path") or []:
+                s = dict(step)
+                if s.get("edge_id") is not None:
+                    s["edge_id"] = str(s["edge_id"])
+                path.append(s)
+            c["edge_path"] = path
+            normalised.append(c)
+        self._graph_candidates = normalised
 
     def record_fused_candidates(self, candidates):
         self._fused_candidates = [dict(c) for c in candidates]
@@ -67,8 +87,9 @@ class GraphTraceRecorder:
         return trace
 
     async def persist_paths(self, session, request_id_int, scope):
+        import json
+
         from sqlalchemy import text
-        from rag_mcp.utils.snowflake import generate_id
         count = 0
         for cand in self._graph_candidates:
             eid = cand.get('evidence_id')
@@ -79,14 +100,15 @@ class GraphTraceRecorder:
                     'INSERT INTO graph_expansion_path (request_id, evidence_id, '
                     'chunk_id, start_chunk_id, edge_path, hop_count, '
                     'structure_weight, graph_rank) '
-                    'VALUES (:rid, :eid, :cid, :scid, :ep, :hc, :sw, :gr) '
+                    'VALUES (:rid, :eid, :cid, :scid, CAST(:ep AS jsonb), '
+                    ':hc, :sw, :gr) '
                     'ON CONFLICT DO NOTHING'
                 ), {
                     'rid': request_id_int,
                     'eid': int(eid),
                     'cid': int(cand['chunk_id']),
                     'scid': int(cand['start_chunk_id']),
-                    'ep': cand.get('edge_path', []),
+                    'ep': json.dumps(cand.get('edge_path', [])),
                     'hc': cand.get('hop_count', 1),
                     'sw': float(cand.get('structure_weight', 1.0)),
                     'gr': cand.get('graph_rank', 0),

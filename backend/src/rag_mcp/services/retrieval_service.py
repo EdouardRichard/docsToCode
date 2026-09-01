@@ -159,8 +159,10 @@ class RetrievalService:
                 query, query_vector, resolved_ids, top_k * 2,
             )
             failed_paths: list[str] = []
+            graph_trace_data: dict | None = None
             if hybrid_result is not None:
-                raw_results, subpath_timings, failed_paths, graph_used = hybrid_result
+                (raw_results, subpath_timings, failed_paths,
+                 graph_used, graph_trace_data) = hybrid_result
                 retrieval_mode = "graph_enhanced" if graph_used else "hybrid"
             else:
                 # Dense-only path (001 behavior, backward compat)
@@ -212,6 +214,7 @@ class RetrievalService:
             # 11. Record RetrievalRun audit trail
             duration_ms = int((time.monotonic() - start_time) * 1000)
             evidence_ref_ids = [e["evidence_id"] for e in evidence_items]
+            run_id = generate_id()
             await self._record_retrieval_run(
                 query=query,
                 project_scopes=project_scopes,
@@ -221,7 +224,24 @@ class RetrievalService:
                 retrieval_mode=retrieval_mode,
                 subpath_timings=subpath_timings,
                 evidence_ref_ids=evidence_ref_ids,
+                run_id=run_id,
             )
+
+            # 11b. Runtime graph-expansion trace ledger (004, T041/T045,
+            # FR-026, DM-1): recorded only when the graph path was attempted.
+            # Internal ledger — never part of the external MCP response
+            # (FR-011, Constitution VII).
+            if graph_trace_data is not None:
+                await self._record_graph_trace(
+                    request_id=request_id,
+                    run_id=run_id,
+                    scope_ids=resolved_ids,
+                    subpath_timings=subpath_timings,
+                    failed_paths=failed_paths,
+                    completion_status=completion_status,
+                    evidence_items=evidence_items,
+                    graph_trace_data=graph_trace_data,
+                )
 
             # 12. Assemble response
             response: dict[str, Any] = {
@@ -602,6 +622,60 @@ class RetrievalService:
         )
         return result.scalar_one_or_none() is not None
 
+    async def _record_graph_trace(
+        self,
+        request_id: str,
+        run_id: int,
+        scope_ids: list[int],
+        subpath_timings: dict | None,
+        failed_paths: list[str],
+        completion_status: str,
+        evidence_items: list[dict[str, Any]],
+        graph_trace_data: dict[str, Any],
+    ) -> None:
+        """Finalise and persist the runtime graph-expansion trace (004, FR-026).
+
+        Builds the schema-conformant trace dict via GraphTraceRecorder,
+        backfills evidence_id on surviving candidates and bridges them to
+        graph_expansion_path rows keyed by the RetrievalRun run_id (DM-1).
+        Trace failures never break the search response.
+        """
+        try:
+            from rag_mcp.graph.trace_recorder import GraphTraceRecorder
+
+            gcfg = self._settings.graph
+            recorder = GraphTraceRecorder(
+                request_id,
+                [str(s) for s in scope_ids],
+                {
+                    "hop_default": gcfg.hop_default,
+                    "hop_max": gcfg.hop_max,
+                    "candidate_budget": gcfg.candidate_budget,
+                    "graph_sub_timeout_ms": gcfg.graph_sub_timeout_ms,
+                    "total_timeout_ms": gcfg.total_timeout_ms,
+                    "direction_default": gcfg.direction_default,
+                },
+            )
+            if subpath_timings:
+                recorder.record_timings(subpath_timings)
+            recorder.record_graph_candidates(graph_trace_data["graph_candidates"])
+            recorder.record_fused_candidates(graph_trace_data["fused_candidates"])
+            for fp in failed_paths:
+                recorder.record_failed_path(fp)
+            recorder.set_completion_status(completion_status)
+            evidence_ids = [e["evidence_id"] for e in evidence_items]
+            recorder.set_evidence_ref_ids(evidence_ids)
+            # DM-1 backfill: evidence_id equals the surviving chunk_id.
+            recorder.backfill_evidence_ids({eid: eid for eid in evidence_ids})
+
+            trace = recorder.to_trace_dict()
+            self._last_graph_trace = trace
+            logger.debug("Graph expansion trace: %s", trace)
+
+            await recorder.persist_paths(self._session, run_id, None)
+        except Exception:  # noqa: BLE001 - tracing must never break search
+            logger.error("Failed to record graph expansion trace", exc_info=True)
+
     async def _graph_scope_triple(self, scope_id: int):
         """Resolve the GraphScope triple for a scope's graph-eligible version.
 
@@ -825,6 +899,12 @@ class RetrievalService:
         graph_results: list[dict[str, Any]] = []
         graph_elapsed = 0.0
         graph_used = False
+        # Trace payload assembled whenever the graph path is attempted (T045);
+        # stays None when the switch is off so the default path is untouched.
+        graph_trace_data: dict[str, Any] | None = (
+            {"graph_candidates": [], "fused_candidates": []}
+            if graph_cfg.enabled else None
+        )
         if graph_cfg.enabled:
             t_graph_start = time.monotonic()
             try:
@@ -856,6 +936,24 @@ class RetrievalService:
             chunk_id = str(payload.get("chunk_id", r.get("id", "")))
             if chunk_id and chunk_id not in result_map:
                 result_map[chunk_id] = r
+
+        if graph_trace_data is not None:
+            graph_trace_data["graph_candidates"] = graph_results
+            graph_trace_data["fused_candidates"] = [
+                {
+                    "chunk_id": str(c.chunk_id),
+                    "knowledge_scope_id": str(c.knowledge_scope_id),
+                    "source_retrievers": list(c.source_retrievers),
+                    "dense_score": c.dense_score,
+                    "sparse_score": c.sparse_score,
+                    "graph_structure_weight": c.graph_structure_weight,
+                    "graph_rank": c.graph_rank,
+                    "fused_score": c.fused_score,
+                    "rerank_score": c.rerank_score,
+                    "final_rank": c.final_rank,
+                }
+                for c in fused
+            ]
 
         # Enrich graph-only candidates (recalled by edges, absent from
         # Dense/Sparse) with PG metadata so they can become evidence (FR-006).
@@ -958,7 +1056,7 @@ class RetrievalService:
             len(raw_results), rerank_elapsed, failed_paths, subpath_timings,
         )
 
-        return raw_results, subpath_timings, failed_paths, graph_used
+        return raw_results, subpath_timings, failed_paths, graph_used, graph_trace_data
 
     async def _fetch_chunk_content(self, chunk_ids: list[int]) -> dict[int, str]:
         """Fetch content_text for chunks by ID (for rerank query+passage pairs)."""
@@ -1017,11 +1115,16 @@ class RetrievalService:
         subpath_timings: dict | None = None,
         evidence_ref_ids: list[str] | None = None,
         format: str | None = None,
+        run_id: int | None = None,
     ) -> None:
-        """Record an append-only RetrievalRun audit entry (003 adds format, FR-027)."""
+        """Record an append-only RetrievalRun audit entry (003 adds format, FR-027).
+
+        A caller-supplied run_id lets the graph trace ledger bridge
+        graph_expansion_path rows to this run (004, DM-1).
+        """
         try:
             run = RetrievalRun(
-                run_id=generate_id(),
+                run_id=run_id if run_id is not None else generate_id(),
                 query_text=query,
                 project_scopes=project_scopes,
                 completion_status=completion_status,
