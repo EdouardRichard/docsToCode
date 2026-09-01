@@ -52,6 +52,15 @@ class MockQdrantStore:
     def delete_points_by_version(self, collection, version_id) -> None:
         self.points = [p for p in self.points if p[2].get("version_id") != str(version_id)]
 
+    def delete_points_by_source(self, collection, source_id) -> None:
+        self.points = [p for p in self.points if p[2].get("source_id") != str(source_id)]
+
+    def delete_points_by_scope(self, collection, scope_id) -> None:
+        self.points = [
+            p for p in self.points
+            if p[2].get("knowledge_scope_id") != str(scope_id)
+        ]
+
 
 async def setup_graph_scope(session, scope_id: int, project_id: int) -> None:
     """Insert knowledge_scope + project rows for an isolated graph test scope."""

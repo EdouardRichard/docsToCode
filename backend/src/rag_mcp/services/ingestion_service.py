@@ -710,6 +710,34 @@ class IngestionService:
                     collection,
                 )
 
+        # 004 (FR-016): purge the superseded version's graph derived data —
+        # expansion-path rows first (chunk FKs), then hard/soft relations for
+        # the (scope, version_number) pair. Graph index_version equals the
+        # version_number the relations were extracted for.
+        from sqlalchemy import text as sa_text
+
+        version_row = await self._session.execute(
+            select(KnowledgeVersion.knowledge_scope_id,
+                   KnowledgeVersion.version_number).where(
+                KnowledgeVersion.version_id == version_id
+            )
+        )
+        version_info = version_row.first()
+        if version_info is not None:
+            scope_id, version_number = version_info
+            await self._session.execute(sa_text(
+                "DELETE FROM graph_expansion_path WHERE chunk_id IN ("
+                "SELECT chunk_id FROM chunks WHERE version_id = :vid)"
+            ), {"vid": version_id})
+            await self._session.execute(sa_text(
+                "DELETE FROM soft_relation WHERE knowledge_scope_id = :ksid "
+                "AND index_version = :iv"
+            ), {"ksid": scope_id, "iv": version_number})
+            await self._session.execute(sa_text(
+                "DELETE FROM graph_edge WHERE knowledge_scope_id = :ksid "
+                "AND index_version = :iv"
+            ), {"ksid": scope_id, "iv": version_number})
+
         await self._session.execute(
             sa_delete(Chunk).where(Chunk.version_id == version_id)
         )

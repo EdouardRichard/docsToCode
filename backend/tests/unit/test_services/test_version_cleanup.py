@@ -1,10 +1,13 @@
 """Unit tests for supersede-time derived-data cleanup (orphan-vector fix).
 
 Covers:
-- ``IngestionService._cleanup_version_derived_data``: purging a superseded
+- IngestionService._cleanup_version_derived_data: purging a superseded
   version's Qdrant points (by version_id) and PG chunks.
-- ``QdrantStore.delete_points_by_version``: the version_id payload filter.
-- ``LocalCPUEmbeddingProvider.warmup``: eager model load trigger.
+- QdrantStore.delete_points_by_version: the version_id payload filter.
+- LocalCPUEmbeddingProvider.warmup: eager model load trigger.
+
+004 extension (T047): supersede cleanup also purges graph derived data
+(graph_expansion_path before chunk FKs, then graph_edge/soft_relation).
 """
 
 from __future__ import annotations
@@ -17,12 +20,42 @@ from rag_mcp.services.ingestion_service import IngestionService
 
 
 def _select_result(rows: list[str]) -> MagicMock:
-    """Build a mock SELECT result whose ``scalars().all()`` returns *rows*."""
+    """Build a mock SELECT result whose scalars().all() returns rows."""
     result = MagicMock()
     scalars = MagicMock()
     scalars.all.return_value = list(rows)
     result.scalars.return_value = scalars
     return result
+
+
+def _version_info_result(scope_id: int, version_number: int) -> MagicMock:
+    """Build a mock result whose first() returns (scope_id, version_number)."""
+    result = MagicMock()
+    result.first.return_value = (scope_id, version_number)
+    return result
+
+
+def _cleanup_session(index_versions: list[str], version_info=None) -> AsyncMock:
+    """AsyncMock session answering the supersede-cleanup query sequence."""
+    session = AsyncMock()
+
+    def execute_side_effect(stmt, *args, **kwargs):
+        text_sql = str(stmt)
+        if "graph_expansion_path" in text_sql or "graph_edge" in text_sql \
+                or "soft_relation" in text_sql:
+            return MagicMock()
+        if "version_number" in text_sql:
+            if version_info is None:
+                result = MagicMock()
+                result.first.return_value = None
+                return result
+            return _version_info_result(*version_info)
+        if "index_version" in text_sql:
+            return _select_result(index_versions)
+        return MagicMock()
+
+    session.execute = AsyncMock(side_effect=execute_side_effect)
+    return session
 
 
 class TestCleanupVersionDerivedData:
@@ -34,11 +67,7 @@ class TestCleanupVersionDerivedData:
     @pytest.mark.asyncio
     async def test_deletes_qdrant_points_and_pg_chunks(self):
         """Supersede cleanup deletes the version's Qdrant points and PG chunks."""
-        session = AsyncMock()
-        session.execute.side_effect = [
-            _select_result(["bge-m3_v1"]),  # SELECT distinct index_version
-            MagicMock(),  # DELETE chunks
-        ]
+        session = _cleanup_session(["bge-m3_v1"], (11, 1))
         qdrant = MagicMock()
 
         await self._svc(session, qdrant)._cleanup_version_derived_data(777)
@@ -46,16 +75,24 @@ class TestCleanupVersionDerivedData:
         qdrant.delete_points_by_version.assert_called_once_with(
             "chunks_hybrid_bge-m3_v1", 777
         )
-        assert session.execute.call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_supersede_purges_graph_rows(self):
+        """004 (T047): supersede cleanup purges the version's graph rows."""
+        session = _cleanup_session(["bge-m3_v1"], (11, 1))
+        qdrant = MagicMock()
+
+        await self._svc(session, qdrant)._cleanup_version_derived_data(777)
+
+        sql = [str(c.args[0]) for c in session.execute.await_args_list]
+        assert any("DELETE FROM graph_expansion_path" in s for s in sql)
+        assert any("DELETE FROM graph_edge" in s for s in sql)
+        assert any("DELETE FROM soft_relation" in s for s in sql)
 
     @pytest.mark.asyncio
     async def test_multiple_index_versions(self):
         """Purge deletes points from every affected collection."""
-        session = AsyncMock()
-        session.execute.side_effect = [
-            _select_result(["a_v1", "b_v1"]),
-            MagicMock(),
-        ]
+        session = _cleanup_session(["a_v1", "b_v1"], (11, 1))
         qdrant = MagicMock()
 
         await self._svc(session, qdrant)._cleanup_version_derived_data(888)
@@ -67,17 +104,14 @@ class TestCleanupVersionDerivedData:
     @pytest.mark.asyncio
     async def test_qdrant_failure_does_not_block_pg_cleanup(self):
         """A Qdrant outage must not block PG chunk deletion (idempotent retry)."""
-        session = AsyncMock()
-        session.execute.side_effect = [
-            _select_result(["bge-m3_v1"]),
-            MagicMock(),
-        ]
+        session = _cleanup_session(["bge-m3_v1"], (11, 1))
         qdrant = MagicMock()
         qdrant.delete_points_by_version.side_effect = RuntimeError("qdrant down")
 
         await self._svc(session, qdrant)._cleanup_version_derived_data(999)
 
-        assert session.execute.call_count == 2
+        sql = [str(c.args[0]) for c in session.execute.await_args_list]
+        assert any("DELETE" in s for s in sql)
 
 
 class TestDeletePointsByVersion:

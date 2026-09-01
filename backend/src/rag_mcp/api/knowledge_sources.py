@@ -119,9 +119,13 @@ async def _purge_source_derived_data(
 
     Idempotent: with no chunk rows there is nothing to remove, and Qdrant
     failures are logged but never block the PG chunk deletion.
+
+    004 (FR-016/AS5.3): graph derived data tied to the source's versions is
+    purged as well — graph_expansion_path rows first (chunk FKs), then
+    graph_edge/soft_relation for the affected (scope, version_number) pairs.
     """
     from sqlalchemy import delete as sa_delete
-    from sqlalchemy import select
+    from sqlalchemy import select, text as sa_text
 
     from rag_mcp.models.chunk import Chunk
 
@@ -143,6 +147,8 @@ async def _purge_source_derived_data(
                 collection,
             )
 
+    await _purge_source_graph_relations(session, source_id)
+
     await session.execute(sa_delete(Chunk).where(Chunk.source_id == source_id))
 
 
@@ -159,7 +165,7 @@ async def _purge_scope_derived_data(
         qdrant_store: Optional QdrantStore override for testing.
     """
     from sqlalchemy import delete as sa_delete
-    from sqlalchemy import select
+    from sqlalchemy import select, text as sa_text
 
     from rag_mcp.models.chunk import Chunk
 
@@ -182,9 +188,68 @@ async def _purge_scope_derived_data(
                 collection,
             )
 
+    # 004 (FR-016/AS5.3, blueprint §5): stop graph retrieval first, then
+    # delete graph derived data for the cleared scope.
+    await session.execute(sa_text(
+        "UPDATE knowledge_versions SET graph_ready = false "
+        "WHERE knowledge_scope_id = :sid"
+    ), {"sid": scope_id})
+    await session.execute(sa_text(
+        "DELETE FROM graph_expansion_path WHERE chunk_id IN ("
+        "SELECT chunk_id FROM chunks WHERE knowledge_scope_id = :sid)"
+    ), {"sid": scope_id})
+    await session.execute(sa_text(
+        "DELETE FROM soft_relation WHERE knowledge_scope_id = :sid"
+    ), {"sid": scope_id})
+    await session.execute(sa_text(
+        "DELETE FROM graph_edge WHERE knowledge_scope_id = :sid"
+    ), {"sid": scope_id})
+
     await session.execute(
         sa_delete(Chunk).where(Chunk.knowledge_scope_id == scope_id)
     )
+
+
+async def _purge_source_graph_relations(session, source_id: int) -> None:
+    """Purge graph derived data owned by a deleted source's versions (004).
+
+    Graph rows are keyed by (knowledge_scope_id, project_id, index_version)
+    where index_version equals the owning version_number. Deleting a source
+    removes the graph rows of its versions; other versions/scopes keep theirs
+    (FR-010/FR-016). Expansion-path rows are removed first because they
+    reference chunks.
+    """
+    from sqlalchemy import text as sa_text
+
+    rows = (await session.execute(sa_text(
+        "SELECT DISTINCT c.knowledge_scope_id, v.version_number "
+        "FROM chunks c JOIN knowledge_versions v ON v.version_id = c.version_id "
+        "WHERE c.source_id = :sid"
+    ), {"sid": source_id})).fetchall()
+    if not rows:
+        return
+
+    # Stop graph retrieval for the affected versions before deleting data
+    # (blueprint §5 mark-then-delete).
+    await session.execute(sa_text(
+        "UPDATE knowledge_versions SET graph_ready = false "
+        "WHERE version_id IN ("
+        "SELECT c.version_id FROM chunks c WHERE c.source_id = :sid)"
+    ), {"sid": source_id})
+    await session.execute(sa_text(
+        "DELETE FROM graph_expansion_path WHERE chunk_id IN ("
+        "SELECT chunk_id FROM chunks WHERE source_id = :sid)"
+    ), {"sid": source_id})
+
+    for scope_id, version_number in rows:
+        await session.execute(sa_text(
+            "DELETE FROM soft_relation WHERE knowledge_scope_id = :ksid "
+            "AND index_version = :iv"
+        ), {"ksid": scope_id, "iv": version_number})
+        await session.execute(sa_text(
+            "DELETE FROM graph_edge WHERE knowledge_scope_id = :ksid "
+            "AND index_version = :iv"
+        ), {"ksid": scope_id, "iv": version_number})
 
 
 async def _run_source_cleanup(source_id: int) -> None:
