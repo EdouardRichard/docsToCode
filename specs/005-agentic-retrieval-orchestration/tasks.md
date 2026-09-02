@@ -110,29 +110,29 @@
 **Story goal**: 多跳查询被拆解为可追溯子问题、选信号/关系方向，并行检索覆盖完整意图。
 **Independent test**: 多跳 Java 调用图/DDL 查询上 Agent 路径 Recall@K > 确定性单轮；sub_problem_id 单调；信号/方向记录可追溯。
 
-- [ ] T018 [P] [US1] Red: failing test for query planner decomposition (sub_problems monotonic, signals, directions, schema-valid)
+- [X] T018 [P] [US1] Red: failing test for query planner decomposition (sub_problems monotonic, signals, directions, schema-valid)
   - [路径] backend/tests/unit/agents/test_query_planner.py
   - [AC] 多跳查询→≥1 子问题；sub_problem_id 从 1 单调；signals⊆{dense,sparse,graph}；relation_directions⊆004 成对；schema_valid=true（FR-001/FR-032/FR-033）
 
-- [ ] T019 [US1] Green: implement query_planner.py
+- [X] T019 [US1] Green: implement query_planner.py
   - [路径] backend/src/rag_mcp/agents/query_planner.py
   - [AC] T018 测试通过；单意图查询→1 子问题、无额外开销
   - [deps] T018
 
-- [ ] T020 [P] [US1] Red: failing test for relation-direction selection respecting 004 bidirectional default + fallback
+- [X] T020 [P] [US1] Red: failing test for relation-direction selection respecting 004 bidirectional default + fallback
   - [路径] backend/tests/unit/agents/test_query_planner_directions.py
   - [AC] 默认方向=calls+called_by / fk_references+fk_referenced_by；非法选择→回退 004 确定性双向默认（FR-033）
 
-- [ ] T021 [US1] Green: implement direction selection + fallback
+- [X] T021 [US1] Green: implement direction selection + fallback
   - [路径] backend/src/rag_mcp/agents/query_planner.py
   - [AC] T020 测试通过
   - [deps] T020
 
-- [ ] T022 [US1] Red: failing integration test wiring planner into state machine step 3 (run record populates query_planner output)
+- [X] T022 [US1] Red: failing integration test wiring planner into state machine step 3 (run record populates query_planner output)
   - [路径] backend/tests/integration/test_us1_planner_integration.py
   - [AC] 步骤 3 调用 planner；agent_outputs_ref.query_planner.sub_problems 写入运行记录；步骤 4 并行检索使用子问题查询（蓝图 §12）
 
-- [ ] T023 [US1] Green: wire planner into state_machine.py step 3
+- [X] T023 [US1] Green: wire planner into state_machine.py step 3
   - [路径] backend/src/rag_mcp/orchestration/state_machine.py
   - [AC] T022 测试通过
   - [deps] T022

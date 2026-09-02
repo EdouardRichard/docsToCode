@@ -74,6 +74,10 @@ class AgenticStateMachine:
         self._total_timeout_ms = agentic_cfg.guardrails.total_timeout_ms
         self._node_timeout_ms = agentic_cfg.guardrails.node_timeout_ms_default
 
+        # Agent instances (wired in T023/T029/T037)
+        self._query_planner = None
+        self._retrieval_queries: list[str] = []
+
         # Run state
         self._rounds_completed: int = 0
         self._completion_status: str = "failed"
@@ -148,6 +152,14 @@ class AgenticStateMachine:
         """Return the state envelope with the run record (FR-010)."""
         return self._envelope
 
+    def set_query_planner(self, planner) -> None:
+        """Wire in the QueryPlannerAgent (T023, blueprint sec 12 step 3)."""
+        self._query_planner = planner
+
+    def get_retrieval_queries(self) -> list[str]:
+        """Return the sub-problem queries for step 4 parallel retrieval (blueprint sec 12)."""
+        return list(self._retrieval_queries)
+
     def run(self, context: dict[str, Any] | None = None) -> dict[str, Any]:
         """Execute the nine-step main flow with bounded supplementary loop.
 
@@ -209,8 +221,30 @@ class AgenticStateMachine:
         self._record_step("resolve_scope")
 
     def _step_query_planning(self, context: dict[str, Any]) -> None:
-        """Step 3: Query planning (stub - wired in T019/T023)."""
+        """Step 3: Query planning (blueprint sec 12, wired in T023).
+
+        Calls the QueryPlannerAgent to decompose the query into sub-problems.
+        Stores the output in the state envelope and extracts sub-problem
+        queries for step 4 parallel retrieval.
+        """
         self._record_step("query_planning")
+        if self._query_planner is not None:
+            result = self._query_planner.run(context)
+            output = result.output
+            # Store in state envelope
+            self._envelope.set_agent_output("query_planner", output)
+            # Extract sub-problem queries for step 4
+            self._retrieval_queries = [
+                sp.get("query", "") for sp in output.get("sub_problems", [])
+            ]
+        else:
+            # No planner wired: use original query as single sub-problem
+            query = context.get("query", "")
+            self._retrieval_queries = [query] if query else []
+            self._envelope.set_agent_output("query_planner", {
+                "sub_problems": [{"sub_problem_id": 1, "query": query, "signals": ["dense"]}] if query else [],
+                "schema_valid": True,
+            })
 
     def _step_parallel_retrieval(self, context: dict[str, Any]) -> None:
         """Step 4: Parallel retrieval (stub - reuses 002/004)."""
