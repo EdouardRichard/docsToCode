@@ -51,29 +51,29 @@
   - [AC] T004 测试通过
   - [deps] T004
 
-- [ ] T006 [P] Red: failing test for AgentBase node-Schema validation + degradation fallback
+- [X] T006 [P] Red: failing test for AgentBase node-Schema validation + degradation fallback
   - [路径] backend/tests/unit/agents/test_base_agent.py
   - [AC] 非法结构化输出→schema_valid=false→回退确定性等价→返回有效四态；不阻塞状态机（FR-003/SC-011）
 
-- [ ] T007 Green: implement base.py (Agent 抽象 + Schema 校验 + degrade)
+- [X] T007 Green: implement base.py (Agent 抽象 + Schema 校验 + degrade)
   - [路径] backend/src/rag_mcp/agents/base.py
   - [AC] T006 测试通过
   - [deps] T006
 
-- [ ] T008 [P] Red: failing test for capability router (no vendor lock, role→capability)
+- [X] T008 [P] Red: failing test for capability router (no vendor lock, role→capability)
   - [路径] backend/tests/unit/agents/test_capability_router.py
   - [AC] query_planner→低延迟、evidence_analyst→更强、context_orchestrator→居中；model_and_version 记录；无硬编码供应商（FR-002/蓝图 §18）
 
-- [ ] T009 Green: implement capability_router.py
+- [X] T009 Green: implement capability_router.py
   - [路径] backend/src/rag_mcp/agents/capability_router.py
   - [AC] T008 测试通过
   - [deps] T008
 
-- [ ] T010 [P] Red: failing test for append-only ledger store (identity + isolation + no-overwrite)
+- [X] T010 [P] Red: failing test for append-only ledger store (identity + isolation + no-overwrite)
   - [路径] backend/tests/unit/orchestration/test_ledger.py
   - [AC] 只 INSERT；ledger_entry_id 雪花 ID（数字串）；round_index/sub_problem_id 单调；(request_id,evidence_id) 桥接键解析；跨作用域写入拒绝（FR-008/FR-009/FR-022）
 
-- [ ] T011 Green: implement ledger.py
+- [X] T011 Green: implement ledger.py
   - [路径] backend/src/rag_mcp/orchestration/ledger.py
   - [AC] T010 测试通过
   - [deps] T010
