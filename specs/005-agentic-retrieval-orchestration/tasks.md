@@ -339,3 +339,82 @@ T001→T003→(Phase 2 骨架 T012→T013)→T018→T019→T022→T023→T028→
 ## MVP Scope
 
 Phase 1 + Phase 2 + Phase 3（US1 查询规划）即可演示“多跳查询被拆解后获更完整证据”的独立价值（sub_problem 可追溯、信号/方向记录、并行检索覆盖）。US2/US3/US4 为后续增量。
+
+## Phase 7: Convergence
+
+> 收敛评估（/speckit-converge，2026-09-03）：对照 spec.md/plan.md/constitution.md 评估当前代码后识别的剩余工作。
+> 现状：结构层（Agent 抽象/Schema 校验/降级/账本与运行记录模型/对照判定逻辑/真实 LLM 调用）已全绿（1064 passed），
+> 但证据流水线（真实检索接入）、持久化落库、MCP 桥接与真实对照评测尚未贯通。以下任务按 CRITICAL→HIGH→MEDIUM→LOW 排序。
+
+- [ ] T057 CRITICAL 桥接 MCP：search_knowledge 在 AGENTIC_RETRIEVAL_ENABLED=true 时路由至 Agent 编排路径（missing）
+  - [路径] backend/src/rag_mcp/mcp/search_knowledge.py + backend/src/rag_mcp/orchestration/（新增编排入口）
+  - [AC] 开关 OFF 时行为与 001 逐字节一致（确定性默认路径不变）；开关 ON 时 search_knowledge 经状态机返回；对外响应 Schema 不变（additionalProperties:false 不违反，FR-024）；partial 终态经既有 gaps/error 字段携带未覆盖/冲突/失败路径（FR-016）；request_id 可桥接内部账本（FR-024/SC-004/SC-012）
+  - [证据] mcp/ 与 server.py 中 0 处 agentic 引用；T037 AC 声明的"仅桥接"未落地
+  - [deps] 无（可先行）
+
+- [ ] T058 CRITICAL 状态机步骤 4/5 接入真实检索：并行检索（Dense/Sparse/图）+ 融合/Rerank（missing）
+  - [路径] backend/src/rag_mcp/orchestration/state_machine.py（复用 services/retrieval_service.py、fusion/rrf.py、graph/expansion.py）
+  - [AC] 每个子问题查询经 002 混合检索（QdrantStore dense+sparse + RRF + Rerank）召回；图信号按 planner 选择经 004 图扩展（沿用 004 护栏）；单来源最大证据 3/上限 5 强制（FR-006）；召回候选携带检索器/得分/来源/版本进入账本输入；补充轮候选重新进入融合/Rerank/分析（FR-005/FR-014）；US1/US2 独立测试可度量（Recall@K 可计算）
+  - [证据] state_machine.py 第 261–267 行：_step_parallel_retrieval/_step_fusion_rerank 仅记录步骤名
+  - [deps] 无（可与 T057 并行）
+
+- [ ] T059 HIGH 持久化贯通：账本/判断/选择清单/运行记录在运行中落库（partial）
+  - [路径] backend/src/rag_mcp/orchestration/state_machine.py（接线 ledger.py、judgment_store.py、context_selection.py、models.py）
+  - [AC] 每条召回证据写入 evidence_ledger_entry（检索查询/检索器/得分/版本/来源/round_index/sub_problem_id，隔离三元组，追加式，FR-008/FR-009）；每轮 evidence_analyst 判断写入 agent_judgment；步骤 8 选择决策写入 context_selection_list；运行结束写入 agentic_retrieval_run（FR-031）；(request_id, evidence_id) 桥接键可解析（SC-006）；并发 5 请求落库无串扰（SC-013）
+  - [证据] state_machine.py 中 0 处 store/model 写入调用
+  - [deps] T058
+
+- [ ] T060 HIGH 评测集真值化：agentic_eval_dataset.json 对齐真实语料（partial）
+  - [路径] eval/agentic_eval_dataset.json（+ 必要时补充评测语料/入库）
+  - [AC] ≥6 条（多跳/缺口/冲突各≥2、含≥1 中文，FR-027）；每条 expected_evidence_ids 解析为评测项目已发布版本中真实存在的 chunk（Java 调用图/DDL 外键/混合检索代码语料）；查询可被真实索引召回且排名差异可度量；遵循 001 AI 生成+人工审核+JSON 约定；原 001/002/004 查询保留逐条可比
+  - [证据] 当前 expected_evidence_ids 为占位 ID，未绑定真实语料
+  - [deps] 无（可与 T057/T058 并行）
+
+- [ ] T061 HIGH 真实对照评测运行器 + 报告产出（missing）
+  - [路径] eval/run_agentic_comparison.py（复用 eval/run_graph_comparison.py 模式 + rag_mcp/eval/agentic_comparison.py）
+  - [AC] 同一环境会话先重跑确定性基线再跑 Agent 编排（FR-030）；在 001 11 条 + 002/004 扩充集 + 005 新增批次上计算 Recall@K/MRR/nDCG/P50/P95/成本；逐查询记录双路径排名、Agent 判断（子问题/信号/方向/缺口/补充轮次/编排决策）、子路径耗时与账本引用（FR-028/SC-009）；三段通过判定（SC-001 ≥3%/SC-002/SC-015）+ 硬性指标；产出 eval/agentic_comparison_report.json（含 enters_default_path，FR-029/宪法 X）；可重复性 1% 容差校验（SC-008）
+  - [证据] eval/ 下无 agentic_comparison_report.json；AgenticComparisonRunner 仅接收给定指标，无真实执行
+  - [deps] T057, T058, T059, T060
+
+- [ ] T062 HIGH 状态机迁移至 LangGraph（partial）
+  - [路径] backend/src/rag_mcp/orchestration/state_machine.py（langgraph 已在依赖）
+  - [AC] 九步主流程与补充循环由 LangGraph StateGraph 管理节点流转（FR-004、plan 决策）；跳转权仍属确定性控制器（宪法 VI）；护栏/隔离/四态行为不变；既有全部状态机与集成测试通过
+  - [证据] 全源码 0 处 langgraph 引用；FR-004 MUST"LangGraph 管理状态机"
+  - [deps] T058（在真实流水线上迁移）
+
+- [ ] T063 MEDIUM 子路径耗时与成本记录接入运行流（partial）
+  - [路径] backend/src/rag_mcp/orchestration/state_machine.py + trace_recorder.py
+  - [AC] 每次运行记录 dense/sparse/graph/fusion/rerank/三 Agent 节点耗时与总成本至运行记录（FR-031/SC-007）；TTL 与脱敏配置生效（FR-011/FR-012）
+  - [证据] TraceRecorder 未在执行流中使用；sub_path_timings 恒为空对象
+  - [deps] T058
+
+- [ ] T064 MEDIUM 提示注入检测与标记（partial）
+  - [路径] backend/src/rag_mcp/agents/（新增检测模块）+ orchestration/
+  - [AC] 可疑注入内容被检测并标记（可审计）；高风险片段从内部控制 Prompt 隔离但保留来源（FR-020）；检索文本不能改变状态跳转/工具选择/模型权限（FR-019/宪法 V）；检测失败不阻塞检索（检测为辅助，结构隔离为边界）
+  - [证据] 全源码 0 处注入检测实现；当前仅有 Schema 校验边界
+  - [deps] 无
+
+- [ ] T065 MEDIUM 上下文编排父级上下文补充（partial）
+  - [路径] backend/src/rag_mcp/agents/context_orchestrator.py
+  - [AC] 需父级上下文的证据按需纳入父级范围（复用 001 父级回填能力）；父级补充不超装箱上限（FR-017/US3-AC2）；决策进入选择清单可追溯
+  - [证据] context_orchestrator._orchestrate 仅去重/多样/装箱，无父级补充
+  - [deps] T058
+
+- [ ] T066 MEDIUM 005 运行期表 TTL 清理（partial）
+  - [路径] backend/src/rag_mcp/services/maintenance_service.py
+  - [AC] 周期清理 agentic_retrieval_run/evidence_ledger_entry 过期行（含级联的 agent_judgment/context_selection_list）；运行状态不进入向量库/不写回知识库（FR-011/SC-014/蓝图 §20）；清理不影响未过期运行与他项目数据
+  - [证据] services/ 中 0 处 005 表清理逻辑
+  - [deps] T059
+
+- [ ] T067 LOW 查询规划跳数上限选择（partial）
+  - [路径] backend/src/rag_mcp/agents/query_planner.py + contracts/agentic-retrieval-run.schema.json
+  - [AC] planner 可选图扩展跳数上限（004 的 1~3 护栏内）并经 Schema 校验；非法/缺失回退 004 默认 2（FR-033）；契约新增字段向后兼容（宪法 VII）
+  - [证据] planner 输出与契约均无跳数字段
+  - [deps] T058
+
+- [ ] T068 HIGH 端到端验收：quickstart 场景 1–7 + 硬性指标套件（missing）
+  - [路径] backend/tests/integration/（真实服务端套件）+ specs/005-.../quickstart.md
+  - [AC] 启动真实服务（AGENTIC_RETRIEVAL_ENABLED=true）后 quickstart 场景 1–7 全部可观测通过；验收套件：跨项目泄漏=0、MCP Schema 合法率 100%、来源可定位率 100%（宪法硬约束/蓝图 §24.2）；DeepSeek Harness 经 MCP 端到端 search_knowledge/get_evidence 通过且 30s 护栏 < Host 超时（SC-012）；对照报告结论（enters_default_path）记录于报告
+  - [证据] 现有 T052/T056 测试为单元级模拟，未在真实服务端验证
+  - [deps] T057, T058, T059, T061
+
