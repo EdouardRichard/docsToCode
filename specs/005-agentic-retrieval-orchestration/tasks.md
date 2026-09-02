@@ -244,61 +244,61 @@
 
 ## Phase N: Polish & Cross-Cutting Concerns
 
-- [ ] T044 [P] Red: failing test for cross-project isolation hardening (single-scope→no leakage; no-scope→reject)
+- [X] T044 [P] Red: failing test for cross-project isolation hardening (single-scope→no leakage; no-scope→reject)
   - [路径] backend/tests/integration/test_cross_project_isolation.py
   - [AC] 单作用域查询不返回他项目证据/账本/判断；无 project_scope→拒绝；泄漏事件=0（FR-021/FR-022/SC-003/宪法硬约束）
 
-- [ ] T045 Green: harden isolation across ledger/judgment/selection/run
+- [X] T045 Green: harden isolation across ledger/judgment/selection/run
   - [路径] backend/src/rag_mcp/orchestration/*.py
   - [AC] T044 测试通过
   - [deps] T044
 
-- [ ] T046 [P] Red: failing test for prompt-injection defense (untrusted→evidence field only; schema-valid; high-risk isolated auditable)
+- [X] T046 [P] Red: failing test for prompt-injection defense (untrusted→evidence field only; schema-valid; high-risk isolated auditable)
   - [路径] backend/tests/integration/test_prompt_injection_defense.py
   - [AC] 恶意上传不能改控制流/工具选择/Prompt；结构化边界隔离；Agent 输出 Schema 校验（FR-019/FR-020/宪法 V）
 
-- [ ] T047 Green: harden injection defense
+- [X] T047 Green: harden injection defense
   - [路径] backend/src/rag_mcp/agents/base.py + backend/src/rag_mcp/orchestration/
   - [AC] T046 测试通过
   - [deps] T046
 
-- [ ] T048 [P] Red: failing test for concurrency isolation (5 concurrent reqs, different project_scope, no crosstalk)
+- [X] T048 [P] Red: failing test for concurrency isolation (5 concurrent reqs, different project_scope, no crosstalk)
   - [路径] backend/tests/integration/test_concurrency_isolation.py
   - [AC] 5 并发→无状态/账本/作用域串扰（FR-025/SC-013）
 
-- [ ] T049 Green: verify/fix concurrency isolation
+- [X] T049 Green: verify/fix concurrency isolation
   - [路径] backend/src/rag_mcp/orchestration/state_machine.py
   - [AC] T048 测试通过
   - [deps] T048
 
-- [ ] T050 [P] Red: failing test for hard-metric gates (schema 100% + locatability 100% + leakage 0 on acceptance suite)
+- [X] T050 [P] Red: failing test for hard-metric gates (schema 100% + locatability 100% + leakage 0 on acceptance suite)
   - [路径] backend/tests/contract/test_hard_metrics.py
   - [AC] 100% Schema 合法；100% 可定位；0 泄漏（宪法硬约束/蓝图 §24.2）
 
-- [ ] T051 Green: ensure hard-metric gates via MCP bridge
+- [X] T051 Green: ensure hard-metric gates via MCP bridge
   - [路径] backend/src/rag_mcp/mcp/（桥接，不改对外契约）
   - [AC] T050 测试通过
   - [deps] T050
 
-- [ ] T052 Red: failing E2E test for DeepSeek Harness (agentic search_knowledge + get_evidence end-to-end, schema-valid, 30s<host timeout)
+- [X] T052 Red: failing E2E test for DeepSeek Harness (agentic search_knowledge + get_evidence end-to-end, schema-valid, 30s<host timeout)
   - [路径] backend/tests/e2e/test_deepseek_harness_e2e.py
   - [AC] DH 端到端调用成功；输出 Schema 合法；30s 护栏<目标 Host 最低 Tool Call 超时（SC-012）
 
-- [ ] T053 Green: fix E2E issues
+- [X] T053 Green: fix E2E issues
   - [路径] backend/src/rag_mcp/mcp/
   - [AC] T052 测试通过
   - [deps] T052
 
-- [ ] T054 [P] Red: failing test for run-state TTL + no-writeback-to-KB + tracing redaction
+- [X] T054 [P] Red: failing test for run-state TTL + no-writeback-to-KB + tracing redaction
   - [路径] backend/tests/unit/orchestration/test_run_state_lifecycle.py
   - [AC] TTL 设置；Agent 推理结果不写回知识库；配置关闭正文时只留 ID/状态/耗时/错误（FR-011/FR-012/蓝图 §20）
 
-- [ ] T055 Green: implement TTL + redaction
+- [X] T055 Green: implement TTL + redaction
   - [路径] backend/src/rag_mcp/orchestration/trace_recorder.py + state_envelope.py
   - [AC] T054 测试通过
   - [deps] T054
 
-- [ ] T056 Run quickstart.md validation scenarios end-to-end
+- [X] T056 Run quickstart.md validation scenarios end-to-end
   - [路径] specs/005-.../quickstart.md
   - [AC] 场景 1–7 全部可观测通过
   - [deps] T053, T055
