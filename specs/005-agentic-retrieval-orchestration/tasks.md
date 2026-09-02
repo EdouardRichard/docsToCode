@@ -142,20 +142,20 @@
 **Story goal**: 可验证缺口触发有界补充检索；补充候选重新进入融合/Rerank/分析；缺口/冲突显式不臆造。
 **Independent test**: 缺口查询→补充轮召回遗漏证据；最终 Recall@K > 单轮基线；缺口判断+轮次在账本可追溯；达上限→partial。
 
-- [ ] T024 [P] [US2] Red: failing test for evidence analyst judgment (固化 enums, conflict surfaced, schema-valid)
+- [X] T024 [P] [US2] Red: failing test for evidence analyst judgment (固化 enums, conflict surfaced, schema-valid)
   - [路径] backend/tests/unit/agents/test_evidence_analyst.py
   - [AC] 输出 coverage_state/conflict_type 固化枚举；uncovered_sub_problem_ids；needs_supplementary；项目/公共冲突并列返回不臆造；schema_valid=true（FR-013/FR-015/FR-032）
 
-- [ ] T025 [US2] Green: implement evidence_analyst.py
+- [X] T025 [US2] Green: implement evidence_analyst.py
   - [路径] backend/src/rag_mcp/agents/evidence_analyst.py
   - [AC] T024 测试通过
   - [deps] T024
 
-- [ ] T026 [P] [US2] Red: failing test for agent_judgment store (persist + round_index + schema conform)
+- [X] T026 [P] [US2] Red: failing test for agent_judgment store (persist + round_index + schema conform)
   - [路径] backend/tests/unit/orchestration/test_judgment_store.py
   - [AC] 判断持久化；round_index 单调；model_and_version 记录；符合 agent-judgment.schema.json
 
-- [ ] T027 [US2] Green: implement judgment_store.py
+- [X] T027 [US2] Green: implement judgment_store.py
   - [路径] backend/src/rag_mcp/orchestration/judgment_store.py
   - [AC] T026 测试通过
   - [deps] T026
