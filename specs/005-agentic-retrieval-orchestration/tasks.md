@@ -160,20 +160,20 @@
   - [AC] T026 测试通过
   - [deps] T026
 
-- [ ] T028 [US2] Red: failing integration test for supplementary loop (6→3→4→5→6→7; controller owns continue)
+- [X] T028 [US2] Red: failing integration test for supplementary loop (6→3→4→5→6→7; controller owns continue)
   - [路径] backend/tests/integration/test_us2_supplementary_loop.py
   - [AC] rounds_completed≤max_rounds(2)；补充候选重新进入融合/Rerank/分析并携带分数；达上限→partial 含缺口；确定性控制器（非 Agent）决定继续（FR-005/FR-014/宪法 VI）
 
-- [ ] T029 [US2] Green: implement loop in state_machine.py
+- [X] T029 [US2] Green: implement loop in state_machine.py
   - [路径] backend/src/rag_mcp/orchestration/state_machine.py
   - [AC] T028 测试通过
   - [deps] T028, T019
 
-- [ ] T030 [US2] Red: failing test for mixed-mechanism terminal decision (hard metrics + analyst judgment → controller four-state)
+- [X] T030 [US2] Red: failing test for mixed-mechanism terminal decision (hard metrics + analyst judgment → controller four-state)
   - [路径] backend/tests/unit/orchestration/test_terminal_decision.py
   - [AC] partial 携带已验证证据+未覆盖+冲突+失败路径；无生成内容填补缺口；四态可区分（FR-015/FR-016/SC-011）
 
-- [ ] T031 [US2] Green: implement terminal decision in state_machine.py
+- [X] T031 [US2] Green: implement terminal decision in state_machine.py
   - [路径] backend/src/rag_mcp/orchestration/state_machine.py
   - [AC] T030 测试通过
   - [deps] T030

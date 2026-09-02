@@ -76,7 +76,10 @@ class AgenticStateMachine:
 
         # Agent instances (wired in T023/T029/T037)
         self._query_planner = None
+        self._evidence_analyst = None
         self._retrieval_queries: list[str] = []
+        self._latest_judgment: dict[str, Any] | None = None
+        self._judgment_ids: list[str] = []
 
         # Run state
         self._rounds_completed: int = 0
@@ -155,6 +158,10 @@ class AgenticStateMachine:
     def set_query_planner(self, planner) -> None:
         """Wire in the QueryPlannerAgent (T023, blueprint sec 12 step 3)."""
         self._query_planner = planner
+
+    def set_evidence_analyst(self, analyst) -> None:
+        """Wire in the EvidenceAnalystAgent (T029, blueprint sec 12 step 6)."""
+        self._evidence_analyst = analyst
 
     def get_retrieval_queries(self) -> list[str]:
         """Return the sub-problem queries for step 4 parallel retrieval (blueprint sec 12)."""
@@ -255,8 +262,28 @@ class AgenticStateMachine:
         self._record_step("fusion_rerank")
 
     def _step_evidence_analysis(self, context: dict[str, Any]) -> None:
-        """Step 6: Evidence analysis (stub - wired in T025)."""
+        """Step 6: Evidence analysis (blueprint sec 12, wired in T029).
+
+        Calls the EvidenceAnalystAgent to produce a structured judgment.
+        Stores the output in the state envelope and records judgment IDs.
+        """
         self._record_step("evidence_analysis")
+        if self._evidence_analyst is not None:
+            analyst_context = {
+                **context,
+                "run_id": self._run_id,
+                "round_index": self._rounds_completed - 1,
+            }
+            result = self._evidence_analyst.run(analyst_context)
+            judgment = result.output
+            self._latest_judgment = judgment
+            judgment_id = judgment.get("judgment_id", "")
+            if judgment_id:
+                self._judgment_ids.append(judgment_id)
+            self._envelope.set_agent_output("evidence_analyst", {
+                "judgment_ids": list(self._judgment_ids),
+                "schema_valid_all": judgment.get("schema_valid", True),
+            })
 
     def _step_loop_decision(self, context: dict[str, Any], force_gap: bool) -> bool:
         """Step 7: Supplementary loop decision (deterministic controller, Constitution VI).
@@ -266,7 +293,16 @@ class AgenticStateMachine:
         judgment INPUT, not an exclusive jump authority.
         """
         self._record_step("loop_decision")
-        should_continue = force_gap and self._rounds_completed < self._max_rounds
+        # Use the analyst judgment if available, else fall back to force_gap
+        if self._latest_judgment is not None:
+            needs_supp = self._latest_judgment.get("needs_supplementary", False)
+            has_gap = (
+                self._latest_judgment.get("coverage_state") in ("partial", "uncovered")
+                or needs_supp
+            )
+        else:
+            has_gap = force_gap
+        should_continue = has_gap and self._rounds_completed < self._max_rounds
         decision = {
             "round": self._rounds_completed,
             "should_continue": should_continue,
@@ -280,6 +316,67 @@ class AgenticStateMachine:
         self._record_step("context_orchestration")
 
     def _step_response_serialization(self, context: dict[str, Any]) -> None:
-        """Step 9: MCP response serialization (stub - reuses 001 bridge)."""
+        """Step 9: MCP response serialization (blueprint sec 12, reuses 001 bridge)."""
         self._record_step("response_serialization")
-        self._completion_status = "complete"
+        # Determine terminal status from the latest evidence analysis
+        if self._latest_judgment is not None:
+            coverage = self._latest_judgment.get("coverage_state", "uncovered")
+            conflict = self._latest_judgment.get("conflict_type", "none")
+            needs_supp = self._latest_judgment.get("needs_supplementary", False)
+            has_evidence = len(self._retrieval_queries) > 0 or coverage != "uncovered"
+            max_rounds_reached = self._rounds_completed >= self._max_rounds
+            self._completion_status = self.determine_terminal_status(
+                coverage_state=coverage,
+                conflict_type=conflict,
+                has_evidence=has_evidence,
+                has_gap=needs_supp,
+                max_rounds_reached=max_rounds_reached,
+            )
+        else:
+            self._completion_status = "complete"
+
+    def determine_terminal_status(
+        self,
+        coverage_state: str = "uncovered",
+        conflict_type: str = "none",
+        has_evidence: bool = False,
+        has_gap: bool = False,
+        max_rounds_reached: bool = False,
+        agent_failed: bool = False,
+    ) -> str:
+        """Determine the final completion_status (FR-015/FR-016/SC-011).
+
+        Four-state decision (blueprint sec 14):
+          - complete: full coverage, no unresolved conflict
+          - partial: has reliable evidence but has gaps/conflict/failed paths
+          - no_evidence: normal execution but no reliable evidence
+          - failed: system error, cannot form valid response
+
+        Constitution III: gaps are exposed, NOT filled with generated content.
+        """
+        # System failure takes priority
+        if agent_failed:
+            return "failed"
+
+        # No evidence at all
+        if not has_evidence and coverage_state == "uncovered":
+            return "no_evidence"
+
+        # Full coverage
+        if coverage_state == "covered" and not has_gap:
+            return "complete"
+
+        # Has evidence but gaps/conflict -> partial (FR-016)
+        # Gaps are exposed, not filled (Constitution III)
+        if has_evidence and (has_gap or coverage_state == "partial" or conflict_type != "none"):
+            return "partial"
+
+        # Max rounds reached with gaps -> partial
+        if max_rounds_reached and has_gap:
+            return "partial"
+
+        # Default: no evidence
+        if not has_evidence:
+            return "no_evidence"
+
+        return "complete"
