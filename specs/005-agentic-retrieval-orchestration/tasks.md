@@ -87,20 +87,20 @@
   - [AC] T012 测试通过
   - [deps] T012
 
-- [ ] T014 [P] Red: failing test for trace recorder (sub-path timings + agent/judgment/ledger refs + TTL + redact)
+- [X] T014 [P] Red: failing test for trace recorder (sub-path timings + agent/judgment/ledger refs + TTL + redact)
   - [路径] backend/tests/unit/orchestration/test_trace_recorder.py
   - [AC] 记录 sub_path_timings/agent_outputs_ref/ledger_ref；TTL 设置；配置关闭正文时只保留 ID/状态/耗时/错误（FR-011/FR-012/蓝图 §20）
 
-- [ ] T015 Green: implement trace_recorder.py
+- [X] T015 Green: implement trace_recorder.py
   - [路径] backend/src/rag_mcp/orchestration/trace_recorder.py
   - [AC] T014 测试通过
   - [deps] T014
 
-- [ ] T016 [P] Red: failing test for state envelope / run record (fields conform schema)
+- [X] T016 [P] Red: failing test for state envelope / run record (fields conform schema)
   - [路径] backend/tests/unit/orchestration/test_state_envelope.py
   - [AC] agentic_retrieval_run 含 project_scope/completion_status/guardrail_state/rounds/agent_outputs_ref/ledger_ref/schema_valid_all，符合 agentic-retrieval-run.schema.json（FR-010/FR-031）
 
-- [ ] T017 Green: implement state_envelope.py
+- [X] T017 Green: implement state_envelope.py
   - [路径] backend/src/rag_mcp/orchestration/state_envelope.py
   - [AC] T016 测试通过
   - [deps] T016
