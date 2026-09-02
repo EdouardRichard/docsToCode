@@ -77,6 +77,7 @@ class AgenticStateMachine:
         # Agent instances (wired in T023/T029/T037)
         self._query_planner = None
         self._evidence_analyst = None
+        self._context_orchestrator = None
         self._retrieval_queries: list[str] = []
         self._latest_judgment: dict[str, Any] | None = None
         self._judgment_ids: list[str] = []
@@ -162,6 +163,10 @@ class AgenticStateMachine:
     def set_evidence_analyst(self, analyst) -> None:
         """Wire in the EvidenceAnalystAgent (T029, blueprint sec 12 step 6)."""
         self._evidence_analyst = analyst
+
+    def set_context_orchestrator(self, orchestrator) -> None:
+        """Wire in the ContextOrchestratorAgent (T037, blueprint sec 12 step 8)."""
+        self._context_orchestrator = orchestrator
 
     def get_retrieval_queries(self) -> list[str]:
         """Return the sub-problem queries for step 4 parallel retrieval (blueprint sec 12)."""
@@ -312,8 +317,26 @@ class AgenticStateMachine:
         return should_continue
 
     def _step_context_orchestration(self, context: dict[str, Any]) -> None:
-        """Step 8: Context orchestration (stub - wired in T033/T037)."""
+        """Step 8: Context orchestration (blueprint sec 12, wired in T037).
+
+        Calls the ContextOrchestratorAgent to deduplicate, preserve diversity,
+        and bin the final context. Stores the output in the state envelope.
+        """
         self._record_step("context_orchestration")
+        if self._context_orchestrator is not None:
+            orch_context = {
+                **context,
+                "candidates": context.get("candidates", []),
+                "top_k": self._top_k_max,
+            }
+            result = self._context_orchestrator.run(orch_context)
+            self._envelope.set_agent_output("context_orchestrator", result.output)
+        else:
+            self._envelope.set_agent_output("context_orchestrator", {
+                "context_result_id": "",
+                "selection_list": [],
+                "schema_valid": True,
+            })
 
     def _step_response_serialization(self, context: dict[str, Any]) -> None:
         """Step 9: MCP response serialization (blueprint sec 12, reuses 001 bridge)."""

@@ -183,29 +183,29 @@
 **Story goal**: 最终上下文去重/保多样/父级补充/装箱；每条证据可追溯；选择清单追加不改账本。
 **Independent test**: 重叠证据→无重复、≥1/来源、截断有可展开 ID；账本原始未改写；(request_id,evidence_id) 解析。
 
-- [ ] T032 [P] [US3] Red: failing test for context orchestrator (dedup, diversity, parent scope, binning, selection list, schema-valid)
+- [X] T032 [P] [US3] Red: failing test for context orchestrator (dedup, diversity, parent scope, binning, selection list, schema-valid)
   - [路径] backend/tests/unit/agents/test_context_orchestrator.py
   - [AC] 无重复；保留≥1/来源；装箱 top_k≤20；selection_list decision∈{selected,truncated,deduped}；truncated→可展开 evidence_id；schema_valid=true（FR-017/FR-018/FR-032）
 
-- [ ] T033 [US3] Green: implement context_orchestrator.py
+- [X] T033 [US3] Green: implement context_orchestrator.py
   - [路径] backend/src/rag_mcp/agents/context_orchestrator.py
   - [AC] T032 测试通过
   - [deps] T032
 
-- [ ] T034 [P] [US3] Red: failing test for context_selection_list store (append-only, no ledger overwrite)
+- [X] T034 [P] [US3] Red: failing test for context_selection_list store (append-only, no ledger overwrite)
   - [路径] backend/tests/unit/orchestration/test_context_selection.py
   - [AC] 选择清单只 INSERT；context_result_id+decision 枚举；账本原始条目未改写；符合 schema（FR-008/FR-017）
 
-- [ ] T035 [US3] Green: implement context_selection.py
+- [X] T035 [US3] Green: implement context_selection.py
   - [路径] backend/src/rag_mcp/orchestration/context_selection.py
   - [AC] T034 测试通过
   - [deps] T034
 
-- [ ] T036 [US3] Red: failing integration test wiring orchestration into step 8 + MCP serialization bridge (output unchanged)
+- [X] T036 [US3] Red: failing integration test wiring orchestration into step 8 + MCP serialization bridge (output unchanged)
   - [路径] backend/tests/integration/test_us3_orchestration_integration.py
   - [AC] 步骤 8 产出上下文；search_knowledge 输出 Schema 合法（additionalProperties:false 不违反）；账本可凭 (request_id,evidence_id) 解析（FR-024/SC-004）
 
-- [ ] T037 [US3] Green: wire step 8 + serialization bridge
+- [X] T037 [US3] Green: wire step 8 + serialization bridge
   - [路径] backend/src/rag_mcp/orchestration/state_machine.py + backend/src/rag_mcp/mcp/（仅桥接，不改对外契约）
   - [AC] T036 测试通过
   - [deps] T036
