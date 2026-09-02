@@ -78,11 +78,11 @@
   - [AC] T010 测试通过
   - [deps] T010
 
-- [ ] T012 Red: failing test for LangGraph state machine skeleton (9-step + guardrails + isolation)
+- [X] T012 Red: failing test for LangGraph state machine skeleton (9-step + guardrails + isolation)
   - [路径] backend/tests/unit/orchestration/test_state_machine.py
   - [AC] 九步主状态流顺序；护栏强制（轮次/超时/装箱）；状态按 request_id/run_id 隔离；无全局活动项目（FR-004/FR-006/FR-025）
 
-- [ ] T013 Green: implement state_machine.py skeleton (确定性控制器 + 补充循环 stub)
+- [X] T013 Green: implement state_machine.py skeleton (确定性控制器 + 补充循环 stub)
   - [路径] backend/src/rag_mcp/orchestration/state_machine.py
   - [AC] T012 测试通过
   - [deps] T012
