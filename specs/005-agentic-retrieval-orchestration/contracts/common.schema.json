@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json",
+  "title": "Common Schema Definitions (005)",
+  "description": "跨 005 Agent 编排内部契约共享的类型定义。复用 001 common.schema.json 共享定义（KnowledgeScopeId 等），新增 005 Agent/账本/判断相关定义。其他 005 schema 通过 $ref 引用本文件 definitions。",
+  "type": "object",
+  "definitions": {
+    "KnowledgeScopeId": { "type": "string", "description": "知识域稳定标识（Snowflake ID 字符串形式）", "pattern": "^[0-9]+$", "minLength": 1 },
+    "KnowledgeScopeType": { "type": "string", "enum": ["project", "public"], "description": "知识域类型" },
+    "ProjectRef": { "type": "string", "description": "项目引用，可以是稳定ID、别名或仓库路径", "minLength": 1 },
+    "EvidenceId": { "type": "string", "description": "证据唯一标识（沿用 001），可用于 get_evidence 展开", "minLength": 1 },
+    "SourceVersion": { "type": "integer", "minimum": 1, "description": "知识源版本号（单调递增整数）" },
+    "SourcePosition": { "type": "string", "description": "来源位置路径。Markdown 为章节路径，Java 为全限定符号路径" },
+    "CompletionStatus": { "type": "string", "enum": ["complete", "partial", "no_evidence", "failed"], "description": "检索完成状态（蓝图 §14 四态，沿用 001）" },
+    "RelevanceScore": { "type": "number", "minimum": 0, "maximum": 1, "description": "相关性/融合/Rerank 分数" },
+    "RequestId": { "type": "string", "description": "请求唯一标识（沿用 001），用于问题回溯与对外账本桥接", "minLength": 1 },
+    "ErrorObject": { "type": "object", "description": "标准化错误对象（沿用 001）", "properties": { "code": { "type": "string" }, "message": { "type": "string" } }, "required": ["code", "message"], "additionalProperties": true },
+    "RunId": { "type": "string", "description": "Agent 编排运行唯一标识（Snowflake ID 字符串形式）", "pattern": "^[0-9]+$", "minLength": 1 },
+    "LedgerEntryId": { "type": "string", "description": "证据账本条目唯一标识（雪花 ID，与 chunk_id/knowledge_scope_id 同型 ^[0-9]+$）", "pattern": "^[0-9]+$", "minLength": 1 },
+    "SubProblemId": { "type": "integer", "minimum": 1, "description": "查询规划 Agent 拆解的子问题标识（run_id 内单调递增）" },
+    "RoundIndex": { "type": "integer", "minimum": 0, "description": "补充检索轮次（0=首轮，>=1=补充检索轮次，run_id 内单调递增）" },
+    "ContextResultId": { "type": "string", "description": "上下文编排结果标识（run_id 内稳定）", "minLength": 1 },
+    "AgentRole": { "type": "string", "enum": ["query_planner", "evidence_analyst", "context_orchestrator"], "description": "Agent 角色标识（蓝图 §11 三角色）" },
+    "CoverageState": { "type": "string", "enum": ["covered", "partial", "uncovered"], "description": "证据分析 Agent 覆盖度状态枚举（FR-032）" },
+    "ConflictType": { "type": "string", "enum": ["none", "version_conflict", "source_conflict", "domain_conflict"], "description": "证据分析 Agent 冲突类型枚举（FR-032）" },
+    "SelectionDecision": { "type": "string", "enum": ["selected", "truncated", "deduped"], "description": "上下文编排追加式选择清单决策枚举（FR-017/FR-032）" },
+    "RetrieverType": { "type": "string", "enum": ["dense", "sparse", "graph", "fusion", "rerank"], "description": "召回该证据的检索器类型" }
+  }
+}

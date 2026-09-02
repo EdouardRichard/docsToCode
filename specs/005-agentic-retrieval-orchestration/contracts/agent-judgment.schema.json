@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-engineering-rag-mcp.local/schemas/005/agent-judgment.schema.json",
+  "title": "Agent Judgment — Evidence Analysis Node Output (005)",
+  "description": "证据分析 Agent 节点结构化输出契约（蓝图 §11.2/§14）。覆盖度/冲突/缺口/是否补充判断，固化枚举见 FR-032。needs_supplementary 为 Agent 判断输入，确定性控制器据此决定继续/返回（不由 Agent 独占，宪法 VI）。未通过 Schema 校验时确定性控制器回退该角色确定性等价行为（FR-003/SC-011）。",
+  "type": "object",
+  "properties": {
+    "judgment_id": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/LedgerEntryId", "description": "判断记录唯一标识（雪花 ID 同型）" },
+    "run_id": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/RunId" },
+    "round_index": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/RoundIndex" },
+    "coverage_state": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/CoverageState" },
+    "conflict_type": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/ConflictType" },
+    "uncovered_sub_problem_ids": { "type": "array", "items": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/SubProblemId" }, "description": "未覆盖子问题标识数组（FR-013）" },
+    "needs_supplementary": { "type": "boolean", "description": "是否需要补充检索（确定性控制器消费，非独占跳转权）" },
+    "gap_descriptions": { "type": "array", "items": { "type": "object", "properties": { "description": { "type": "string" }, "suggested_action": { "type": "string" } }, "required": ["description"], "additionalProperties": false } },
+    "model_and_version": { "type": "string", "description": "证据分析 Agent 模型与版本（能力路由记录）" },
+    "schema_valid": { "type": "boolean", "description": "节点 Schema 校验结果；false 触发降级（FR-003）" }
+  },
+  "required": ["judgment_id", "run_id", "round_index", "coverage_state", "conflict_type", "uncovered_sub_problem_ids", "needs_supplementary", "gap_descriptions", "model_and_version", "schema_valid"],
+  "additionalProperties": false
+}

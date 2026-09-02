@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-engineering-rag-mcp.local/schemas/005/evidence-ledger-entry.schema.json",
+  "title": "Evidence Ledger Entry (005)",
+  "description": "追加式证据账本条目内部契约（蓝图 §13）。Agent 可引用/评价/筛选但不得覆盖；表只 INSERT（除 TTL 清理）。不改对外 MCP 契约——对外以 search_knowledge 输出的 request_id+evidence_id 为桥接键解析本条目（FR-024/FR-008/SC-006）。",
+  "type": "object",
+  "properties": {
+    "ledger_entry_id": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/LedgerEntryId" },
+    "request_id": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/RequestId" },
+    "run_id": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/RunId" },
+    "round_index": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/RoundIndex" },
+    "sub_problem_id": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/SubProblemId" },
+    "evidence_id": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/EvidenceId" },
+    "retrieval_query": { "type": "string", "description": "召回该证据的检索查询（追踪配置关闭正文时可存空串占位，FR-012）" },
+    "retriever": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/RetrieverType" },
+    "score": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/RelevanceScore" },
+    "source_version": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/SourceVersion" },
+    "source_position": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/SourcePosition" },
+    "knowledge_scope_id": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/KnowledgeScopeId" },
+    "knowledge_scope_type": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/KnowledgeScopeType" },
+    "referenced_by_agent": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/AgentRole" }
+  },
+  "required": ["ledger_entry_id", "request_id", "run_id", "round_index", "sub_problem_id", "evidence_id", "retrieval_query", "retriever", "score", "source_version", "source_position", "knowledge_scope_id", "knowledge_scope_type", "referenced_by_agent"],
+  "additionalProperties": false
+}

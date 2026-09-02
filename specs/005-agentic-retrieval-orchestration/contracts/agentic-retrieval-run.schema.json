@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-engineering-rag-mcp.local/schemas/005/agentic-retrieval-run.schema.json",
+  "title": "Agentic Retrieval Run (005)",
+  "description": "Agent 编排检索运行记录 + 公共状态包络 + 护栏状态 + 子路径耗时 + 三 Agent 输出引用 + 账本引用（蓝图 §13/§12，FR-010/FR-031）。运行期状态使用 TTL，不进入向量库，不写回项目知识库（蓝图 §20）。",
+  "type": "object",
+  "properties": {
+    "run_id": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/RunId" },
+    "request_id": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/RequestId" },
+    "project_scope": { "type": "array", "items": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/ProjectRef" }, "minItems": 1, "maxItems": 10, "description": "显式项目作用域（宪法 I，缺失拒绝）" },
+    "knowledge_scope_ids": { "type": "array", "items": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/KnowledgeScopeId" } },
+    "task_context": { "type": ["object", "null"], "description": "调用方任务上下文（仅作提示，服务端固定护栏始终生效，FR-007）" },
+    "run_config": { "type": "object", "description": "运行配置与模型能力要求（护栏、模型路由、Agent 开关、图护栏沿用 004）", "additionalProperties": true },
+    "completion_status": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/CompletionStatus" },
+    "max_rounds": { "type": "integer", "minimum": 1, "maximum": 3, "description": "最大检索轮次护栏（默认 2/上限 3，FR-006）" },
+    "rounds_completed": { "type": "integer", "minimum": 0 },
+    "guardrail_state": { "type": "object", "description": "护栏状态：节点超时 5s/10s、装箱上限 top_k<=20、单来源上限 3/5、总超时 30s、图护栏沿用 004（跳数 2/3、预算 10/20、子超时 3s）", "additionalProperties": true },
+    "sub_path_timings": { "type": "object", "description": "各子路径（dense/sparse/graph/fusion/rerank/query_planner/evidence_analyst/context_orchestrator）耗时 ms", "additionalProperties": { "type": "number", "minimum": 0 } },
+    "agent_outputs_ref": {
+      "type": "object",
+      "description": "三 Agent 输出引用",
+      "properties": {
+        "query_planner": {
+          "type": "object",
+          "description": "查询规划 Agent 输出：拆解子问题与所选检索信号/关系方向（蓝图 §11.1，FR-033）",
+          "properties": {
+            "sub_problems": { "type": "array", "items": { "type": "object", "properties": { "sub_problem_id": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/SubProblemId" }, "query": { "type": "string" }, "signals": { "type": "array", "items": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/RetrieverType" } }, "relation_directions": { "type": "array", "items": { "type": "string", "enum": ["calls", "called_by", "fk_references", "fk_referenced_by"] } } }, "required": ["sub_problem_id", "query", "signals"], "additionalProperties": false } },
+            "schema_valid": { "type": "boolean" }
+          },
+          "required": ["sub_problems", "schema_valid"],
+          "additionalProperties": false
+        },
+        "evidence_analyst": {
+          "type": "object",
+          "description": "证据分析 Agent 各轮判断引用",
+          "properties": {
+            "judgment_ids": { "type": "array", "items": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/LedgerEntryId" } },
+            "schema_valid_all": { "type": "boolean" }
+          },
+          "required": ["judgment_ids", "schema_valid_all"],
+          "additionalProperties": false
+        },
+        "context_orchestrator": {
+          "type": "object",
+          "description": "上下文编排 Agent 输出：去重/多样/父级补充/装箱结果（蓝图 §11.3，FR-017）",
+          "properties": {
+            "context_result_id": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/ContextResultId" },
+            "selection_list": {
+              "type": "array",
+              "description": "追加式选择清单（不改写账本，FR-008/FR-017）",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "ledger_entry_id": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/LedgerEntryId" },
+                  "decision": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/SelectionDecision" }
+                },
+                "required": ["ledger_entry_id", "decision"],
+                "additionalProperties": false
+              }
+            },
+            "schema_valid": { "type": "boolean" }
+          },
+          "required": ["context_result_id", "selection_list", "schema_valid"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["query_planner", "evidence_analyst", "context_orchestrator"],
+      "additionalProperties": false
+    },
+    "ledger_ref": {
+      "type": "object",
+      "description": "证据账本引用（追加式，按轮次/子问题分组，SC-009 可解释性）",
+      "properties": {
+        "ledger_entry_ids": { "type": "array", "items": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/LedgerEntryId" } },
+        "rounds": { "type": "array", "items": { "type": "object", "properties": { "round_index": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/RoundIndex" }, "sub_problem_ids": { "type": "array", "items": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/SubProblemId" } }, "judgment_id": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/LedgerEntryId" } }, "required": ["round_index"], "additionalProperties": false } }
+      },
+      "required": ["ledger_entry_ids", "rounds"],
+      "additionalProperties": false
+    },
+    "total_cost": { "type": ["number", "null"], "minimum": 0, "description": "单次调用 LLM 成本（SC-007）" },
+    "schema_valid_all": { "type": "boolean", "description": "所有 Agent 节点 Schema 校验是否通过；任一 false 触发降级记录（SC-011）" }
+  },
+  "required": ["run_id", "request_id", "project_scope", "knowledge_scope_ids", "run_config", "completion_status", "max_rounds", "rounds_completed", "guardrail_state", "sub_path_timings", "agent_outputs_ref", "ledger_ref", "schema_valid_all"],
+  "additionalProperties": false,
+  "allOf": [
+    { "if": { "properties": { "completion_status": { "const": "partial" } } }, "then": { "description": "partial 须携带已验证证据+未覆盖问题+冲突+失败路径（FR-016），由 ledger_ref/agent_outputs_ref 表达" } },
+    { "if": { "properties": { "completion_status": { "const": "failed" } } }, "then": { "description": "failed 须携带错误，沿用 001 ErrorObject 经对外契约返回" } }
+  ]
+}
