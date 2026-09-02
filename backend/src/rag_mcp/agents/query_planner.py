@@ -68,9 +68,24 @@ class QueryPlannerAgent(AgentBase):
     ROLE = "query_planner"
     NODE_SCHEMA = NODE_SCHEMA
 
-    def __init__(self, model_and_version: str = "") -> None:
+    DECOMPOSE_SYSTEM_PROMPT = (
+        "You are a query-planning agent for a code/knowledge retrieval system. "
+        "Decompose the user's retrieval query into traceable sub-problems. "
+        "For multi-hop questions produce one sub-problem per hop; for "
+        "single-intent questions return exactly ONE sub-problem.\n"
+        "Respond with ONLY a JSON object of the exact shape:\n"
+        '{"sub_problems": [{"query": string, "signals": [string], '
+        '"relation_directions": [string]}]}\n'
+        'where "signals" is a non-empty subset of ["dense", "sparse", "graph"], '
+        'and "relation_directions" (optional, only when "graph" is in signals) '
+        'is a subset of ["calls", "called_by", "fk_references", "fk_referenced_by"]. '
+        "No markdown fences, no extra keys, no commentary."
+    )
+
+    def __init__(self, model_and_version: str = "", llm_client=None) -> None:
         super().__init__(model_and_version=model_and_version)
         self._sub_problem_counter = 0
+        self._llm_client = llm_client
 
     def get_default_directions(self) -> list[str]:
         """Return the 004 deterministic bidirectional default (FR-033)."""
@@ -84,11 +99,28 @@ class QueryPlannerAgent(AgentBase):
     def _llm_decompose(self, query: str, context: dict[str, Any]) -> list[dict[str, Any]] | None:
         """Call the LLM to decompose the query (overridable for testing).
 
-        Returns a list of sub-problem dicts, or None on failure.
+        Makes a REAL LLM call through the wired client when one is configured
+        (T019 LLM integration). Returns a list of sub-problem dicts, or None
+        on any failure — the caller then degrades deterministically (SC-011).
         Each dict has: query (str), signals (list[str]), relation_directions (list[str]|None).
         """
-        # Default: no LLM available, return None to trigger fallback
-        return None
+        if self._llm_client is None:
+            # No client wired: deterministic fallback (keeps unit tests offline)
+            return None
+        try:
+            payload = self._llm_client.chat_json(
+                self.DECOMPOSE_SYSTEM_PROMPT,
+                {"query": query, "task_context": context.get("task_context")},
+            )
+        except Exception as exc:
+            logger.warning("query_planner LLM call raised: %s", exc)
+            return None
+        if not isinstance(payload, dict):
+            return None
+        sub_problems = payload.get("sub_problems")
+        if not isinstance(sub_problems, list) or not sub_problems:
+            return None
+        return sub_problems
 
     def execute(self, context: dict[str, Any]) -> dict[str, Any]:
         """Decompose the query into sub-problems (FR-001/FR-032/FR-033)."""

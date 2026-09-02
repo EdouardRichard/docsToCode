@@ -43,6 +43,39 @@ STEP_NAMES = [
 ]
 
 
+def build_llm_agents(settings: Any | None = None):
+    """Build the three Agents with real LLM clients wired from config.
+
+    This is the Model Gateway bridge (blueprint sec 18): each role gets an
+    actually-callable LLM client resolved by the capability router from the
+    run-config / environment. Returns (query_planner, evidence_analyst,
+    context_orchestrator). Context orchestrator uses deterministic logic
+    (dedup/diversity/binning) and needs no LLM client.
+    """
+    from rag_mcp.agents.capability_router import CapabilityRouter
+    from rag_mcp.agents.context_orchestrator import ContextOrchestratorAgent
+    from rag_mcp.agents.evidence_analyst import EvidenceAnalystAgent
+    from rag_mcp.agents.query_planner import QueryPlannerAgent
+
+    if settings is None:
+        settings = get_settings()
+    router = CapabilityRouter.from_settings(settings)
+    default_model = settings.agentic.model_routing.default_model
+
+    query_planner = QueryPlannerAgent(
+        model_and_version=default_model,
+        llm_client=router.create_client("query_planner"),
+    )
+    evidence_analyst = EvidenceAnalystAgent(
+        model_and_version=default_model,
+        llm_client=router.create_client("evidence_analyst"),
+    )
+    context_orchestrator = ContextOrchestratorAgent(
+        model_and_version=default_model,
+    )
+    return query_planner, evidence_analyst, context_orchestrator
+
+
 class AgenticStateMachine:
     """Deterministic state machine for Agent orchestration (FR-004/FR-005/FR-006).
 
@@ -167,6 +200,17 @@ class AgenticStateMachine:
     def set_context_orchestrator(self, orchestrator) -> None:
         """Wire in the ContextOrchestratorAgent (T037, blueprint sec 12 step 8)."""
         self._context_orchestrator = orchestrator
+
+    def wire_default_agents(self, settings: Any | None = None) -> None:
+        """Wire the three Agents with real LLM clients from config.
+
+        Makes the agentic path actually call the LLM for query planning and
+        evidence analysis (the Model Gateway bridge, blueprint sec 18).
+        """
+        planner, analyst, orchestrator = build_llm_agents(settings)
+        self.set_query_planner(planner)
+        self.set_evidence_analyst(analyst)
+        self.set_context_orchestrator(orchestrator)
 
     def get_retrieval_queries(self) -> list[str]:
         """Return the sub-problem queries for step 4 parallel retrieval (blueprint sec 12)."""

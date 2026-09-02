@@ -45,13 +45,49 @@ class EvidenceAnalystAgent(AgentBase):
     ROLE = "evidence_analyst"
     NODE_SCHEMA = NODE_SCHEMA
 
-    def __init__(self, model_and_version: str = "") -> None:
+    JUDGE_SYSTEM_PROMPT = (
+        "You are an evidence-analysis agent for a retrieval system. "
+        "Given the sub-problems and the retrieved evidence, judge coverage. "
+        "Never invent evidence; expose gaps and conflicts explicitly.\n"
+        "Respond with ONLY a JSON object of the exact shape:\n"
+        '{"coverage_state": "covered"|"partial"|"uncovered", '
+        '"conflict_type": "none"|"version_conflict"|"source_conflict"|"domain_conflict", '
+        '"uncovered_sub_problem_ids": [integer], '
+        '"needs_supplementary": boolean, '
+        '"gap_descriptions": [{"description": string, "suggested_action": string}]}\n'
+        "No markdown fences, no extra keys, no commentary."
+    )
+
+    def __init__(self, model_and_version: str = "", llm_client=None) -> None:
         super().__init__(model_and_version=model_and_version)
         self._round_counter = 0
+        self._llm_client = llm_client
 
     def _llm_judge(self, context: dict[str, Any]) -> dict[str, Any] | None:
-        """Call the LLM to produce a judgment (overridable for testing)."""
-        return None  # default: no LLM, trigger fallback
+        """Call the LLM to produce a judgment (overridable for testing).
+
+        Makes a REAL LLM call through the wired client when one is configured
+        (T025 LLM integration). Returns the judgment dict, or None on any
+        failure — the caller then degrades deterministically (SC-011).
+        """
+        if self._llm_client is None:
+            return None
+        try:
+            payload = self._llm_client.chat_json(
+                self.JUDGE_SYSTEM_PROMPT,
+                {
+                    "query": context.get("query", ""),
+                    "sub_problems": context.get("sub_problems", []),
+                    "evidence": context.get("evidence", []),
+                    "round_index": context.get("round_index", 0),
+                },
+            )
+        except Exception as exc:
+            logger.warning("evidence_analyst LLM call raised: %s", exc)
+            return None
+        if not isinstance(payload, dict):
+            return None
+        return payload
 
     def execute(self, context: dict[str, Any]) -> dict[str, Any]:
         """Produce a structured evidence judgment (FR-013/FR-015/FR-032)."""

@@ -14,6 +14,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from rag_mcp.agents.llm_client import LLMClient
+
 
 @dataclass
 class RouteResult:
@@ -50,6 +52,7 @@ class CapabilityRouter:
         default_model: str = "",
         llm_base_url: str = "",
         llm_api_key: str = "",
+        node_timeout_ms: int = 5_000,
     ) -> None:
         self._models = {
             "query_planner": query_planner_model,
@@ -59,6 +62,7 @@ class CapabilityRouter:
         self._default_model = default_model
         self._llm_base_url = llm_base_url
         self._llm_api_key = llm_api_key
+        self._node_timeout_ms = node_timeout_ms
 
     @classmethod
     def from_settings(cls, settings: Any) -> "CapabilityRouter":
@@ -76,6 +80,7 @@ class CapabilityRouter:
             default_model=routing.default_model,
             llm_base_url=routing.llm_base_url,
             llm_api_key=routing.llm_api_key,
+            node_timeout_ms=agentic.guardrails.node_timeout_ms_default,
         )
 
     def route(self, role: str) -> RouteResult:
@@ -92,4 +97,20 @@ class CapabilityRouter:
             model_and_version=model,  # model name serves as model_and_version
             llm_base_url=self._llm_base_url,
             llm_api_key=self._llm_api_key,
+        )
+
+    def create_client(self, role: str) -> LLMClient:
+        """Create an actually-callable LLM client for an Agent role (FR-002).
+
+        This is the Model Gateway bridge (blueprint sec 18): the router
+        resolves the model for the role and returns a client that makes real
+        HTTP calls to the OpenAI-compatible endpoint. No vendor is hardcoded;
+        base_url/api_key/model all come from run-config / environment.
+        """
+        routed = self.route(role)
+        return LLMClient(
+            base_url=routed.llm_base_url,
+            api_key=routed.llm_api_key,
+            model=routed.model,
+            timeout_s=self._node_timeout_ms / 1000.0,
         )
