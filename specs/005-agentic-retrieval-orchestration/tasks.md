@@ -215,29 +215,29 @@
 **Story goal**: Agent 编排对照评测；≥3% 受益子集 + 001 非劣 + 002/004 非回归 + 硬性指标全过→进默认路径，否则可选路径。
 **Independent test**: 对照报告产出；逐查询可解释；三段通过判定；默认路径决策；可重复。
 
-- [ ] T038 [P] [US4] Red: failing test for agentic comparison eval report (metrics + per-query + three_gate_pass)
+- [X] T038 [P] [US4] Red: failing test for agentic comparison eval report (metrics + per-query + three_gate_pass)
   - [路径] backend/tests/unit/eval/test_agentic_comparison.py
   - [AC] 报告含 Recall@K/MRR/nDCG/P50/P95/cost + per_query_comparison（确定性 vs Agent 排名+判断+账本引用）+ three_gate_pass（sc001/sc002/sc015/hard_metrics）+ enters_default_path（FR-026/FR-028/FR-029）
 
-- [ ] T039 [US4] Green: implement agentic_comparison.py eval runner
+- [X] T039 [US4] Green: implement agentic_comparison.py eval runner
   - [路径] backend/src/rag_mcp/eval/agentic_comparison.py
   - [AC] T038 测试通过
   - [deps] T038
 
-- [ ] T040 [P] [US4] Red: failing test for eval batch composition (≥6, categories, ≥1 zh, JSON format)
+- [X] T040 [P] [US4] Red: failing test for eval batch composition (≥6, categories, ≥1 zh, JSON format)
   - [路径] backend/tests/eval/test_agentic_eval_batch.py + eval/agentic_eval_dataset.json
   - [AC] ≥6 条；多跳/缺口/冲突各≥2；≥1 中文；JSON 符合 001 eval 格式（FR-027）
 
-- [ ] T041 [US4] Green: create eval batch dataset
+- [X] T041 [US4] Green: create eval batch dataset
   - [路径] eval/agentic_eval_dataset.json
   - [AC] T040 测试通过
   - [deps] T040
 
-- [ ] T042 [US4] Red: failing integration test for same-session rerun-baseline-then-agentic fairness + repeatability
+- [X] T042 [US4] Red: failing integration test for same-session rerun-baseline-then-agentic fairness + repeatability
   - [路径] backend/tests/integration/test_us4_eval_fairness.py
   - [AC] 同会话先重跑确定性基线再跑 Agent；非延迟指标 1% 容差内一致；延迟环境敏感（FR-030/SC-008）
 
-- [ ] T043 [US4] Green: implement fairness orchestration
+- [X] T043 [US4] Green: implement fairness orchestration
   - [路径] backend/src/rag_mcp/eval/agentic_comparison.py
   - [AC] T042 测试通过
   - [deps] T042

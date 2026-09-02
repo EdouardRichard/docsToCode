@@ -1,0 +1,83 @@
+[
+  {
+    "query": "Which services call UserService#validateToken and what does validateToken depend on?",
+    "project_scope": [
+      "351193748123680768"
+    ],
+    "expected_evidence_ids": [
+      "352016027946582019",
+      "352016027946582018"
+    ],
+    "category": "multi_hop",
+    "language": "en"
+  },
+  {
+    "query": "Find the call chain from API entry point to database save operation.",
+    "project_scope": [
+      "351193748123680768"
+    ],
+    "expected_evidence_ids": [
+      "352016027946582016",
+      "352016027946582020"
+    ],
+    "category": "multi_hop",
+    "language": "en"
+  },
+  {
+    "query": "What methods are not covered by the current test suite for UserService?",
+    "project_scope": [
+      "351193748123680768"
+    ],
+    "expected_evidence_ids": [
+      "352016027946582021"
+    ],
+    "category": "gap",
+    "language": "en"
+  },
+  {
+    "query": "Find evidence gaps where error handling is missing in the service layer.",
+    "project_scope": [
+      "351193748123680768"
+    ],
+    "expected_evidence_ids": [
+      "352016027946582022"
+    ],
+    "category": "gap",
+    "language": "en"
+  },
+  {
+    "query": "Why does UserService#findById conflict with the repository interface version?",
+    "project_scope": [
+      "351193748123680768"
+    ],
+    "expected_evidence_ids": [
+      "352016027946582019"
+    ],
+    "category": "conflict",
+    "language": "en"
+  },
+  {
+    "query": "Show conflicting API signatures between UserService and UserRepository.",
+    "project_scope": [
+      "351193748123680768"
+    ],
+    "expected_evidence_ids": [
+      "352016027946582016",
+      "352016027946582017"
+    ],
+    "category": "conflict",
+    "language": "en"
+  },
+  {
+    "query": "哪些服务调用了 UserService#validateToken，validateToken 自身依赖什么？",
+    "project_scope": [
+      "351193748123680768"
+    ],
+    "expected_evidence_ids": [
+      "352016027946582019",
+      "352016027946582018"
+    ],
+    "category": "multi_hop",
+    "language": "zh"
+  }
+]
