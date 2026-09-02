@@ -32,11 +32,11 @@
   - [路径] backend/src/rag_mcp/agents/、backend/src/rag_mcp/orchestration/、backend/src/rag_mcp/eval/
   - [AC] 目录与 __init__.py 创建；imports 可解析
 
-- [ ] T002 [P] Configure agentic run-config schema (guardrails defaults, model routing, agent toggle, 004 graph guardrails reuse)
+- [X] T002 [P] Configure agentic run-config schema (guardrails defaults, model routing, agent toggle, 004 graph guardrails reuse)
   - [路径] backend/src/rag_mcp/config/agentic.py
   - [AC] config 加载默认值（轮次 2/上限3、节点 5s/上限10s、top_k≤20、单来源 3/上限5、总超时 30s、图跳数 2/3·预算 10/20·子超时 3s）；toggle off→确定性回退
 
-- [ ] T003 DB migration: create 005 runtime tables (TTL + indexes + isolation triples)
+- [X] T003 DB migration: create 005 runtime tables (TTL + indexes + isolation triples)
   - [路径] backend/migrations/005_agentic_tables.py
   - [AC] evidence_ledger_entry / agent_judgment / context_selection_list / agentic_retrieval_run 建表；TTL 列；(knowledge_scope_id,project_id,index_version) 隔离；append-only（ORM 无 UPDATE 路径）
 

@@ -18,7 +18,7 @@ try:  # pragma: no cover - optional convenience, not a hard dependency
     from dotenv import load_dotenv
 
     _ENV_CANDIDATES = (
-        Path(__file__).resolve().parents[3] / ".env",  # repository root
+        Path(__file__).resolve().parents[4] / ".env",  # repository root
         Path.cwd() / ".env",
     )
     for _candidate in _ENV_CANDIDATES:
@@ -101,6 +101,9 @@ class IngestionConfig:
     chunk_target_tokens: int = 768
     chunk_min_tokens: int = 64
     chunk_max_tokens: int = 1_024
+
+
+from rag_mcp.config.agentic import AgenticConfig, AgenticGuardrails, ModelRouting
 
 
 @dataclass(frozen=True)
@@ -202,6 +205,64 @@ class Settings:
     graph_soft_confidence_threshold: float = field(
         default_factory=lambda: float(os.getenv("GRAPH_SOFT_CONFIDENCE_THRESHOLD", "0.6"))
     )
+    # 005: Agent orchestration (environment-overridable)
+    # Configurable switch (FR-024, Constitution X): default OFF keeps the
+    # deterministic 001/002/004 path; enable only after comparison eval passes.
+    agentic_retrieval_enabled: bool = field(
+        default_factory=lambda: os.getenv(
+            "AGENTIC_RETRIEVAL_ENABLED", "false"
+        ).lower() in ("1", "true", "yes", "on")
+    )
+    agentic_max_rounds: int = field(
+        default_factory=lambda: int(os.getenv("AGENTIC_MAX_ROUNDS", "2"))
+    )
+    agentic_max_rounds_limit: int = field(
+        default_factory=lambda: int(os.getenv("AGENTIC_MAX_ROUNDS_LIMIT", "3"))
+    )
+    agentic_node_timeout_ms: int = field(
+        default_factory=lambda: int(os.getenv("AGENTIC_NODE_TIMEOUT_MS", "5000"))
+    )
+    agentic_node_timeout_ms_limit: int = field(
+        default_factory=lambda: int(os.getenv("AGENTIC_NODE_TIMEOUT_MS_LIMIT", "10000"))
+    )
+    agentic_top_k_max: int = field(
+        default_factory=lambda: int(os.getenv("AGENTIC_TOP_K_MAX", "20"))
+    )
+    agentic_max_evidence_per_source: int = field(
+        default_factory=lambda: int(os.getenv("AGENTIC_MAX_EVIDENCE_PER_SOURCE", "3"))
+    )
+    agentic_max_evidence_per_source_limit: int = field(
+        default_factory=lambda: int(os.getenv("AGENTIC_MAX_EVIDENCE_PER_SOURCE_LIMIT", "5"))
+    )
+    agentic_total_timeout_ms: int = field(
+        default_factory=lambda: int(os.getenv("AGENTIC_TOTAL_TIMEOUT_MS", "30000"))
+    )
+    agentic_confidence_threshold: float = field(
+        default_factory=lambda: float(os.getenv("AGENTIC_CONFIDENCE_THRESHOLD", "0.6"))
+    )
+    agentic_trace_body_enabled: bool = field(
+        default_factory=lambda: os.getenv("AGENTIC_TRACE_BODY_ENABLED", "true").lower()
+        in ("1", "true", "yes", "on")
+    )
+    # LLM model routing (FR-002, blueprint sec 18.4)
+    llm_base_url: str = field(
+        default_factory=lambda: os.getenv("LLM_BASE_URL", "")
+    )
+    llm_api_key: str = field(
+        default_factory=lambda: os.getenv("api_key", os.getenv("LLM_API_KEY", ""))
+    )
+    llm_model: str = field(
+        default_factory=lambda: os.getenv("model", os.getenv("LLM_MODEL", "deepseek-v4-flash"))
+    )
+    agentic_model_query_planner: str = field(
+        default_factory=lambda: os.getenv("AGENTIC_MODEL_QUERY_PLANNER", "")
+    )
+    agentic_model_evidence_analyst: str = field(
+        default_factory=lambda: os.getenv("AGENTIC_MODEL_EVIDENCE_ANALYST", "")
+    )
+    agentic_model_context_orchestrator: str = field(
+        default_factory=lambda: os.getenv("AGENTIC_MODEL_CONTEXT_ORCHESTRATOR", "")
+    )
 
     @property
     def graph(self) -> "GraphConfig":
@@ -220,6 +281,54 @@ class Settings:
             structure_weight_hop_decay=self.graph_structure_weight_hop_decay,
             soft_confidence_threshold=self.graph_soft_confidence_threshold,
         )
+    @property
+    def agentic(self) -> "AgenticConfig":
+        """Assemble a frozen AgenticConfig from environment-overridable fields.
+
+        Toggle enabled=False -> deterministic fallback (FR-024, Constitution X).
+        """
+        # Clamp effective values to limits
+        max_rounds = min(self.agentic_max_rounds, self.agentic_max_rounds_limit)
+        node_timeout = min(self.agentic_node_timeout_ms, self.agentic_node_timeout_ms_limit)
+        max_ev = min(
+            self.agentic_max_evidence_per_source,
+            self.agentic_max_evidence_per_source_limit,
+        )
+        guardrails = AgenticGuardrails(
+            max_rounds_default=max_rounds,
+            max_rounds_limit=self.agentic_max_rounds_limit,
+            node_timeout_ms_default=node_timeout,
+            node_timeout_ms_limit=self.agentic_node_timeout_ms_limit,
+            top_k_max=self.agentic_top_k_max,
+            max_evidence_per_source_default=max_ev,
+            max_evidence_per_source_limit=self.agentic_max_evidence_per_source_limit,
+            total_timeout_ms=self.agentic_total_timeout_ms,
+            graph_hop_default=self.graph_hop_default,
+            graph_hop_max=self.graph_hop_max,
+            graph_candidate_budget_default=self.graph_candidate_budget,
+            graph_candidate_budget_max=self.graph_candidate_budget_max,
+            graph_sub_timeout_ms=self.graph_sub_timeout_ms,
+            confidence_threshold_default=self.agentic_confidence_threshold,
+            trace_body_enabled_default=self.agentic_trace_body_enabled,
+        )
+        model_routing = ModelRouting(
+            query_planner_model=self.agentic_model_query_planner or self.llm_model,
+            evidence_analyst_model=self.agentic_model_evidence_analyst or self.llm_model,
+            context_orchestrator_model=self.agentic_model_context_orchestrator or self.llm_model,
+            default_model=self.llm_model,
+            llm_base_url=self.llm_base_url,
+            llm_api_key=self.llm_api_key,
+        )
+        return AgenticConfig(
+            enabled=self.agentic_retrieval_enabled,
+            guardrails=guardrails,
+            model_routing=model_routing,
+            max_rounds=max_rounds,
+            node_timeout_ms=node_timeout,
+            max_evidence_per_source=max_ev,
+            trace_body_enabled=self.agentic_trace_body_enabled,
+        )
+
 
 
 def get_settings() -> Settings:

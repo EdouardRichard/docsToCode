@@ -34,3 +34,4 @@ logs/
 
 # Eval run logs (transient)
 eval/_*.log
+docs/1.0-iteration-roadmap.md
