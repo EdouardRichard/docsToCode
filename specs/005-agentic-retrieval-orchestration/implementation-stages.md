@@ -155,6 +155,24 @@ py -m pytest tests/contract/test_mcp_schemas.py -q     # 001 对外契约不回�
 - [ ] `tasks.md` 对应任务标 `[X]`；按逻辑组 git commit
 - [ ] 未引入新对外契约字段（evidence 项 `additionalProperties:false` 不变）
 
+## Part D — 实测基础设施就绪状态（实施前核对）
+
+**已就绪（实测）**：
+- ✅ PostgreSQL（远程，.env `DATABASE_URL`/`DATABASE_URL_SYNC`，可达；schema 含 001–004 表 + 004 图表 `graph_edge`/`soft_relation`/`graph_expansion_path`；alembic head `0045`）
+- ✅ Qdrant（远程，.env `QDRANT_URL`）
+- ✅ Python 依赖全部安装（langgraph/langchain/jsonschema/qdrant_client/asyncpg/alembic/mcp/sentence_transformers[BGE]）
+- ✅ 评测语料：`eval/eval_dataset.json` 含 Java 调用图 + DDL 外键查询；`eval/baseline_report.json`(001)/`hybrid_comparison_report.json`(002)/`graph_enhanced_comparison_report.json`(004) 存在；图表已填充（004 评测已跑）
+
+**待准备（缺口）**：
+1. ⚠️ **LLM 端点与凭据（Stage 3+ 必需，Stage 1 不需要）**——`.env` 当前无 LLM 变量（仅有 `EMBEDDING_MODEL`）。三 Agent 经 `LLMProvider.structured_complete(prompt, schema)` 需真实 LLM。请在 `.env` 预置：
+   - `LLM_BASE_URL`（如 `https://api.deepseek.com/v1` 远程；或 `http://localhost:11434/v1` 本地 Ollama）
+   - `LLM_API_KEY`（远程必填；本地留空）
+   - `LLM_MODEL`（如 `deepseek-chat` / DeepSeek V4-Flash，蓝图 §18.4）
+   - 可选按角色路由：`LLM_MODEL_QUERY_PLANNER`（低延迟）、`LLM_MODEL_EVIDENCE_ANALYST`（更强）、`LLM_MODEL_CONTEXT_ORCHESTRATOR`（居中）
+   - Stage 1 用 `StubLLMProvider`（按 schema 返回结构化输出，无需真实 LLM）；Stage 3+ 切真实 LLMProvider 实现。
+2. ✓ **核对 graph_ready**：确认评测项目的知识版本已发布 `graph_ready` 且 Java/DDL 语料可检索（图表已填充→大概率已就绪；若 DB 被重置则重跑 004 重建发布 `graph_ready`）。
+3. **Stage 7 E2E 专用**：MCP 服务端 `py -m rag_mcp.server`（127.0.0.1:8000 管理 / :8080 MCP）+ DeepSeek Harness 连接 `http://127.0.0.1:8080`。
+
 ## 当前进度
 
 - ✅ T001（包目录）、T004/T005（契约校验，30 测试绿，commit f48aa9d）
