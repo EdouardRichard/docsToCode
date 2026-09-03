@@ -215,21 +215,21 @@
 
 ### Tests for User Story 4（先红）
 
-- [ ] T065 [US4] Red: 006 全量契约测试（5 个 schema 合法 + $ref 解析 + 对外 MCP schema 不回归）— `backend/tests/contract/test_006_schemas.py`
+- [X] T065 [US4] Red: 006 全量契约测试（5 个 schema 合法 + $ref 解析 + 对外 MCP schema 不回归）— `backend/tests/contract/test_006_schemas.py`
   - **AC**: 断言 5 个 006 schema 经 json-schema 2020-12 校验、`common.schema.json` $ref 全解析、`search_knowledge`/`get_evidence` 输出 schema 不变（FR-025/宪法 VII）；负向约束保持：不执行质量对照评测（FR-027）、既有护栏不改（FR-029）。
-- [ ] T066 [US4] Green: 契约校验 harness 接入（读 specs/006-runtime-hardening/contracts/*.schema.json）— `backend/tests/contract/test_006_schemas.py`
+- [X] T066 [US4] Green: 契约校验 harness 接入（读 specs/006-runtime-hardening/contracts/*.schema.json）— `backend/tests/contract/test_006_schemas.py`
   - **AC**: T065 全绿。
-- [ ] T067 [US4] Red: 跨实例 ID 唯一性集成测试（writer+2 reader 并发、worker_id 互异、零冲突、同 worker_id 误配拒绝）— `backend/tests/integration/test_cross_instance_id.py`
+- [X] T067 [US4] Red: 跨实例 ID 唯一性集成测试（writer+2 reader 并发、worker_id 互异、零冲突、同 worker_id 误配拒绝）— `backend/tests/integration/test_cross_instance_id.py`
   - **AC**: 断言并发批次运行记录主键零冲突、活跃 worker_id 互异、同 WORKER_ID 第二实例启动显式拒绝（SC-013/FR-030）。
-- [ ] T068 [US4] Green: 打通 worker_id 分配→雪花生成→注册约束链路，使 T067 转绿 — 涉及 `backend/src/rag_mcp/runtime/instance_registry.py`、`backend/src/rag_mcp/utils/snowflake.py`
+- [X] T068 [US4] Green: 打通 worker_id 分配→雪花生成→注册约束链路，使 T067 转绿 — 涉及 `backend/src/rag_mcp/runtime/instance_registry.py`、`backend/src/rag_mcp/utils/snowflake.py`
   - **AC**: T067 全绿。
-- [ ] T069 [US4] Red: 实例形态冒烟适配器（001 基线 11 条经 MCP HTTP 双形态执行 + 逐条对照 baseline_report.json）— `backend/tests/eval/test_instance_form_smoke.py`
+- [X] T069 [US4] Red: 实例形态冒烟适配器（001 基线 11 条经 MCP HTTP 双形态执行 + 逐条对照 baseline_report.json）— `backend/tests/eval/test_instance_form_smoke.py`
   - **AC**: 断言 writer 与 reader 两形态各重跑 11 条、非延迟指标 1% 容差内逐条一致、P50/P95 记录对照标注环境敏感（FR-028/SC-009）。
-- [ ] T070 [US4] Green: 实现 `eval/instance_form_smoke.py`（MCP Streamable HTTP 适配 + 对照报告）— `backend/src/rag_mcp/eval/instance_form_smoke.py`
+- [X] T070 [US4] Green: 实现 `eval/instance_form_smoke.py`（MCP Streamable HTTP 适配 + 对照报告）— `backend/src/rag_mcp/eval/instance_form_smoke.py`
   - **AC**: T069 全绿。
-- [ ] T071 [US4] Red: 双形态硬约束集成测试（泄漏=0、Schema 100%、定位 100%、缺 project_scope 拒绝，含 reader 请求）— `backend/tests/integration/test_runtime_hard_constraints.py`
+- [X] T071 [US4] Red: 双形态硬约束集成测试（泄漏=0、Schema 100%、定位 100%、缺 project_scope 拒绝，含 reader 请求）— `backend/tests/integration/test_runtime_hard_constraints.py`
   - **AC**: 断言 writer+reader 部署验收集泄漏事件=0、Tool 成功响应 100% 过 Schema、来源可定位率 100%、缺作用域请求被拒且不回退全库（FR-023/FR-024/FR-025/SC-008）；未认证服务默认绑定本机（FR-026）。
-- [ ] T072 [US4] Green: 复用 001–005 硬指标 harness 于双形态，使 T071 转绿 — 涉及 `backend/tests/contract/test_hard_metrics.py`、`backend/tests/integration/test_runtime_hard_constraints.py`
+- [X] T072 [US4] Green: 复用 001–005 硬指标 harness 于双形态，使 T071 转绿 — 涉及 `backend/tests/contract/test_hard_metrics.py`、`backend/tests/integration/test_runtime_hard_constraints.py`
   - **AC**: T071 全绿。
 
 ---
