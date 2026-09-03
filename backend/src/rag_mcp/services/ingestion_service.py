@@ -56,6 +56,20 @@ def _derive_index_version(embedding_model: str) -> str:
     return f"{short_name}_v1"
 
 
+def _validate_collection_dimension(embedding_provider, existing_dimension: int | None) -> None:
+    """FR-011/FR-013 (constitution VIII): refuse to reuse an existing collection
+    with a mismatched embedding dimension. The only legal path is a new index
+    version + re-vectorization; no in-place mixing.
+    """
+    if existing_dimension is None:
+        return
+    from rag_mcp.providers.factory import check_embedding_dimension
+
+    result = check_embedding_dimension(embedding_provider, existing_dimension)
+    if not result.valid:
+        raise ValueError("; ".join(e.message for e in result.errors))
+
+
 def backfill_parent_chunk_ids(chunk_dicts: list[dict[str, Any]]) -> None:
     """Backfill ``parent_chunk_id`` for each chunk in-place (FR-007 / US-3).
 
@@ -307,7 +321,14 @@ class IngestionService:
 
             # 9. Ensure Qdrant hybrid collection exists (Dense + Sparse named vectors)
             dimension = self._embedding_provider.get_dimension()
-            if not self._qdrant_store.collection_exists(collection_name):
+            if self._qdrant_store.collection_exists(collection_name):
+                # FR-011/FR-013 (constitution VIII): refuse to mix a
+                # different-dimension embedding into an existing index version.
+                _validate_collection_dimension(
+                    self._embedding_provider,
+                    self._qdrant_store.get_collection_dimension(collection_name),
+                )
+            else:
                 logger.info("Creating Qdrant hybrid collection: %s (dim=%d)", collection_name, dimension)
                 self._qdrant_store.create_hybrid_collection(collection_name, dimension)
 

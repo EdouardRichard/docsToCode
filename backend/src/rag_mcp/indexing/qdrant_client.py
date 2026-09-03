@@ -54,6 +54,25 @@ class QdrantStore:
         collections = [c.name for c in self._client.get_collections().collections]
         return name in collections
 
+    def get_collection_dimension(self, name: str) -> int | None:
+        """Return the Dense vector dimension of an existing collection, or None.
+
+        Handles both hybrid (named 'dense' vector) and simple (single vector)
+        collection shapes. Returns None when the collection is missing or its
+        vector config cannot be introspected.
+        """
+        try:
+            info = self._client.get_collection(collection_name=name)
+        except Exception:  # noqa: BLE001 - introspection is best-effort
+            return None
+        vectors = getattr(info.config.params, "vectors", None)
+        if vectors is None:
+            return None
+        if isinstance(vectors, dict):
+            dense = vectors.get("dense")
+            return int(dense.size) if dense is not None else None
+        return int(vectors.size)
+
     def upsert_points(self, collection: str, points: list[PointStruct]) -> None:
         """Upsert points into a collection.
 
