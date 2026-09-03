@@ -100,6 +100,31 @@ def validate_timeout_profiles_at_startup() -> None:
         )
 
 
+def assemble_runtime_providers(settings):
+    """FR-010/FR-011/SC-004: assemble embedding+reranker from run config.
+
+    Replaces the hardcoded local-CPU providers so the reader/writer MCP uses
+    the unified Provider configuration; an invalid configuration fails the
+    instance loudly instead of silently falling back (no silent downgrade).
+    """
+    from rag_mcp.providers.factory import assemble_or_fail
+
+    bundle = assemble_or_fail(settings)
+    return bundle.embedding, bundle.reranker
+
+
+def _warmup_provider(label: str, provider) -> None:
+    """Eagerly warm a local model if the provider supports warmup.
+
+    Remote providers have no warmup step (they are stateless HTTP adapters);
+    GPU providers validate hardware lazily. Both are skipped gracefully.
+    """
+    warmup = getattr(provider, "warmup", None)
+    if callable(warmup):
+        print(f"Warming up {label} provider — may take ~30-60s ...")
+        warmup()
+
+
 @dataclass(frozen=True)
 class InstanceIdentity:
     """This process's instance identity for the whole lifetime."""
@@ -251,8 +276,7 @@ def main():
     validate_timeout_profiles_at_startup()
     identity = asyncio.run(startup_sequence(mode))
 
-    provider = LocalCPUEmbeddingProvider()
-    reranker = LocalCPUReranker()
+    provider, reranker = assemble_runtime_providers(settings)
     qdrant = QdrantStore()
     server = build_mcp_server(
         mode=mode,
@@ -262,12 +286,10 @@ def main():
         identity=identity,
     )
 
-    # Warm the embedding model before serving so the first search_knowledge
-    # call does not exceed the client's request timeout (bge-m3 lazy load).
-    print("Warming up embedding model (bge-m3) — may take ~30-60s ...")
-    provider.warmup()
-    print("Warming up reranker model (bge-reranker-v2-m3) ...")
-    reranker.warmup()
+    # Warm local models before serving so the first search_knowledge call
+    # does not exceed the client's request timeout (bge-m3 lazy load).
+    _warmup_provider("embedding", provider)
+    _warmup_provider("reranker", reranker)
 
     print(
         f"MCP server running on 127.0.0.1:{args.port or settings.mcp_port} "

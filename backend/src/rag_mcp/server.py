@@ -58,6 +58,26 @@ def _validate_timeout_profiles_or_fail(settings) -> None:
         )
 
 
+def _validate_provider_config_or_fail(settings) -> None:
+    """FR-011/SC-004: reject an invalid Provider configuration at startup.
+
+    The management (writer) process validates the unified Provider run
+    configuration before acquiring the lease; no silent fallback to an
+    undeclared model is allowed.
+    """
+    from rag_mcp.providers.factory import validate_provider_config
+
+    result = validate_provider_config(
+        settings.providers,
+        llm_base_url=settings.llm_base_url,
+    )
+    if not result.valid:
+        raise ValueError(
+            "invalid provider configuration: "
+            + "; ".join(e.message for e in result.errors)
+        )
+
+
 async def _acquire_writer_lease(settings):
     """Writer startup: register the instance and acquire the lease (FR-002).
 
@@ -185,6 +205,7 @@ async def lifespan(app: FastAPI):
     settings = get_settings()
     validate_management_mode(settings.instance_mode)
     _validate_timeout_profiles_or_fail(settings)
+    _validate_provider_config_or_fail(settings)
     # 抢租约 -> 失败即拒启 (no silent degradation, FR-002)
     lease = await _acquire_writer_lease(settings)
     renewal_task = asyncio.create_task(
