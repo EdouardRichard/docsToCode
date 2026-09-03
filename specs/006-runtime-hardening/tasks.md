@@ -177,32 +177,32 @@
 
 ### Tests for User Story 3（先红）
 
-- [ ] T053 [US3] Red: 正文开关全模式单测（query_text 置空、trace_body_recorded 标记、ID/状态/耗时/错误保留）— `backend/tests/unit/test_trace_body_switch.py`
+- [X] T053 [US3] Red: 正文开关全模式单测（query_text 置空、trace_body_recorded 标记、ID/状态/耗时/错误保留）— `backend/tests/unit/test_trace_body_switch.py`
   - **AC**: 断言 TRACE_BODY_ENABLED=false 时四种模式运行记录 query_text IS NULL 且 trace_body_recorded=FALSE、ID/状态/耗时/错误保留完整率 100%；AGENTIC_TRACE_BODY_ENABLED 兼容别名生效（FR-018/FR-019/SC-007）。
-- [ ] T054 [US3] Green: 统一正文开关接入运行记录写入（dense/hybrid/graph_enhanced/agentic）— `backend/src/rag_mcp/services/retrieval_service.py`、`backend/src/rag_mcp/orchestration/persistence.py`
+- [X] T054 [US3] Green: 统一正文开关接入运行记录写入（dense/hybrid/graph_enhanced/agentic）— `backend/src/rag_mcp/services/retrieval_service.py`、`backend/src/rag_mcp/orchestration/persistence.py`
   - **AC**: T053 全绿。
-- [ ] T055 [P] [US3] Red: provider_usage 记录单测（embedding/rerank/llm 调用计数与字符量、缓存命中不计）— `backend/tests/unit/test_provider_usage.py`
+- [X] T055 [P] [US3] Red: provider_usage 记录单测（embedding/rerank/llm 调用计数与字符量、缓存命中不计）— `backend/tests/unit/test_provider_usage.py`
   - **AC**: 断言 provider_usage JSONB 口径与 005 真实调用口径一致（llm 缓存命中不计数）（FR-016）。
-- [ ] T056 [P] [US3] Green: 请求完成时内存累计 provider_usage 并随运行记录写入 — `backend/src/rag_mcp/services/retrieval_service.py`
+- [X] T056 [P] [US3] Green: 请求完成时内存累计 provider_usage 并随运行记录写入 — `backend/src/rag_mcp/services/retrieval_service.py`
   - **AC**: T055 全绿。
-- [ ] T057 [US3] Red: 指标聚合单测（计数/状态分布/percentile/子路径/provider 用量/TTL 清理量）— `backend/tests/unit/test_runtime_metrics.py`
+- [X] T057 [US3] Red: 指标聚合单测（计数/状态分布/percentile/子路径/provider 用量/TTL 清理量）— `backend/tests/unit/test_runtime_metrics.py`
   - **AC**: 断言聚合 SQL 口径与 [data-model.md §6](./data-model.md) 一致、按 instance_mode/tool 分组、窗口受 TTL 约束、结果可序列化为 [runtime-metrics.schema.json](./contracts/runtime-metrics.schema.json)。
-- [ ] T058 [US3] Green: 实现 `runtime/metrics.py`（查询时聚合 + 指标组装）— `backend/src/rag_mcp/runtime/metrics.py`
+- [X] T058 [US3] Green: 实现 `runtime/metrics.py`（查询时聚合 + 指标组装）— `backend/src/rag_mcp/runtime/metrics.py`
   - **AC**: T057 全绿；聚合限定 TTL 窗口；不含任何正文。
-- [ ] T059 [US3] Red: 维护日志单测（TTL 清理计数写入、append-only）— `backend/tests/unit/test_maintenance_log.py`
+- [X] T059 [US3] Red: 维护日志单测（TTL 清理计数写入、append-only）— `backend/tests/unit/test_maintenance_log.py`
   - **AC**: 断言 purge 行数写入 `runtime_maintenance_log`、只 INSERT、可聚合（FR-016）。
-- [ ] T060 [US3] Green: 扩展 `maintenance_service.py`（清理计数写日志 + TTL 配置驱动）— `backend/src/rag_mcp/services/maintenance_service.py`
+- [X] T060 [US3] Green: 扩展 `maintenance_service.py`（清理计数写日志 + TTL 配置驱动）— `backend/src/rag_mcp/services/maintenance_service.py`
   - **AC**: T059 全绿；TTL 清理归属 writer（reader 不运行）。
-- [ ] T061 [US3] Red: 指标端点契约测试（GET /runtime/metrics 响应 schema 校验 + 无正文 + 秒级）— `backend/tests/contract/test_runtime_metrics_schema.py`
+- [X] T061 [US3] Red: 指标端点契约测试（GET /runtime/metrics 响应 schema 校验 + 无正文 + 秒级）— `backend/tests/contract/test_runtime_metrics_schema.py`
   - **AC**: 断言响应通过 [runtime-metrics.schema.json](./contracts/runtime-metrics.schema.json) 校验、全文不含 query_text/evidence 正文、查询秒级（FR-016/FR-017/SC-006）。
-- [ ] T062 [US3] Green: 实现 `api/runtime_metrics.py` 端点 + 挂到 writer 管理面 — `backend/src/rag_mcp/api/runtime_metrics.py`
+- [X] T062 [US3] Green: 实现 `api/runtime_metrics.py` 端点 + 挂到 writer 管理面 — `backend/src/rag_mcp/api/runtime_metrics.py`
   - **AC**: T061 全绿；仅 writer 管理面暴露（reader 不启动管理面）。
 
 ### Integration for User Story 3（先红）
 
-- [ ] T063 [US3] Red: 指标对账集成测试（已知批次逐条对账）— `backend/tests/integration/test_runtime_metrics_reconcile.py`
+- [X] T063 [US3] Red: 指标对账集成测试（已知批次逐条对账）— `backend/tests/integration/test_runtime_metrics_reconcile.py`
   - **AC**: 断言请求量/状态分布/延迟分位数/provider 用量与批次逐条对应、对账偏差=0（SC-006）。
-- [ ] T064 [US3] Green: 打通运行记录扩展→聚合→端点链路，使 T063 转绿 — 涉及 `backend/src/rag_mcp/runtime/metrics.py`、`backend/src/rag_mcp/api/runtime_metrics.py`
+- [X] T064 [US3] Green: 打通运行记录扩展→聚合→端点链路，使 T063 转绿 — 涉及 `backend/src/rag_mcp/runtime/metrics.py`、`backend/src/rag_mcp/api/runtime_metrics.py`
   - **AC**: T063 全绿。
 
 ---

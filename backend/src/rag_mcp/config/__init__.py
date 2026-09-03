@@ -383,7 +383,7 @@ class Settings:
             graph_candidate_budget_max=self.graph_candidate_budget_max,
             graph_sub_timeout_ms=self.graph_sub_timeout_ms,
             confidence_threshold_default=self.agentic_confidence_threshold,
-            trace_body_enabled_default=self.agentic_trace_body_enabled,
+            trace_body_enabled_default=self.trace_body_enabled,
         )
         model_routing = ModelRouting(
             query_planner_model=self.agentic_model_query_planner or self.llm_model,
@@ -400,7 +400,7 @@ class Settings:
             max_rounds=max_rounds,
             node_timeout_ms=node_timeout,
             max_evidence_per_source=max_ev,
-            trace_body_enabled=self.agentic_trace_body_enabled,
+            trace_body_enabled=self.trace_body_enabled,
         )
 
 

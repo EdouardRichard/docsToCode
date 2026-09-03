@@ -40,6 +40,7 @@ async def test_client(engine):
 
     from rag_mcp.api.projects import get_session as projects_get_session
     from rag_mcp.api.knowledge_sources import get_session as ks_get_session
+    from rag_mcp.api.runtime_metrics import get_session as metrics_get_session
     from rag_mcp.server import app
 
     session_factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
@@ -50,6 +51,7 @@ async def test_client(engine):
 
     app.dependency_overrides[projects_get_session] = _get_session
     app.dependency_overrides[ks_get_session] = _get_session
+    app.dependency_overrides[metrics_get_session] = _get_session
 
     try:
         transport = ASGITransport(app=app)

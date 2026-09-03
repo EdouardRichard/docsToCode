@@ -26,7 +26,6 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from rag_mcp.api.middleware import RequestContextMiddleware
@@ -239,25 +238,17 @@ def create_app() -> FastAPI:
     async def health():
         return {"status": "ok", "version": "0.1.0"}
 
-    # 006 T024: metrics route placeholder on the writer management plane.
-    # US3 (T061/T062) replaces this with the aggregated read-only endpoint.
-    @app.get("/runtime/metrics")
-    async def runtime_metrics_placeholder():
-        return JSONResponse(
-            status_code=501,
-            content={
-                "detail": "runtime metrics endpoint is implemented in US3 (T062); "
-                "the writer management plane owns this route"
-            },
-        )
+
 
     # Register API routers
     from rag_mcp.api.projects import router as projects_router
     from rag_mcp.api.knowledge_sources import router as ks_router
+    from rag_mcp.api.runtime_metrics import router as runtime_metrics_router
     from rag_mcp.api.sse import router as sse_router
 
     app.include_router(projects_router)
     app.include_router(ks_router)
+    app.include_router(runtime_metrics_router)
     app.include_router(sse_router)
 
     # Mount frontend static files if build exists

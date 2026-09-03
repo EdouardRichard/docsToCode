@@ -14,6 +14,7 @@ import logging
 import time
 import uuid
 from collections import defaultdict
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from sqlalchemy import or_, select
@@ -1412,16 +1413,29 @@ class RetrievalService:
         evidence_ref_ids: list[str] | None = None,
         format: str | None = None,
         run_id: int | None = None,
+        tool: str = "search_knowledge",
+        error_summary: dict | None = None,
+        provider_usage: dict | None = None,
     ) -> None:
         """Record an append-only RetrievalRun audit entry (003 adds format, FR-027).
 
         A caller-supplied run_id lets the graph trace ledger bridge
         graph_expansion_path rows to this run (004, DM-1).
+
+        006 (FR-016/FR-018/FR-019): honors the unified trace-body switch
+        (query_text=NULL + trace_body_recorded=FALSE when disabled), records
+        tool / instance attribution / error_summary / provider_usage, and
+        computes expires_at from the configurable RETRIEVAL_TTL_DAYS.
         """
+        from rag_mcp.runtime.instance_context import get_instance
+
         try:
+            trace_enabled = bool(self._settings.trace_body_enabled)
+            instance_id, instance_mode, _worker_id = get_instance()
+            now = datetime.now(timezone.utc)
             run = RetrievalRun(
                 run_id=run_id if run_id is not None else generate_id(),
-                query_text=query,
+                query_text=query if trace_enabled else None,
                 project_scopes=project_scopes,
                 completion_status=completion_status,
                 evidence_count=evidence_count,
@@ -1430,6 +1444,14 @@ class RetrievalService:
                 subpath_timings=subpath_timings,
                 evidence_ref_ids=evidence_ref_ids or [],
                 format=format,
+                tool=tool,
+                instance_id=instance_id,
+                instance_mode=instance_mode,
+                trace_body_recorded=trace_enabled,
+                error_summary=error_summary,
+                provider_usage=provider_usage,
+                created_at=now,
+                expires_at=now + timedelta(days=int(self._settings.retrieval_ttl_days)),
             )
             self._session.add(run)
             await self._session.flush()

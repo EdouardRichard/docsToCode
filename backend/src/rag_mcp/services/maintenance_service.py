@@ -17,18 +17,21 @@ never touched, and no runtime state is written back to the knowledge base
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from rag_mcp.config import get_settings
 from rag_mcp.models.retrieval_run import RetrievalRun
+from rag_mcp.models.runtime import RuntimeMaintenanceLog
 from rag_mcp.orchestration.models import (
     AgenticRetrievalRun,
     AgentJudgment,
     ContextSelectionList,
     EvidenceLedgerEntry,
 )
+from rag_mcp.utils.snowflake import generate_id
 
 logger = logging.getLogger(__name__)
 
@@ -114,6 +117,76 @@ async def purge_expired_agentic_runs(
         "Purged expired agentic runtime rows (before %s): %s", reference, counts,
     )
     return counts
+
+
+def compute_expires_at(now: datetime | None = None) -> datetime:
+    """FR-019: expires_at = write time + RETRIEVAL_TTL_DAYS (configurable).
+
+    Replaces the former server_default '7 days' constant so the retention
+    window is runtime-configuration driven.
+    """
+    reference = now or datetime.now(timezone.utc)
+    settings = get_settings()
+    return reference + timedelta(days=int(settings.retrieval_ttl_days))
+
+
+async def record_ttl_purge(
+    session: AsyncSession,
+    *,
+    purged_retrieval_runs: int = 0,
+    purged_agentic_runs: int = 0,
+    purged_maintenance_logs: int = 0,
+) -> RuntimeMaintenanceLog:
+    """Append a TTL purge audit row (FR-016, append-only — only INSERT)."""
+    log = RuntimeMaintenanceLog(
+        log_id=generate_id(),
+        event_type="ttl_purge",
+        purged_retrieval_runs=max(0, purged_retrieval_runs),
+        purged_agentic_runs=max(0, purged_agentic_runs),
+        purged_maintenance_logs=max(0, purged_maintenance_logs),
+    )
+    session.add(log)
+    return log
+
+
+async def run_ttl_purge(
+    session: AsyncSession,
+    now: datetime | None = None,
+) -> dict[str, int]:
+    """Writer maintenance: purge expired rows and audit the counts (T060).
+
+    Purges expired retrieval_runs and 005 agentic rows, then records a
+    runtime_maintenance_log row with the counts. Runs on the writer
+    management process only (readers never run maintenance, FR-004).
+    """
+    reference = now or datetime.now(timezone.utc)
+    retrieval = await purge_expired_retrieval_runs(session, now=reference)
+    agentic = await purge_expired_agentic_runs(session, now=reference)
+    maintenance = await _purge_expired_maintenance_logs(session, now=reference)
+    await record_ttl_purge(
+        session,
+        purged_retrieval_runs=retrieval,
+        purged_agentic_runs=sum(agentic.values()),
+        purged_maintenance_logs=maintenance,
+    )
+    return {
+        "purged_retrieval_runs": retrieval,
+        "purged_agentic_runs": sum(agentic.values()),
+        "purged_maintenance_logs": maintenance,
+    }
+
+
+async def _purge_expired_maintenance_logs(
+    session: AsyncSession, now: datetime | None = None
+) -> int:
+    """Self-purge old maintenance log rows by the same TTL window."""
+    reference = now or datetime.now(timezone.utc)
+    settings = get_settings()
+    cutoff = reference - timedelta(days=int(settings.retrieval_ttl_days))
+    result = await session.execute(
+        delete(RuntimeMaintenanceLog).where(RuntimeMaintenanceLog.created_at < cutoff)
+    )
+    return result.rowcount or 0
 
 
 class MaintenanceService:

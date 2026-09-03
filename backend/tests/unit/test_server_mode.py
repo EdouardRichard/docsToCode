@@ -96,10 +96,12 @@ async def test_lifespan_runs_ttl_loop_after_lease(monkeypatch) -> None:
 
 
 def test_metrics_route_placeholder_registered() -> None:
-    """T024 AC: metrics route is mounted on the writer management plane."""
+    """T024/T062: metrics route is mounted on the writer management plane."""
     from rag_mcp.server import app
 
-    paths = {getattr(route, "path", None) for route in app.routes}
+    # FastAPI includes routers as _IncludedRouter markers; resolve the real
+    # path set through the OpenAPI schema.
+    paths = set(app.openapi()["paths"].keys())
     assert "/runtime/metrics" in paths
 
 
