@@ -10,6 +10,7 @@ Conforms to mcp-get-evidence.schema.json output structure.
 from __future__ import annotations
 
 import logging
+import time
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import select
@@ -58,10 +59,21 @@ class EvidenceService:
         Returns:
             Dict conforming to mcp-get-evidence.schema.json output structure.
         """
+        start = time.monotonic()
         # 1. Parse evidence_id as chunk_id
         try:
             chunk_id = int(evidence_id)
         except (ValueError, TypeError):
+            await self._record_evidence_run(
+                evidence_id=evidence_id,
+                project_scopes=project_scopes,
+                available=False,
+                error={
+                    "code": "INVALID_EVIDENCE_ID",
+                    "message": f"Evidence ID '{evidence_id}' is not a valid identifier.",
+                },
+                duration_ms=int((time.monotonic() - start) * 1000),
+            )
             return {
                 "evidence_id": evidence_id,
                 "status": "unavailable",
@@ -82,6 +94,16 @@ class EvidenceService:
 
         if chunk is None:
             logger.info("Evidence %s not found in database", evidence_id)
+            await self._record_evidence_run(
+                evidence_id=evidence_id,
+                project_scopes=project_scopes,
+                available=False,
+                error={
+                    "code": "EVIDENCE_NOT_FOUND",
+                    "message": f"No evidence found with ID '{evidence_id}'. It may have been deleted or superseded.",
+                },
+                duration_ms=int((time.monotonic() - start) * 1000),
+            )
             return {
                 "evidence_id": evidence_id,
                 "status": "unavailable",
@@ -99,6 +121,19 @@ class EvidenceService:
             logger.warning(
                 "Scope mismatch for evidence %s: chunk scope=%d, requested scopes=%s (resolved=%s)",
                 evidence_id, chunk.knowledge_scope_id, project_scopes, resolved_scope_ids,
+            )
+            await self._record_evidence_run(
+                evidence_id=evidence_id,
+                project_scopes=project_scopes,
+                available=False,
+                error={
+                    "code": "SCOPE_MISMATCH",
+                    "message": (
+                        f"Evidence '{evidence_id}' does not belong to any of the "
+                        f"requested project scopes. Ensure the correct project is specified."
+                    ),
+                },
+                duration_ms=int((time.monotonic() - start) * 1000),
             )
             return {
                 "evidence_id": evidence_id,
@@ -153,7 +188,58 @@ class EvidenceService:
             "Evidence retrieved: id=%s, scope=%d, version=%d",
             evidence_id, chunk.knowledge_scope_id, source_version,
         )
+        await self._record_evidence_run(
+            evidence_id=evidence_id,
+            project_scopes=project_scopes,
+            available=True,
+            error=None,
+            duration_ms=int((time.monotonic() - start) * 1000),
+        )
         return response
+
+    async def _record_evidence_run(
+        self,
+        evidence_id: str,
+        project_scopes: list[str],
+        available: bool,
+        error: dict | None,
+        duration_ms: int,
+    ) -> None:
+        """Write a retrieval_runs row for this get_evidence call (T084).
+
+        data-model §4.1 / FR-016: get_evidence calls land in retrieval_runs
+        with tool='get_evidence' so runtime metrics aggregate by Tool. Map the
+        get_evidence status onto the four-state completion_status.
+        """
+        from rag_mcp.config import get_settings
+        from rag_mcp.runtime.instance_context import get_instance
+        from rag_mcp.services.retrieval_service import persist_retrieval_run
+
+        settings = get_settings()
+        instance_id, instance_mode, _worker_id = get_instance()
+        error_summary = None
+        if error is not None:
+            error_summary = {
+                "code": error.get("code", "EVIDENCE_ERROR"),
+                "message": error.get("message", ""),
+                "failed_paths": [],
+            }
+        await persist_retrieval_run(
+            self._session,
+            query=None,
+            project_scopes=project_scopes,
+            completion_status="complete" if available else "failed",
+            evidence_count=1 if available else 0,
+            duration_ms=duration_ms,
+            retrieval_mode="dense",
+            evidence_ref_ids=[evidence_id] if available else [],
+            tool="get_evidence",
+            error_summary=error_summary,
+            trace_enabled=bool(settings.trace_body_enabled),
+            ttl_days=int(settings.retrieval_ttl_days),
+            instance_id=instance_id,
+            instance_mode=instance_mode,
+        )
 
     def annotate_evidence(
         self,
