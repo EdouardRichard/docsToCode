@@ -89,13 +89,13 @@
   - **AC**: 断言 server total（默认 30000）< min(各 Host 60000/60000/120000)；任一 Host ≤ server total 时校验函数拒绝并给出可纠正错误；缺省值装载正确（FR-021/SC-010）。
 - [X] T022 [US1] Green: 实现超时档位校验并在实例启动时强制调用（writer 管理进程 + writer/reader MCP 启动前）— `backend/src/rag_mcp/config/timeout_profiles.py`、`backend/src/rag_mcp/server.py`、`backend/_run_mcp.py`
   - **AC**: T021 全绿；启动时反向配置显式失败；超时数值变更不要求改 MCP 契约（FR-022）。
-- [ ] T023 [US1] Red: server.py 模式强制单测（reader 显式报错、writer 抢租约失败即拒启、TTL 清理归属 writer）— `backend/tests/unit/test_server_mode.py`
+- [X] T023 [US1] Red: server.py 模式强制单测（reader 显式报错、writer 抢租约失败即拒启、TTL 清理归属 writer）— `backend/tests/unit/test_server_mode.py`
   - **AC**: 断言 `--mode reader` 启动管理进程抛明确错误；writer 抢租约失败不进入写模式；reader 不挂写路径后台任务（FR-001/FR-004）。
-- [ ] T024 [US1] Green: `server.py` 角色强制 + 租约抢占 + 指标路由占位 — `backend/src/rag_mcp/server.py`
+- [X] T024 [US1] Green: `server.py` 角色强制 + 租约抢占 + 指标路由占位 — `backend/src/rag_mcp/server.py`
   - **AC**: T023 全绿；writer 启动顺序=抢租约→建引擎→注册指标路由→起 TTL 循环。
-- [ ] T025 [US1] Red: _run_mcp.py 模式单测（--mode writer|reader、INSTANCE_MODE 等效、reader 无维护后台）— `backend/tests/unit/test_run_mcp_mode.py`
+- [X] T025 [US1] Red: _run_mcp.py 模式单测（--mode writer|reader、INSTANCE_MODE 等效、reader 无维护后台）— `backend/tests/unit/test_run_mcp_mode.py`
   - **AC**: 断言 reader MCP 不启动入库/TTL 清理/迁移；两形态均注册 `search_knowledge`/`get_evidence`（FR-001/FR-004）。
-- [ ] T026 [US1] Green: `_run_mcp.py --mode writer|reader`（实例注册 + worker_id 分配 + schema 校验 + 超时档位校验）— `backend/_run_mcp.py`
+- [X] T026 [US1] Green: `_run_mcp.py --mode writer|reader`（实例注册 + worker_id 分配 + schema 校验 + 超时档位校验）— `backend/_run_mcp.py`
   - **AC**: T025 全绿；依赖 T018/T020/T022；writer MCP 与 reader MCP 均注册实例行（process_role=mcp）。
 
 ### Integration for User Story 1（先红，串起全链路）

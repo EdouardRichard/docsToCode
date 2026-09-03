@@ -7,23 +7,146 @@ Provides:
 - CORS for localhost development
 - Lifespan-managed DB engine, shared services, and a periodic TTL cleanup loop
   (blueprint §20) that purges expired RetrievalRun records.
+
+006 Runtime Hardening: the management process is WRITER-ONLY (FR-001) —
+`--mode reader` fails loudly (readers run only the read-only MCP via
+_run_mcp.py). Startup order (T024): acquire the single-writer lease (FR-002,
+refusing write mode when another writer holds it) -> DB engine -> metrics
+route -> TTL cleanup loop + lease renewal loop. The GET /runtime/metrics
+route is a placeholder until US3 (T062) implements the aggregation endpoint.
 """
 
 from __future__ import annotations
 
 import asyncio
 import logging
+import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from rag_mcp.api.middleware import RequestContextMiddleware
 from rag_mcp.config import get_settings
+from rag_mcp.config.timeout_profiles import validate_timeout_profiles
 
 logger = logging.getLogger(__name__)
+
+
+def validate_management_mode(mode: str) -> None:
+    """FR-001: the management process is writer-only.
+
+    A reader deployment runs only the read-only MCP process; starting the
+    management API in reader mode is a deployment error and fails loudly.
+    """
+    if mode != "writer":
+        raise ValueError(
+            f"the management process does not support mode {mode!r}: readers "
+            f"run only the read-only MCP via _run_mcp.py --mode reader and "
+            f"never start a management plane (FR-001/FR-004)"
+        )
+
+
+def _validate_timeout_profiles_or_fail(settings) -> None:
+    """T022/FR-021: reject reversed timeout profiles at startup, loudly."""
+    errors = validate_timeout_profiles(settings.timeout_profiles)
+    if errors:
+        raise ValueError(
+            "invalid timeout profile configuration: " + "; ".join(errors)
+        )
+
+
+async def _acquire_writer_lease(settings):
+    """Writer startup: register the instance and acquire the lease (FR-002).
+
+    Raises RuntimeError when the lease is held (never a silent downgrade to
+    reader); the error carries the current holder's instance_id and expiry.
+    """
+    from rag_mcp.db import get_session_factory
+    from rag_mcp.runtime.instance_registry import InstanceRegistryService
+    from rag_mcp.runtime.write_coordinator import (
+        LeaseAcquisition,
+        PostgresLeaseWriteCoordinator,
+    )
+
+    instance_id = uuid.uuid4()
+    factory = get_session_factory()
+    registry = InstanceRegistryService(factory)
+    registration = await registry.register(
+        instance_id=instance_id,
+        instance_mode="writer",
+        process_role="management",
+        worker_id=settings.worker_id,
+        expiry_window_s=settings.lease_expiry_window_s,
+    )
+    if not registration.registered:
+        raise RuntimeError(
+            f"cannot register writer management instance: {registration.error}"
+        )
+
+    coordinator = PostgresLeaseWriteCoordinator(factory)
+    result = await coordinator.acquire(
+        holder_instance_id=instance_id,
+        renew_interval_s=settings.lease_renew_interval_s,
+        expiry_window_s=settings.lease_expiry_window_s,
+    )
+    if not result.acquired:
+        await registry.deregister(instance_id)
+        raise RuntimeError(f"refusing to enter write mode: {result.error}")
+    logger.info(
+        "writer lease %s acquired (instance %s)",
+        result.lease_id, instance_id,
+    )
+    # holder_instance_id doubles as our instance identity for shutdown.
+    return LeaseAcquisition(
+        lease_id=result.lease_id,
+        acquired=True,
+        holder_instance_id=instance_id,
+    )
+
+
+async def _release_writer_lease(lease) -> None:
+    """Graceful shutdown: release the lease and deregister the instance."""
+    from rag_mcp.db import get_session_factory
+    from rag_mcp.runtime.instance_registry import InstanceRegistryService
+    from rag_mcp.runtime.write_coordinator import PostgresLeaseWriteCoordinator
+
+    holder = getattr(lease, "holder_instance_id", None)
+    try:
+        factory = get_session_factory()
+        coordinator = PostgresLeaseWriteCoordinator(factory)
+        await coordinator.release(lease.lease_id)
+        if holder is not None:
+            registry = InstanceRegistryService(factory)
+            await registry.deregister(holder)
+    except Exception:  # noqa: BLE001 - shutdown must proceed
+        logger.exception("failed to release writer lease cleanly")
+
+
+async def _lease_renewal_loop(lease_id: int, renew_interval_s: int, expiry_window_s: int) -> None:
+    """Renew the writer lease every renew_interval_s (data-model §3.3)."""
+    from rag_mcp.db import get_session_factory
+    from rag_mcp.runtime.write_coordinator import PostgresLeaseWriteCoordinator
+
+    while True:
+        await asyncio.sleep(renew_interval_s)
+        try:
+            factory = get_session_factory()
+            coordinator = PostgresLeaseWriteCoordinator(factory)
+            ok = await coordinator.renew(lease_id, expiry_window_s)
+            if not ok:
+                logger.error(
+                    "writer lease %s could not be renewed (released/expired); "
+                    "the management process keeps serving read paths but must "
+                    "be restarted to re-enter write mode", lease_id,
+                )
+        except asyncio.CancelledError:
+            raise
+        except Exception:  # noqa: BLE001 - keep the loop alive
+            logger.exception("lease renewal failed")
 
 
 async def _ttl_cleanup_loop(interval_s: int) -> None:
@@ -54,19 +177,38 @@ async def _ttl_cleanup_loop(interval_s: int) -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Manage application lifecycle: TTL cleanup loop + DB engine disposal."""
+    """Writer lifecycle: lease -> engine -> TTL cleanup + renewal loops.
+
+    Startup order per T024: acquire the single-writer lease (fails loudly
+    when held), then start the TTL cleanup and lease renewal loops. TTL
+    cleanup belongs to the writer management process only (FR-004).
+    """
     settings = get_settings()
+    validate_management_mode(settings.instance_mode)
+    _validate_timeout_profiles_or_fail(settings)
+    # 抢租约 -> 失败即拒启 (no silent degradation, FR-002)
+    lease = await _acquire_writer_lease(settings)
+    renewal_task = asyncio.create_task(
+        _lease_renewal_loop(
+            lease.lease_id,
+            settings.lease_renew_interval_s,
+            settings.lease_expiry_window_s,
+        )
+    )
     cleanup_task = asyncio.create_task(
         _ttl_cleanup_loop(settings.retrieval_ttl_cleanup_interval_s)
     )
     try:
         yield
     finally:
-        cleanup_task.cancel()
-        try:
-            await cleanup_task
-        except asyncio.CancelledError:
-            pass
+        for task in (renewal_task, cleanup_task):
+            task.cancel()
+        for task in (renewal_task, cleanup_task):
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+        await _release_writer_lease(lease)
         from rag_mcp.db import dispose_engine
 
         await dispose_engine()
@@ -96,6 +238,18 @@ def create_app() -> FastAPI:
     @app.get("/health")
     async def health():
         return {"status": "ok", "version": "0.1.0"}
+
+    # 006 T024: metrics route placeholder on the writer management plane.
+    # US3 (T061/T062) replaces this with the aggregated read-only endpoint.
+    @app.get("/runtime/metrics")
+    async def runtime_metrics_placeholder():
+        return JSONResponse(
+            status_code=501,
+            content={
+                "detail": "runtime metrics endpoint is implemented in US3 (T062); "
+                "the writer management plane owns this route"
+            },
+        )
 
     # Register API routers
     from rag_mcp.api.projects import router as projects_router
@@ -143,6 +297,12 @@ if __name__ == "__main__":
         help="MCP port (informational; the MCP server runs via backend/_run_mcp.py)",
     )
     args = parser.parse_args()
+
+    # FR-001: the management process is writer-only; refuse reader mode.
+    try:
+        validate_management_mode(args.mode)
+    except ValueError as exc:
+        parser.error(str(exc))
 
     port = args.port or get_settings().management_port
     logger.info("Starting management API (%s mode) on %s:%d", args.mode, args.host, port)
