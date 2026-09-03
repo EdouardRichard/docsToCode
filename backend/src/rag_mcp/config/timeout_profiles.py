@@ -26,7 +26,7 @@ HOST_TARGETS = ("deepseek_harness", "claude_code", "chatgpt_app")
 
 _ENV_BY_HOST = {
     "deepseek_harness": "HOST_TIMEOUT_MS_DEEPSEEK_HARNESS",
-    "claude_code": "HOST_TIMEOUT_MS_CHATGPT_APP",
+    "claude_code": "HOST_TIMEOUT_MS_CLAUDE_CODE",
     "chatgpt_app": "HOST_TIMEOUT_MS_CHATGPT_APP",
 }
 
@@ -60,10 +60,14 @@ class TimeoutProfiles:
     def from_env(cls) -> "TimeoutProfiles":
         return cls(
             deepseek_harness_ms=_env_int(
-                "HOST_TIMEOUT_MS_DEEPSEEK_HARNESS", cls.deepseek_harness_ms
+                _ENV_BY_HOST["deepseek_harness"], _DEFAULTS_BY_HOST["deepseek_harness"]
             ),
-            claude_code_ms=_env_int("HOST_TIMEOUT_MS_CLAUDE_CODE", cls.claude_code_ms),
-            chatgpt_app_ms=_env_int("HOST_TIMEOUT_MS_CHATGPT_APP", cls.chatgpt_app_ms),
+            claude_code_ms=_env_int(
+                _ENV_BY_HOST["claude_code"], _DEFAULTS_BY_HOST["claude_code"]
+            ),
+            chatgpt_app_ms=_env_int(
+                _ENV_BY_HOST["chatgpt_app"], _DEFAULTS_BY_HOST["chatgpt_app"]
+            ),
             server_total_ms=_env_int("RETRIEVAL_TOTAL_TIMEOUT_MS", cls.server_total_ms),
         )
 

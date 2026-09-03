@@ -285,5 +285,5 @@
 - [X] T079 在检索失败/降级路径填充 `error_summary`（code/message/failed_paths）到运行记录，落实错误回溯 per FR-020 (partial)
 - [X] T080 将实例形态冒烟对照结果落盘为报告产物（如 `eval/instance_form_smoke_report.json`，含 writer/reader 两形态逐条 comparison 与 1% 容差判定） per T069/T070/FR-028/SC-009 (partial)
 - [X] T081 将 `check_embedding_dimension` 接入入库/启动校验（Embedding 维度与既有索引版本不一致时显式拒绝混装） per FR-011/FR-013 (partial)
-- [ ] T082 修正或删除 `config/timeout_profiles.py` 死代码 `_ENV_BY_HOST`（`claude_code` 被误映射为 `HOST_TIMEOUT_MS_CHATGPT_APP`） per plan: timeout profiles (partial)
+- [X] T082 修正或删除 `config/timeout_profiles.py` 死代码 `_ENV_BY_HOST`（`claude_code` 被误映射为 `HOST_TIMEOUT_MS_CHATGPT_APP`） per plan: timeout profiles (partial)
 

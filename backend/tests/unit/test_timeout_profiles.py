@@ -73,3 +73,19 @@ def test_error_messages_are_actionable() -> None:
 def test_min_host_timeout_helper() -> None:
     profiles = TimeoutProfiles()
     assert profiles.min_host_timeout_ms() == 60_000
+
+
+def test_env_by_host_mapping_correct() -> None:
+    from rag_mcp.config.timeout_profiles import _ENV_BY_HOST
+
+    assert _ENV_BY_HOST["deepseek_harness"] == "HOST_TIMEOUT_MS_DEEPSEEK_HARNESS"
+    assert _ENV_BY_HOST["claude_code"] == "HOST_TIMEOUT_MS_CLAUDE_CODE"
+    assert _ENV_BY_HOST["chatgpt_app"] == "HOST_TIMEOUT_MS_CHATGPT_APP"
+
+
+def test_claude_code_env_is_independent(monkeypatch) -> None:
+    monkeypatch.setenv("HOST_TIMEOUT_MS_CLAUDE_CODE", "45000")
+    monkeypatch.setenv("HOST_TIMEOUT_MS_CHATGPT_APP", "120000")
+    profiles = TimeoutProfiles.from_env()
+    assert profiles.claude_code_ms == 45000
+    assert profiles.chatgpt_app_ms == 120000
