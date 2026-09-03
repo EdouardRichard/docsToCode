@@ -154,17 +154,17 @@
 
 ### Integration for User Story 2（先红）
 
-- [ ] T047 [US2] Red: Provider 配置端到端 + 非法配置启动集成测试 — `backend/tests/integration/test_provider_config_integration.py`
+- [X] T047 [US2] Red: Provider 配置端到端 + 非法配置启动集成测试 — `backend/tests/integration/test_provider_config_integration.py`
   - **AC**: 断言仅经运行配置完成三类能力到不同 Provider 并检索成功、对外契约不变；≥3 类非法配置启动显式失败、静默回退=0（SC-004）。
-- [ ] T048 [US2] Green: 打通配置装载→工厂校验→运行时装配，使 T047 转绿 — 涉及 `backend/src/rag_mcp/config/provider_config.py`、`backend/src/rag_mcp/providers/factory.py`
+- [X] T048 [US2] Green: 打通配置装载→工厂校验→运行时装配，使 T047 转绿 — 涉及 `backend/src/rag_mcp/config/provider_config.py`、`backend/src/rag_mcp/providers/factory.py`
   - **AC**: T047 全绿。
-- [ ] T049 [US2] Red: Embedding 维度切换防混装集成测试 — `backend/tests/integration/test_embedding_switch_no_mix.py`
+- [X] T049 [US2] Red: Embedding 维度切换防混装集成测试 — `backend/tests/integration/test_embedding_switch_no_mix.py`
   - **AC**: 断言不同维度/模型 Embedding 直接作用既有索引版本被拒、唯一合法路径=新索引版本+重向量化、混装事件=0（SC-005/FR-013）。
-- [ ] T050 [US2] Green: 打通维度一致性校验 + 新索引版本路径，使 T049 转绿 — 涉及 `backend/src/rag_mcp/providers/factory.py`、`backend/src/rag_mcp/services/ingestion_service.py`
+- [X] T050 [US2] Green: 打通维度一致性校验 + 新索引版本路径，使 T049 转绿 — 涉及 `backend/src/rag_mcp/providers/factory.py`、`backend/src/rag_mcp/services/ingestion_service.py`
   - **AC**: T049 全绿。
-- [ ] T051 [US2] Red: remote Provider 故障注入集成测试（连接失败/超时/HTTP 错误 → 有效四态、硬失败=0）— `backend/tests/integration/test_provider_fault_injection.py`
+- [X] T051 [US2] Red: remote Provider 故障注入集成测试（连接失败/超时/HTTP 错误 → 有效四态、硬失败=0）— `backend/tests/integration/test_provider_fault_injection.py`
   - **AC**: 断言 remote embedding/reranker/llm 故障注入时检索路径返回有效 completion_status 四态、Provider 层新增硬失败数=0、状态机不阻塞（SC-012/FR-015）。
-- [ ] T052 [US2] Green: 打通 Provider 故障→既有降级契约（005 确定性回退），使 T051 转绿 — `backend/tests/integration/test_provider_fault_injection.py`
+- [X] T052 [US2] Green: 打通 Provider 故障→既有降级契约（005 确定性回退），使 T051 转绿 — `backend/tests/integration/test_provider_fault_injection.py`
   - **AC**: T051 全绿。
 
 ---

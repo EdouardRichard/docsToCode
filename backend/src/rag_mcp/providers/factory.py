@@ -197,6 +197,19 @@ def build_provider_bundle(settings) -> ProviderBundle:
     )
 
 
+def assemble_or_fail(settings) -> ProviderBundle:
+    """Startup entry: build providers and refuse to start on invalid config.
+
+    SC-004: illegal configurations fail the instance explicitly; there is
+    no silent fallback path.
+    """
+    bundle = build_provider_bundle(settings)
+    if not bundle.validation.valid:
+        messages = "; ".join(e.message for e in bundle.validation.errors)
+        raise ValueError(f"invalid provider configuration: {messages}")
+    return bundle
+
+
 def check_embedding_dimension(
     embedding_provider: Any, active_collection_dimension: int | None
 ) -> ValidationResult:
