@@ -69,25 +69,25 @@
 
 ### Tests for User Story 1（先红）
 
-- [ ] T013 [P] [US1] Red: WriteCoordinator 状态机单测（抢占/续约/释放/过期回收/第二 writer 拒绝）— `backend/tests/unit/runtime/test_write_coordinator.py`
+- [X] T013 [P] [US1] Red: WriteCoordinator 状态机单测（抢占/续约/释放/过期回收/第二 writer 拒绝）— `backend/tests/unit/runtime/test_write_coordinator.py`
   - **AC**: 断言：active 唯一（部分唯一索引）；抢占失败返回持有者 instance_id 与到期时间；续约更新 renewed_at/expires_at；过期行可回收；参数化缩短续约/过期窗口可测试（FR-002/FR-003）。
-- [ ] T014 [US1] Green: 实现 `WriteCoordinator` 抽象 + `PostgresLeaseWriteCoordinator` — `backend/src/rag_mcp/runtime/write_coordinator.py`
+- [X] T014 [US1] Green: 实现 `WriteCoordinator` 抽象 + `PostgresLeaseWriteCoordinator` — `backend/src/rag_mcp/runtime/write_coordinator.py`
   - **AC**: T013 全绿；事务内"先标记过期→INSERT active→唯一冲突检测"语义；续约/释放方法齐全；SQL 与 [data-model.md §3](./data-model.md) 一致。
-- [ ] T015 [P] [US1] Red: SourceObjectStore 抽象 + 本地 FS 实现单测 — `backend/tests/unit/runtime/test_source_object_store.py`
+- [X] T015 [P] [US1] Red: SourceObjectStore 抽象 + 本地 FS 实现单测 — `backend/tests/unit/runtime/test_source_object_store.py`
   - **AC**: 断言读/写/存在性走 `DATA_ROOT`；路径越界（目录穿越）被拒；抽象方法签名与蓝图 §21.2 演进接口一致（FR-006）。
-- [ ] T016 [P] [US1] Green: 实现 `SourceObjectStore` 抽象 + `LocalFilesystemSourceObjectStore` — `backend/src/rag_mcp/runtime/source_object_store.py`
+- [X] T016 [P] [US1] Green: 实现 `SourceObjectStore` 抽象 + `LocalFilesystemSourceObjectStore` — `backend/src/rag_mcp/runtime/source_object_store.py`
   - **AC**: T015 全绿；对既有 `data_root` 访问收口（包一层，不改行为）。
-- [ ] T017 [US1] Red: instance_registry 分配/心跳/误配检测单测（显式 WORKER_ID 冲突拒绝、自动补位最低空闲、心跳过期）— `backend/tests/unit/runtime/test_instance_registry.py`
+- [X] T017 [US1] Red: instance_registry 分配/心跳/误配检测单测（显式 WORKER_ID 冲突拒绝、自动补位最低空闲、心跳过期）— `backend/tests/unit/runtime/test_instance_registry.py`
   - **AC**: 断言：两实例同显式 worker_id → 唯一约束冲突显式拒绝（含冲突实例标识）；未配置自动获最低空闲（单实例=0）；过期行可被回收；注册/心跳事务正确（FR-030/澄清 Q6）。
-- [ ] T018 [US1] Green: 实现 `instance_registry.py`（注册/心跳/分配 + 唯一冲突检测）— `backend/src/rag_mcp/runtime/instance_registry.py`
+- [X] T018 [US1] Green: 实现 `instance_registry.py`（注册/心跳/分配 + 唯一冲突检测）— `backend/src/rag_mcp/runtime/instance_registry.py`
   - **AC**: T017 全绿；依赖 T012 worker_id 参数化；writer 管理进程清理过期行。
-- [ ] T019 [P] [US1] Red: schema_compat 单测（alembic head 一致/不一致分支）— `backend/tests/unit/runtime/test_schema_compat.py`
+- [X] T019 [P] [US1] Red: schema_compat 单测（alembic head 一致/不一致分支）— `backend/tests/unit/runtime/test_schema_compat.py`
   - **AC**: 断言 head 一致通过、不一致显式失败并含版本信息（FR-007）。
-- [ ] T020 [P] [US1] Green: 实现 `schema_compat.py`（比对代码迁移 head 与库内 `alembic_version`）— `backend/src/rag_mcp/runtime/schema_compat.py`
+- [X] T020 [P] [US1] Green: 实现 `schema_compat.py`（比对代码迁移 head 与库内 `alembic_version`）— `backend/src/rag_mcp/runtime/schema_compat.py`
   - **AC**: T019 全绿。
-- [ ] T021 [US1] Red: 超时档位校验单测（服务端总超时 < 每个 Host Tool Call 超时；反向配置显式拒绝）— `backend/tests/unit/test_timeout_profiles.py`
+- [X] T021 [US1] Red: 超时档位校验单测（服务端总超时 < 每个 Host Tool Call 超时；反向配置显式拒绝）— `backend/tests/unit/test_timeout_profiles.py`
   - **AC**: 断言 server total（默认 30000）< min(各 Host 60000/60000/120000)；任一 Host ≤ server total 时校验函数拒绝并给出可纠正错误；缺省值装载正确（FR-021/SC-010）。
-- [ ] T022 [US1] Green: 实现超时档位校验并在实例启动时强制调用（writer 管理进程 + writer/reader MCP 启动前）— `backend/src/rag_mcp/config/timeout_profiles.py`、`backend/src/rag_mcp/server.py`、`backend/_run_mcp.py`
+- [X] T022 [US1] Green: 实现超时档位校验并在实例启动时强制调用（writer 管理进程 + writer/reader MCP 启动前）— `backend/src/rag_mcp/config/timeout_profiles.py`、`backend/src/rag_mcp/server.py`、`backend/_run_mcp.py`
   - **AC**: T021 全绿；启动时反向配置显式失败；超时数值变更不要求改 MCP 契约（FR-022）。
 - [ ] T023 [US1] Red: server.py 模式强制单测（reader 显式报错、writer 抢租约失败即拒启、TTL 清理归属 writer）— `backend/tests/unit/test_server_mode.py`
   - **AC**: 断言 `--mode reader` 启动管理进程抛明确错误；writer 抢租约失败不进入写模式；reader 不挂写路径后台任务（FR-001/FR-004）。
