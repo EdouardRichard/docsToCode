@@ -29,7 +29,10 @@ async def _clean_slate(engine):
     factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
     async with factory() as session:
         await session.execute(
-            text("DELETE FROM retrieval_runs WHERE instance_mode IS NOT NULL")
+            text(
+                "DELETE FROM retrieval_runs "
+                "WHERE instance_mode IS NOT NULL OR provider_usage IS NOT NULL"
+            )
         )
         await session.commit()
     yield

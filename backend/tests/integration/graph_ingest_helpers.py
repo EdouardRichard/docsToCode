@@ -38,13 +38,16 @@ class MockQdrantStore:
 
     def __init__(self) -> None:
         self.points: list[tuple] = []
-        self.collections: list[str] = []
+        self.collections: dict[str, int] = {}
 
     def collection_exists(self, name: str) -> bool:
         return name in self.collections
 
     def create_hybrid_collection(self, name: str, dim: int) -> None:
-        self.collections.append(name)
+        self.collections[name] = dim
+
+    def get_collection_dimension(self, name: str) -> int | None:
+        return self.collections.get(name)
 
     def upsert_hybrid(self, collection, point_id, dense_vector, sparse_vector, payload) -> None:
         self.points.append((collection, point_id, payload))
