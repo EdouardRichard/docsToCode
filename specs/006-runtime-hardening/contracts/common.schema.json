@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-engineering-rag-mcp.local/schemas/006/common.schema.json",
+  "title": "Common Schema Definitions (006)",
+  "description": "跨 006 Runtime Hardening 内部契约共享的类型定义。复用 001/005 common.schema.json 共享定义模式（KnowledgeScopeId/CompletionStatus/ErrorObject 等），新增 006 实例/租约/Provider/指标相关定义。其他 006 schema 通过 $ref 引用本文件 definitions。",
+  "type": "object",
+  "definitions": {
+    "InstanceId": { "type": "string", "format": "uuid", "description": "实例进程唯一标识（UUID v4，进程启动时生成，标识一次进程生命周期，澄清 Q4）" },
+    "WorkerId": { "type": "integer", "minimum": 0, "maximum": 1023, "description": "雪花生成器 worker_id（并发活跃实例互异，澄清 Q6；单实例默认 0 兼容 001）" },
+    "LeaseId": { "type": "string", "pattern": "^[0-9]+$", "minLength": 1, "description": "Writer 租约唯一标识（雪花 ID 字符串形式，沿用仓库惯例）" },
+    "InstanceMode": { "type": "string", "enum": ["writer", "reader"], "description": "实例模式（蓝图 §21.2：writer 为唯一知识库维护实例并提供只读 MCP 检索；reader 仅提供只读 MCP 检索）" },
+    "ProcessRole": { "type": "string", "enum": ["management", "mcp"], "description": "进程角色：管理进程（writer-only，租约持有者）或 MCP 进程（writer/reader 皆可）" },
+    "LeaseState": { "type": "string", "enum": ["active", "released", "expired"], "description": "租约状态机（澄清 Q4）：active 持有中；released 正常退出主动释放；expired 过期未续约可被回收" },
+    "InstanceState": { "type": "string", "enum": ["active", "released", "expired"], "description": "实例注册活性状态（澄清 Q4 三态）：active 心跳中；released 正常退出主动注销；expired 心跳过期可回收" },
+    "Tool": { "type": "string", "enum": ["search_knowledge", "get_evidence"], "description": "MCP 核心 Tool 标识（001 已确立，006 用于指标按 Tool 聚合）" },
+    "CompletionStatus": { "type": "string", "enum": ["complete", "partial", "no_evidence", "failed"], "description": "检索完成状态（蓝图 §14 四态，沿用 001）" },
+    "ProviderCapability": { "type": "string", "enum": ["embedding", "reranker", "llm"], "description": "Provider 能力维度（蓝图 §18.1：三类能力可分别选择不同 Provider）" },
+    "ProviderType": { "type": "string", "enum": ["local_cpu", "local_gpu", "remote_api"], "description": "Provider 类型（蓝图 §18.1/宪法架构约束：接口必须允许本地 CPU、本地 GPU 与远程 API 执行）" },
+    "ConcurrencyLimit": { "type": "integer", "minimum": 1, "maximum": 64, "description": "Provider 独立并发上限（澄清 Q2 固化默认：LLM 4/上限 8、Embedding 8/上限 16、Reranker 2/上限 4）" },
+    "SecretEnvName": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$", "description": "凭据承载环境变量名（仅名称引用，凭据值不进入任何契约/配置结构，宪法原则 V）" },
+    "TimestampIso": { "type": "string", "format": "date-time", "description": "ISO 8601 时间戳（UTC）" },
+    "HostTarget": { "type": "string", "enum": ["deepseek_harness", "chatgpt_app", "claude_code"], "description": "目标 MCP Host（蓝图 §19：每 Host 独立超时档位）" },
+    "TimeoutMs": { "type": "integer", "minimum": 1, "description": "超时毫秒数（运行配置管理，不写入协议契约，蓝图 §19）" },
+    "DurationMs": { "type": "integer", "minimum": 0, "description": "耗时毫秒数（>= 0）" },
+    "Count": { "type": "integer", "minimum": 0, "description": "非负计数" },
+    "MetricKey": { "type": "string", "pattern": "^[a-z0-9_.:-]+$", "description": "运行指标稳定键（聚合维度：能力 × provider_type × 实例模式，澄清 Q4）" },
+    "ErrorObject": { "type": "object", "description": "标准化错误对象（沿用 001/005）", "properties": { "code": { "type": "string", "minLength": 1 }, "message": { "type": "string", "minLength": 1 } }, "required": ["code", "message"], "additionalProperties": false },
+    "RunId": { "type": "string", "pattern": "^[0-9]+$", "minLength": 1, "description": "运行唯一标识（雪花 ID 字符串形式，沿用 001）" }
+  }
+}

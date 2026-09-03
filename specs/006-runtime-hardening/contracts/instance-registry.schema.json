@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-engineering-rag-mcp.local/schemas/006/instance-registry.schema.json",
+  "title": "Instance Registry Record (006)",
+  "description": "实例注册记录契约（FR-030，澄清 Q4/Q6）。每个实例进程启动时注册一行：instance_id（UUID）标识进程生命周期，worker_id 在并发活跃实例间互异（DB 唯一约束检测相同 worker_id 误配置并显式拒绝）。心跳滚动更新 last_heartbeat_at/expires_at；过期注册由 writer 维护循环清理。reader 的注册/心跳属逐请求运行状态，不受知识库写路径租约约束（FR-004 豁免）。",
+  "type": "object",
+  "properties": {
+    "instance_id": { "$ref": "common.schema.json#/definitions/InstanceId" },
+    "worker_id": { "$ref": "common.schema.json#/definitions/WorkerId" },
+    "instance_mode": { "$ref": "common.schema.json#/definitions/InstanceMode" },
+    "process_role": { "$ref": "common.schema.json#/definitions/ProcessRole" },
+    "state": { "$ref": "common.schema.json#/definitions/InstanceState" },
+    "started_at": { "$ref": "common.schema.json#/definitions/TimestampIso" },
+    "last_heartbeat_at": { "$ref": "common.schema.json#/definitions/TimestampIso" },
+    "expires_at": { "$ref": "common.schema.json#/definitions/TimestampIso" },
+    "released_at": { "type": ["null", "string"], "format": "date-time", "description": "正常退出注销时间；未注销为 null" }
+  },
+  "required": ["instance_id", "worker_id", "instance_mode", "process_role", "state", "started_at", "last_heartbeat_at", "expires_at", "released_at"],
+  "additionalProperties": false
+}

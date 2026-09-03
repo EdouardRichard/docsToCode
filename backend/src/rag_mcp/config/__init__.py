@@ -104,6 +104,57 @@ class IngestionConfig:
 
 
 from rag_mcp.config.agentic import AgenticConfig, AgenticGuardrails, ModelRouting
+from rag_mcp.config.provider_config import (
+    ProviderConfig,
+    ProviderSettings,
+    load_provider_settings,
+)
+from rag_mcp.config.timeout_profiles import TimeoutProfiles, validate_timeout_profiles
+
+# 006 instance modes (blueprint §21.2)
+_INSTANCE_MODES = ("writer", "reader")
+_TRUTHY_ENV = ("1", "true", "yes", "on")
+
+
+def _env_instance_mode() -> str:
+    raw = os.getenv("INSTANCE_MODE")
+    if raw is None or raw == "":
+        return "writer"
+    value = raw.strip().lower()
+    if value not in _INSTANCE_MODES:
+        raise ValueError(
+            f"INSTANCE_MODE must be one of {_INSTANCE_MODES}, got {raw!r}"
+        )
+    return value
+
+
+def _env_worker_id() -> int | None:
+    raw = os.getenv("WORKER_ID")
+    if raw is None or raw == "":
+        return None
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise ValueError(f"WORKER_ID must be an integer, got {raw!r}") from exc
+    if not 0 <= value <= 1023:
+        raise ValueError(f"WORKER_ID must be 0-1023, got {value}")
+    return value
+
+
+def _env_trace_body() -> bool:
+    """Unified 006 trace-body switch (research §1.7).
+
+    TRACE_BODY_ENABLED is the single switch covering all retrieval modes;
+    AGENTIC_TRACE_BODY_ENABLED (005) stays as a compatible alias used only
+    when the unified switch is not set.
+    """
+    unified = os.getenv("TRACE_BODY_ENABLED")
+    if unified is not None:
+        return unified.strip().lower() in _TRUTHY_ENV
+    alias = os.getenv("AGENTIC_TRACE_BODY_ENABLED")
+    if alias is not None:
+        return alias.strip().lower() in _TRUTHY_ENV
+    return True
 
 
 @dataclass(frozen=True)
@@ -263,6 +314,29 @@ class Settings:
     agentic_model_context_orchestrator: str = field(
         default_factory=lambda: os.getenv("AGENTIC_MODEL_CONTEXT_ORCHESTRATOR", "")
     )
+
+    # 006 Runtime hardening (data-model §2/§3/§4, research §1.4/§1.7/§1.9)
+    # Deployment form: writer = management process + writer MCP; reader = read-only MCP
+    instance_mode: str = field(default_factory=_env_instance_mode)
+    # None -> auto-assign lowest free worker_id at registration (FR-030)
+    worker_id: int | None = field(default_factory=_env_worker_id)
+    # Writer lease: renewal 30s / expiry window 90s (clarification Q2)
+    lease_renew_interval_s: int = field(
+        default_factory=lambda: int(os.getenv("LEASE_RENEW_INTERVAL_S", "30"))
+    )
+    lease_expiry_window_s: int = field(
+        default_factory=lambda: int(os.getenv("LEASE_EXPIRY_WINDOW_S", "90"))
+    )
+    # Retrieval run TTL (default 7 days, FR-019; drives expires_at + cleanup)
+    retrieval_ttl_days: int = field(
+        default_factory=lambda: int(os.getenv("RETRIEVAL_TTL_DAYS", "7"))
+    )
+    # Unified trace-body switch for all retrieval modes (FR-018)
+    trace_body_enabled: bool = field(default_factory=_env_trace_body)
+    # Provider runtime configuration (embedding/reranker/llm, FR-008~FR-015)
+    providers: ProviderSettings = field(default_factory=load_provider_settings)
+    # Per-Host timeout profiles (FR-021/FR-022)
+    timeout_profiles: TimeoutProfiles = field(default_factory=TimeoutProfiles.from_env)
 
     @property
     def graph(self) -> "GraphConfig":

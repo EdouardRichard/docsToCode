@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-engineering-rag-mcp.local/schemas/006/provider-config.schema.json",
+  "title": "Validated Provider Configuration (006)",
+  "description": "统一 Provider 运行配置契约（FR-010/FR-011，蓝图 §17/§18.1）。三类能力（embedding/reranker/llm）各自独立声明 Provider（local_cpu / local_gpu / remote_api），启动时统一校验：类型合法、必填完备、remote 端点尽力探测、Embedding 维度与活跃 Dense 集合维度一致；非法配置显式失败、不静默回退（SC-004）。凭据仅以环境变量名（api_key_env）引用，凭据值不进入本契约（宪法原则 V）。Embedding 模型/Provider 切换须创建新索引版本并重新向量化，不得向既有索引版本混装向量（FR-013，宪法 VIII）。",
+  "type": "object",
+  "properties": {
+    "capabilities": {
+      "type": "object",
+      "description": "三类能力的 Provider 配置",
+      "properties": {
+        "embedding": { "$ref": "#/definitions/ProviderCapabilityConfig" },
+        "reranker": { "$ref": "#/definitions/ProviderCapabilityConfig" },
+        "llm": { "$ref": "#/definitions/ProviderCapabilityConfig" }
+      },
+      "required": ["embedding", "reranker", "llm"],
+      "additionalProperties": false
+    },
+    "validation": {
+      "type": "object",
+      "description": "启动校验结果",
+      "properties": {
+        "valid": { "type": "boolean", "description": "整体配置是否通过校验；false 时实例启动显式失败" },
+        "errors": { "type": "array", "items": { "$ref": "common.schema.json#/definitions/ErrorObject" }, "description": "校验失败项（可纠正的错误信息）" }
+      },
+      "required": ["valid", "errors"],
+      "additionalProperties": false
+    },
+    "embedding_dimension_check": {
+      "type": ["null", "object"],
+      "description": "Embedding 维度与活跃 Dense 集合一致性校验（FR-011/FR-013；不一致时唯一合法路径为新索引版本+重向量化）",
+      "properties": {
+        "declared_dimension": { "type": "integer", "minimum": 1 },
+        "active_collection_dimension": { "type": "integer", "minimum": 1 },
+        "compatible": { "type": "boolean" }
+      },
+      "required": ["declared_dimension", "active_collection_dimension", "compatible"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["capabilities", "validation"],
+  "additionalProperties": false,
+  "definitions": {
+    "ProviderCapabilityConfig": {
+      "type": "object",
+      "properties": {
+        "provider_type": { "$ref": "common.schema.json#/definitions/ProviderType" },
+        "model": { "type": "string", "minLength": 1, "description": "模型标识（如 BAAI/bge-m3、BAAI/bge-reranker-v2-m3、deepseek-v4-flash）" },
+        "endpoint": { "type": ["null", "string"], "format": "uri", "description": "remote_api 必填（OpenAI-compatible 基址）；local_cpu/local_gpu 为 null" },
+        "api_key_env": { "type": ["null", "string"], "$comment": "SecretEnvName 模式", "pattern": "^[A-Z][A-Z0-9_]*$", "description": "凭据承载环境变量名（仅名称；local 类型为 null）" },
+        "concurrency_limit": { "$ref": "common.schema.json#/definitions/ConcurrencyLimit" }
+      },
+      "required": ["provider_type", "model", "endpoint", "api_key_env", "concurrency_limit"],
+      "additionalProperties": false
+    }
+  }
+}

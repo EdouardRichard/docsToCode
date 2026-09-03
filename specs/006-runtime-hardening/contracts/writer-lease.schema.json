@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-engineering-rag-mcp.local/schemas/006/writer-lease.schema.json",
+  "title": "Writer Lease Record (006)",
+  "description": "单写租约记录契约（FR-002/FR-003，澄清 Q2/Q4）。PostgreSQL 单 Writer 租约的可观测状态：任意时刻至多一个 active 租约（DB 部分唯一索引保证）；第二个 writer 抢占失败时返回的错误携带现有租约信息。租约参数固化默认：续约间隔 30s、过期窗口 90s（可运行配置覆盖）。读路径（检索/证据展开）不依赖本契约。",
+  "type": "object",
+  "properties": {
+    "lease_id": { "$ref": "common.schema.json#/definitions/LeaseId" },
+    "holder_instance_id": { "$ref": "common.schema.json#/definitions/InstanceId" },
+    "state": { "$ref": "common.schema.json#/definitions/LeaseState" },
+    "acquired_at": { "$ref": "common.schema.json#/definitions/TimestampIso" },
+    "renewed_at": { "$ref": "common.schema.json#/definitions/TimestampIso" },
+    "expires_at": { "$ref": "common.schema.json#/definitions/TimestampIso" },
+    "released_at": { "type": ["null", "string"], "format": "date-time", "description": "正常释放时间；未释放为 null" },
+    "renew_interval_s": { "type": "integer", "minimum": 1, "description": "续约周期秒数（信息性，来自运行配置；固化默认 30）" },
+    "expiry_window_s": { "type": "integer", "minimum": 1, "description": "过期窗口秒数（信息性，来自运行配置；固化默认 90 = 续约间隔 3 倍）" }
+  },
+  "required": ["lease_id", "holder_instance_id", "state", "acquired_at", "renewed_at", "expires_at", "released_at", "renew_interval_s", "expiry_window_s"],
+  "additionalProperties": false
+}

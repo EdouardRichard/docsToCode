@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-engineering-rag-mcp.local/schemas/006/runtime-metrics.schema.json",
+  "title": "Runtime Metrics Readout (006)",
+  "description": "运行指标查询契约（FR-016/FR-017，蓝图 §20、§23.3 能力域 6）。writer 管理面只读端点的响应结构：覆盖 writer 与 reader 实例的检索活动（聚合源为共享库运行期表 + 维护日志，窗口受运行记录 TTL 约束）。全部字段为聚合数值与标识，MUST NOT 包含查询正文或证据正文（无论正文记录开关状态）。指标属运维指标，不是检索质量指标。",
+  "type": "object",
+  "properties": {
+    "generated_at": { "$ref": "common.schema.json#/definitions/TimestampIso" },
+    "window": {
+      "type": "object",
+      "description": "聚合窗口（TTL 窗口）",
+      "properties": {
+        "from": { "$ref": "common.schema.json#/definitions/TimestampIso" },
+        "to": { "$ref": "common.schema.json#/definitions/TimestampIso" },
+        "ttl_days": { "type": "integer", "minimum": 1, "description": "运行记录 TTL（运行配置，默认 7 天）" }
+      },
+      "required": ["from", "to", "ttl_days"],
+      "additionalProperties": false
+    },
+    "request_totals": {
+      "type": "array",
+      "description": "请求量按实例模式与 Tool 聚合（instance_mode 为 null 表示 006 之前的历史记录分组）",
+      "items": {
+        "type": "object",
+        "properties": {
+          "instance_mode": { "type": ["null", "string"], "enum": [null, "writer", "reader"] },
+          "tool": { "$ref": "common.schema.json#/definitions/Tool" },
+          "requests": { "$ref": "common.schema.json#/definitions/Count" }
+        },
+        "required": ["instance_mode", "tool", "requests"],
+        "additionalProperties": false
+      }
+    },
+    "completion_status_distribution": {
+      "type": "array",
+      "description": "completion_status 四态分布（按实例模式聚合）",
+      "items": {
+        "type": "object",
+        "properties": {
+          "instance_mode": { "type": ["null", "string"], "enum": [null, "writer", "reader"] },
+          "status": { "$ref": "common.schema.json#/definitions/CompletionStatus" },
+          "count": { "$ref": "common.schema.json#/definitions/Count" }
+        },
+        "required": ["instance_mode", "status", "count"],
+        "additionalProperties": false
+      }
+    },
+    "latency": {
+      "type": "array",
+      "description": "P50/P95 延迟（按 Tool 聚合，毫秒）",
+      "items": {
+        "type": "object",
+        "properties": {
+          "tool": { "$ref": "common.schema.json#/definitions/Tool" },
+          "p50_ms": { "$ref": "common.schema.json#/definitions/DurationMs" },
+          "p95_ms": { "$ref": "common.schema.json#/definitions/DurationMs" }
+        },
+        "required": ["tool", "p50_ms", "p95_ms"],
+        "additionalProperties": false
+      }
+    },
+    "subpath_timings_ms": {
+      "type": "array",
+      "description": "子路径耗时 P50（dense/sparse/fusion/rerank/graph/total，按 Tool）",
+      "items": {
+        "type": "object",
+        "properties": {
+          "tool": { "$ref": "common.schema.json#/definitions/Tool" },
+          "subpath": { "type": "string", "enum": ["dense", "sparse", "fusion", "rerank", "graph", "total"] },
+          "p50_ms": { "$ref": "common.schema.json#/definitions/DurationMs" }
+        },
+        "required": ["tool", "subpath", "p50_ms"],
+        "additionalProperties": false
+      }
+    },
+    "provider_usage": {
+      "type": "object",
+      "description": "Provider 调用与用量（LLM 成本沿用 005 真实调用口径：缓存命中不计入）",
+      "properties": {
+        "embedding_calls": { "$ref": "common.schema.json#/definitions/Count" },
+        "rerank_calls": { "$ref": "common.schema.json#/definitions/Count" },
+        "llm_calls": { "$ref": "common.schema.json#/definitions/Count" },
+        "llm_prompt_chars": { "$ref": "common.schema.json#/definitions/Count" },
+        "llm_completion_chars": { "$ref": "common.schema.json#/definitions/Count" }
+      },
+      "required": ["embedding_calls", "rerank_calls", "llm_calls", "llm_prompt_chars", "llm_completion_chars"],
+      "additionalProperties": false
+    },
+    "ttl_purge": {
+      "type": "object",
+      "description": "TTL 清理量（聚合自 runtime_maintenance_log）",
+      "properties": {
+        "purged_retrieval_runs": { "$ref": "common.schema.json#/definitions/Count" },
+        "purged_agentic_runs": { "$ref": "common.schema.json#/definitions/Count" },
+        "purged_maintenance_logs": { "$ref": "common.schema.json#/definitions/Count" },
+        "events": { "$ref": "common.schema.json#/definitions/Count" }
+      },
+      "required": ["purged_retrieval_runs", "purged_agentic_runs", "purged_maintenance_logs", "events"],
+      "additionalProperties": false
+    },
+    "active_instances": {
+      "type": "array",
+      "description": "当前活跃实例快照（来自 instance_registry；仅标识与角色，无正文）",
+      "items": {
+        "type": "object",
+        "properties": {
+          "instance_id": { "$ref": "common.schema.json#/definitions/InstanceId" },
+          "instance_mode": { "$ref": "common.schema.json#/definitions/InstanceMode" },
+          "process_role": { "$ref": "common.schema.json#/definitions/ProcessRole" },
+          "worker_id": { "$ref": "common.schema.json#/definitions/WorkerId" },
+          "writer_lease_holder": { "type": "boolean", "description": "该实例是否持有 writer 租约（仅 management/writer 为 true）" }
+        },
+        "required": ["instance_id", "instance_mode", "process_role", "worker_id", "writer_lease_holder"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["generated_at", "window", "request_totals", "completion_status_distribution", "latency", "subpath_timings_ms", "provider_usage", "ttl_purge", "active_instances"],
+  "additionalProperties": false
+}
