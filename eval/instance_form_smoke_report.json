@@ -1,0 +1,340 @@
+{
+  "report_type": "instance_form_smoke",
+  "generated_at": "2026-09-03T14:45:15.081175+00:00",
+  "instance_forms": {
+    "writer": {
+      "mode": "writer",
+      "generated_at": "2026-09-03T14:45:12.918923+00:00",
+      "num_queries": 11,
+      "means": {
+        "recall_at_k": 1.0,
+        "mrr": 0.9545454545454546,
+        "ndcg_at_k": 0.966448159415587
+      },
+      "comparison": {
+        "recall_at_k": {
+          "measured": 1.0,
+          "baseline": 1.0,
+          "within_tolerance": true,
+          "no_regression": true
+        },
+        "mrr": {
+          "measured": 0.9545454545454546,
+          "baseline": 0.9090909090909091,
+          "within_tolerance": false,
+          "no_regression": true
+        },
+        "ndcg_at_k": {
+          "measured": 0.966448159415587,
+          "baseline": 0.9328963188311742,
+          "within_tolerance": false,
+          "no_regression": true
+        }
+      },
+      "latency_env_sensitive": true,
+      "per_query_results": [
+        {
+          "query": "Find the definition of com.example.service.UserService.",
+          "expected": [
+            "352016027946582016"
+          ],
+          "retrieved": [
+            "352016027946582016",
+            "352016027946582018",
+            "352016027946582019",
+            "352016027946582020",
+            "352016027946582017"
+          ],
+          "status": "complete"
+        },
+        {
+          "query": "What is the purpose of com.example.service.UserService#DB_PASSWORD?",
+          "expected": [
+            "352016027946582017"
+          ],
+          "retrieved": [
+            "352016027946582017",
+            "352016027946582016",
+            "352016027946582018",
+            "352016027946582019",
+            "352016027946582020"
+          ],
+          "status": "complete"
+        },
+        {
+          "query": "Show me the implementation of com.example.service.UserService#repository.",
+          "expected": [
+            "352016027946582018"
+          ],
+          "retrieved": [
+            "352016027946582018",
+            "352016027946582016",
+            "352016027946582019",
+            "352016027946582020",
+            "352016027946582017"
+          ],
+          "status": "complete"
+        },
+        {
+          "query": "What does com.example.service.UserService#findById do?",
+          "expected": [
+            "352016027946582019"
+          ],
+          "retrieved": [
+            "352016027946582019",
+            "352016027946582016",
+            "352016027946582020",
+            "352016027946582018",
+            "352016027946582017"
+          ],
+          "status": "complete"
+        },
+        {
+          "query": "Explain the code at com.example.service.UserService#getActiveUsers.",
+          "expected": [
+            "352016027946582020"
+          ],
+          "retrieved": [
+            "352016027946582020",
+            "352016027946582016",
+            "352016027946582019",
+            "352016027946582021",
+            "352016027946582017"
+          ],
+          "status": "complete"
+        },
+        {
+          "query": "Find the definition of com.example.service.UserService#validateToken.",
+          "expected": [
+            "352016027946582021"
+          ],
+          "retrieved": [
+            "352016027946582016",
+            "352016027946582021",
+            "352016027946582018",
+            "352016027946582017",
+            "352016027946582019"
+          ],
+          "status": "complete"
+        },
+        {
+          "query": "Show me the section # extra.",
+          "expected": [
+            "352016115179716608"
+          ],
+          "retrieved": [
+            "352016115179716608"
+          ],
+          "status": "complete"
+        },
+        {
+          "query": "Show me the section # Test Content.",
+          "expected": [
+            "352016116299595776"
+          ],
+          "retrieved": [
+            "352016116299595776"
+          ],
+          "status": "complete"
+        },
+        {
+          "query": "Explain the content of # Test Content.",
+          "expected": [
+            "352016117394309120"
+          ],
+          "retrieved": [
+            "352016117394309120"
+          ],
+          "status": "complete"
+        },
+        {
+          "query": "What does # Test Content describe?",
+          "expected": [
+            "352016118451273728"
+          ],
+          "retrieved": [
+            "352016118451273728"
+          ],
+          "status": "complete"
+        },
+        {
+          "query": "Explain the content of # Test Content.",
+          "expected": [
+            "352016119487266816"
+          ],
+          "retrieved": [
+            "352016119487266816"
+          ],
+          "status": "complete"
+        }
+      ]
+    },
+    "reader": {
+      "mode": "reader",
+      "generated_at": "2026-09-03T14:45:15.081175+00:00",
+      "num_queries": 11,
+      "means": {
+        "recall_at_k": 1.0,
+        "mrr": 0.9545454545454546,
+        "ndcg_at_k": 0.966448159415587
+      },
+      "comparison": {
+        "recall_at_k": {
+          "measured": 1.0,
+          "baseline": 1.0,
+          "within_tolerance": true,
+          "no_regression": true
+        },
+        "mrr": {
+          "measured": 0.9545454545454546,
+          "baseline": 0.9090909090909091,
+          "within_tolerance": false,
+          "no_regression": true
+        },
+        "ndcg_at_k": {
+          "measured": 0.966448159415587,
+          "baseline": 0.9328963188311742,
+          "within_tolerance": false,
+          "no_regression": true
+        }
+      },
+      "latency_env_sensitive": true,
+      "per_query_results": [
+        {
+          "query": "Find the definition of com.example.service.UserService.",
+          "expected": [
+            "352016027946582016"
+          ],
+          "retrieved": [
+            "352016027946582016",
+            "352016027946582018",
+            "352016027946582019",
+            "352016027946582020",
+            "352016027946582017"
+          ],
+          "status": "complete"
+        },
+        {
+          "query": "What is the purpose of com.example.service.UserService#DB_PASSWORD?",
+          "expected": [
+            "352016027946582017"
+          ],
+          "retrieved": [
+            "352016027946582017",
+            "352016027946582016",
+            "352016027946582018",
+            "352016027946582019",
+            "352016027946582020"
+          ],
+          "status": "complete"
+        },
+        {
+          "query": "Show me the implementation of com.example.service.UserService#repository.",
+          "expected": [
+            "352016027946582018"
+          ],
+          "retrieved": [
+            "352016027946582018",
+            "352016027946582016",
+            "352016027946582019",
+            "352016027946582020",
+            "352016027946582017"
+          ],
+          "status": "complete"
+        },
+        {
+          "query": "What does com.example.service.UserService#findById do?",
+          "expected": [
+            "352016027946582019"
+          ],
+          "retrieved": [
+            "352016027946582019",
+            "352016027946582016",
+            "352016027946582020",
+            "352016027946582018",
+            "352016027946582017"
+          ],
+          "status": "complete"
+        },
+        {
+          "query": "Explain the code at com.example.service.UserService#getActiveUsers.",
+          "expected": [
+            "352016027946582020"
+          ],
+          "retrieved": [
+            "352016027946582020",
+            "352016027946582016",
+            "352016027946582019",
+            "352016027946582021",
+            "352016027946582017"
+          ],
+          "status": "complete"
+        },
+        {
+          "query": "Find the definition of com.example.service.UserService#validateToken.",
+          "expected": [
+            "352016027946582021"
+          ],
+          "retrieved": [
+            "352016027946582016",
+            "352016027946582021",
+            "352016027946582018",
+            "352016027946582017",
+            "352016027946582019"
+          ],
+          "status": "complete"
+        },
+        {
+          "query": "Show me the section # extra.",
+          "expected": [
+            "352016115179716608"
+          ],
+          "retrieved": [
+            "352016115179716608"
+          ],
+          "status": "complete"
+        },
+        {
+          "query": "Show me the section # Test Content.",
+          "expected": [
+            "352016116299595776"
+          ],
+          "retrieved": [
+            "352016116299595776"
+          ],
+          "status": "complete"
+        },
+        {
+          "query": "Explain the content of # Test Content.",
+          "expected": [
+            "352016117394309120"
+          ],
+          "retrieved": [
+            "352016117394309120"
+          ],
+          "status": "complete"
+        },
+        {
+          "query": "What does # Test Content describe?",
+          "expected": [
+            "352016118451273728"
+          ],
+          "retrieved": [
+            "352016118451273728"
+          ],
+          "status": "complete"
+        },
+        {
+          "query": "Explain the content of # Test Content.",
+          "expected": [
+            "352016119487266816"
+          ],
+          "retrieved": [
+            "352016119487266816"
+          ],
+          "status": "complete"
+        }
+      ]
+    }
+  }
+}

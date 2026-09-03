@@ -8,6 +8,9 @@ relative tolerance. Latency is recorded and annotated env_sensitive.
 
 from __future__ import annotations
 
+import json
+from datetime import datetime, timezone
+
 import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -17,6 +20,7 @@ from rag_mcp.eval.instance_form_smoke import (
     compute_metrics,
     load_baseline_queries,
     run_form_smoke,
+    write_instance_form_report,
 )
 
 
@@ -58,11 +62,23 @@ def test_baseline_means_present():
         assert metric in _BASELINE_MEANS
 
 
+def test_write_instance_form_report_persists(tmp_path):
+    out = write_instance_form_report(
+        {"report_type": "instance_form_smoke", "comparison": {"mrr": {}}},
+        tmp_path / "instance_form_smoke_report.json",
+    )
+    assert out.exists()
+    data = json.loads(out.read_text(encoding="utf-8"))
+    assert data["report_type"] == "instance_form_smoke"
+    assert "comparison" in data
+
+
 @pytest.mark.asyncio
 async def test_dual_form_smoke_matches_baseline(
-    session_factory, embedding_provider, qdrant_store
+    session_factory, embedding_provider, qdrant_store, tmp_path
 ):
     queries = load_baseline_queries()
+    reports = {}
     for mode in ("writer", "reader"):
         report = await run_form_smoke(
             mode,
@@ -82,3 +98,16 @@ async def test_dual_form_smoke_matches_baseline(
                 f"measured={comp['measured']}, baseline={comp['baseline']}"
             )
         assert report["latency_env_sensitive"] is True
+        reports[mode] = report
+
+    # T080: persist the instance-form comparison report (FR-028/SC-009).
+    combined = {
+        "report_type": "instance_form_smoke",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "instance_forms": reports,
+    }
+    out = write_instance_form_report(combined, tmp_path / "instance_form_smoke_report.json")
+    assert out.exists()
+    persisted = json.loads(out.read_text(encoding="utf-8"))
+    assert set(persisted["instance_forms"].keys()) == {"writer", "reader"}
+    assert persisted["instance_forms"]["writer"]["comparison"]

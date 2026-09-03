@@ -283,7 +283,7 @@
 - [X] T077 在 MCP 实例启动时写入实例上下文并传递到运行记录：调用 `set_instance(identity.instance_id, mode, worker_id)`（或让 `build_mcp_server`/`create_mcp_server` 消费 `identity`），使 `retrieval_runs.instance_id/instance_mode` 非空以支撑按实例模式聚合 per FR-016/FR-020/data-model §4.1 (partial)
 - [X] T078 在检索路径接入 `ProviderUsageAccumulator` 并随运行记录写入 `provider_usage`（embedding/rerank/llm 调用次数与字符量，缓存命中不计） per FR-016/SC-006 (partial)
 - [X] T079 在检索失败/降级路径填充 `error_summary`（code/message/failed_paths）到运行记录，落实错误回溯 per FR-020 (partial)
-- [ ] T080 将实例形态冒烟对照结果落盘为报告产物（如 `eval/instance_form_smoke_report.json`，含 writer/reader 两形态逐条 comparison 与 1% 容差判定） per T069/T070/FR-028/SC-009 (partial)
+- [X] T080 将实例形态冒烟对照结果落盘为报告产物（如 `eval/instance_form_smoke_report.json`，含 writer/reader 两形态逐条 comparison 与 1% 容差判定） per T069/T070/FR-028/SC-009 (partial)
 - [ ] T081 将 `check_embedding_dimension` 接入入库/启动校验（Embedding 维度与既有索引版本不一致时显式拒绝混装） per FR-011/FR-013 (partial)
 - [ ] T082 修正或删除 `config/timeout_profiles.py` 死代码 `_ENV_BY_HOST`（`claude_code` 被误映射为 `HOST_TIMEOUT_MS_CHATGPT_APP`） per plan: timeout profiles (partial)
 

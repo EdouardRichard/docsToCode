@@ -24,6 +24,7 @@ _REPO_ROOT = Path(__file__).resolve().parents[4]
 _EVAL_DIR = _REPO_ROOT / "eval"
 _BASELINE_PATH = _EVAL_DIR / "baseline_report.json"
 _DATASET_PATH = _EVAL_DIR / "eval_dataset.json"
+_DEFAULT_REPORT_PATH = _EVAL_DIR / "instance_form_smoke_report.json"
 
 # 001 baseline aggregation (research §0.1): 11 queries.
 _BASELINE_MEANS = {
@@ -154,3 +155,19 @@ def run_form_smoke_sync(mode: str, *, session_factory, qdrant_store, embedding_p
             tolerance=tolerance,
         )
     )
+
+
+def write_instance_form_report(report: dict, path: str | Path | None = None) -> Path:
+    """Persist an instance-form smoke comparison report (T070, FR-028/SC-009).
+
+    The default target is eval/instance_form_smoke_report.json; an explicit
+    path (e.g. a pytest tmp_path) overrides it. JSON is written UTF-8 with
+    stable key order for reproducible diffs.
+    """
+    target = Path(path) if path is not None else _DEFAULT_REPORT_PATH
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(
+        json.dumps(report, ensure_ascii=False, indent=2, sort_keys=False),
+        encoding="utf-8",
+    )
+    return target
