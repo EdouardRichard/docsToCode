@@ -131,25 +131,25 @@
 
 ### Tests for User Story 2（先红）
 
-- [ ] T037 [US2] Red: Provider 工厂校验单测（类型合法/必填完备/remote 端点探测/维度一致性）— `backend/tests/unit/providers/test_provider_factory.py`
+- [X] T037 [US2] Red: Provider 工厂校验单测（类型合法/必填完备/remote 端点探测/维度一致性）— `backend/tests/unit/providers/test_provider_factory.py`
   - **AC**: 断言：未知 provider_type、remote 缺端点、维度不匹配均显式失败且 errors 含可纠正信息；合法配置通过（FR-010/FR-011/SC-004）。
-- [ ] T038 [US2] Green: 实现 `providers/factory.py`（三类能力 Provider 装配 + 统一校验 + 维度比对入口）— `backend/src/rag_mcp/providers/factory.py`
+- [X] T038 [US2] Green: 实现 `providers/factory.py`（三类能力 Provider 装配 + 统一校验 + 维度比对入口）— `backend/src/rag_mcp/providers/factory.py`
   - **AC**: T037 全绿；供应商中立（FR-012）：OpenAI/Anthropic-compatible 仅作适配协议、不绑供应商；校验结果符合 [provider-config.schema.json](./contracts/provider-config.schema.json)。
-- [ ] T039 [P] [US2] Red: remote embedding 单测（OpenAI-compatible /embeddings、失败返回 None/降级）— `backend/tests/unit/providers/test_remote_api_embedding.py`
+- [X] T039 [P] [US2] Red: remote embedding 单测（OpenAI-compatible /embeddings、失败返回 None/降级）— `backend/tests/unit/providers/test_remote_api_embedding.py`
   - **AC**: 断言 /embeddings 调用形态、维度返回、HTTP 错误/超时/畸形 → 显式降级不抛入状态机（FR-015）。
-- [ ] T040 [P] [US2] Green: 实现 `providers/remote_api_embedding.py` — `backend/src/rag_mcp/providers/remote_api_embedding.py`
+- [X] T040 [P] [US2] Green: 实现 `providers/remote_api_embedding.py` — `backend/src/rag_mcp/providers/remote_api_embedding.py`
   - **AC**: T039 全绿。
-- [ ] T041 [P] [US2] Red: remote reranker 单测（OpenAI-compatible /rerank）— `backend/tests/unit/providers/test_remote_api_reranker.py`
+- [X] T041 [P] [US2] Red: remote reranker 单测（OpenAI-compatible /rerank）— `backend/tests/unit/providers/test_remote_api_reranker.py`
   - **AC**: 断言 /rerank 调用形态、分数归一、失败降级（FR-015）。
-- [ ] T042 [P] [US2] Green: 实现 `providers/remote_api_reranker.py` — `backend/src/rag_mcp/providers/remote_api_reranker.py`
+- [X] T042 [P] [US2] Green: 实现 `providers/remote_api_reranker.py` — `backend/src/rag_mcp/providers/remote_api_reranker.py`
   - **AC**: T041 全绿。
-- [ ] T043 [P] [US2] Red: local_gpu 单测（device 参数化、无硬件显式失败语义）— `backend/tests/unit/providers/test_local_gpu.py`
+- [X] T043 [P] [US2] Red: local_gpu 单测（device 参数化、无硬件显式失败语义）— `backend/tests/unit/providers/test_local_gpu.py`
   - **AC**: 断言 device='cuda' 路径选择、无 GPU 时启动校验显式失败（不静默回退 CPU）（FR-010/Assumptions）。
-- [ ] T044 [P] [US2] Green: 实现 `providers/local_gpu.py`（同模型 GPU device 执行路径）— `backend/src/rag_mcp/providers/local_gpu.py`
+- [X] T044 [P] [US2] Green: 实现 `providers/local_gpu.py`（同模型 GPU device 执行路径）— `backend/src/rag_mcp/providers/local_gpu.py`
   - **AC**: T043 全绿。
-- [ ] T045 [US2] Red: Provider 独立并发上限单测（信号量按能力隔离、超限有界）— `backend/tests/unit/providers/test_provider_concurrency.py`
+- [X] T045 [US2] Red: Provider 独立并发上限单测（信号量按能力隔离、超限有界）— `backend/tests/unit/providers/test_provider_concurrency.py`
   - **AC**: 断言 LLM/Embedding/Reranker 上限互不影响、超限请求被排队/拒绝护栏约束（FR-009）。
-- [ ] T046 [US2] Green: 并发上限接入工厂/Provider 包装层 — `backend/src/rag_mcp/providers/factory.py`
+- [X] T046 [US2] Green: 并发上限接入工厂/Provider 包装层 — `backend/src/rag_mcp/providers/factory.py`
   - **AC**: T045 全绿。
 
 ### Integration for User Story 2（先红）
