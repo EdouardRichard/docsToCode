@@ -256,6 +256,15 @@ def build_mcp_server(
     if reranker is None:
         reranker = LocalCPUReranker()
     qdrant = qdrant_store if qdrant_store is not None else QdrantStore()
+
+    # FR-016/FR-020 (data-model §4.1): install this process's instance
+    # identity so retrieval run records carry instance_id / instance_mode
+    # (metrics aggregate by instance form).
+    if identity is not None:
+        from rag_mcp.runtime.instance_context import set_instance
+
+        set_instance(identity.instance_id, identity.mode, identity.worker_id)
+
     server = create_mcp_server(
         session_factory=session_factory,
         embedding_provider=provider,

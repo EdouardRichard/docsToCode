@@ -280,7 +280,7 @@
 > 收敛评估（/speckit-converge，2026-09-10）：对比 spec/plan/tasks 与当前代码后识别出的"半成品"接线项。既有 T001–T075 已实现且 pytest 全绿（1446 passed / 1 skipped），但以下运行时接线尚未在真实进程路径中落地——基础设施（配置/工厂/模型/列/聚合 SQL）已建并被单测/直连测试覆盖，数据生产端未接入真实启动与检索路径。CRITICAL/HIGH 优先。
 
 - [X] T076 将统一 Provider 配置接入运行时启动：`_run_mcp.py` 与 `server.py` 启动时调用 `assemble_or_fail`/`validate_provider_config`，按配置装配 embedding/reranker/llm 并对非法配置显式拒启（替换 `_run_mcp.py` 硬编码的 `LocalCPUEmbeddingProvider`/`LocalCPUReranker`） per FR-010/FR-011/SC-004 (partial)
-- [ ] T077 在 MCP 实例启动时写入实例上下文并传递到运行记录：调用 `set_instance(identity.instance_id, mode, worker_id)`（或让 `build_mcp_server`/`create_mcp_server` 消费 `identity`），使 `retrieval_runs.instance_id/instance_mode` 非空以支撑按实例模式聚合 per FR-016/FR-020/data-model §4.1 (partial)
+- [X] T077 在 MCP 实例启动时写入实例上下文并传递到运行记录：调用 `set_instance(identity.instance_id, mode, worker_id)`（或让 `build_mcp_server`/`create_mcp_server` 消费 `identity`），使 `retrieval_runs.instance_id/instance_mode` 非空以支撑按实例模式聚合 per FR-016/FR-020/data-model §4.1 (partial)
 - [ ] T078 在检索路径接入 `ProviderUsageAccumulator` 并随运行记录写入 `provider_usage`（embedding/rerank/llm 调用次数与字符量，缓存命中不计） per FR-016/SC-006 (partial)
 - [ ] T079 在检索失败/降级路径填充 `error_summary`（code/message/failed_paths）到运行记录，落实错误回溯 per FR-020 (partial)
 - [ ] T080 将实例形态冒烟对照结果落盘为报告产物（如 `eval/instance_form_smoke_report.json`，含 writer/reader 两形态逐条 comparison 与 1% 容差判定） per T069/T070/FR-028/SC-009 (partial)
