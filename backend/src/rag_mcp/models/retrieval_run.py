@@ -93,7 +93,7 @@ class RetrievalRun(Base):
         String(16),
         nullable=False,
         server_default=text("'dense'"),
-        comment="'dense' (001), 'hybrid' (002) or 'graph_enhanced' (004)",
+        comment="'dense' (001), 'hybrid' (002), 'graph_enhanced' (004) or 'agentic' (006)",
     )
     subpath_timings: Mapped[dict | None] = mapped_column(
         JSONB,

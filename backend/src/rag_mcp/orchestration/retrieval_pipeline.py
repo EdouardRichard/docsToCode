@@ -203,6 +203,17 @@ class AgenticRetrievalPipeline:
         self._embedding_provider = embedding_provider
         self._reranker = reranker
         self._settings = get_settings()
+        # 006 provider usage (FR-016): accumulate real embedding/rerank calls
+        # across every round recall so the agentic run record can reconcile.
+        self._embedding_calls = 0
+        self._rerank_calls = 0
+
+    def get_provider_usage(self) -> dict[str, int]:
+        """Embedding/rerank call counts accumulated across rounds (FR-016)."""
+        return {
+            "embedding_calls": self._embedding_calls,
+            "rerank_calls": self._rerank_calls,
+        }
 
     # ------------------------------------------------------------------
     # Public API
@@ -243,6 +254,9 @@ class AgenticRetrievalPipeline:
                 graph_relation_types=relation_types,
                 graph_hop=sp.get("graph_hop"),
             )
+        self._embedding_calls += 1
+        if "rerank_ms" in (res.get("subpath_timings") or {}):
+            self._rerank_calls += 1
         cands = res["candidates"]
         for c in cands:
             c["sub_problem_id"] = sub_id

@@ -47,6 +47,64 @@ def invalidate_sparse_encoder_cache() -> None:
     logger.info("Sparse encoder cache invalidated")
 
 
+async def persist_retrieval_run(
+    session: AsyncSession,
+    *,
+    query: str | None,
+    project_scopes: list,
+    completion_status: str,
+    evidence_count: int,
+    duration_ms: int,
+    retrieval_mode: str = "dense",
+    subpath_timings: dict | None = None,
+    evidence_ref_ids: list | None = None,
+    format: str | None = None,
+    run_id: int | None = None,
+    tool: str = "search_knowledge",
+    error_summary: dict | None = None,
+    provider_usage: dict | None = None,
+    trace_enabled: bool = True,
+    ttl_days: int = 7,
+    instance_id=None,
+    instance_mode=None,
+) -> int | None:
+    """Write one append-only RetrievalRun row (FR-016/FR-018/FR-020).
+
+    Shared by the deterministic path, the agentic path and get_evidence so
+    every retrieval activity lands in retrieval_runs for the by-Tool /
+    by-instance-mode runtime metrics. Audit writes must never break the
+    caller: any failure is logged and None returned.
+    """
+    try:
+        now = datetime.now(timezone.utc)
+        run = RetrievalRun(
+            run_id=run_id if run_id is not None else generate_id(),
+            query_text=query if trace_enabled else None,
+            project_scopes=project_scopes,
+            completion_status=completion_status,
+            evidence_count=evidence_count,
+            duration_ms=duration_ms,
+            retrieval_mode=retrieval_mode,
+            subpath_timings=subpath_timings,
+            evidence_ref_ids=evidence_ref_ids or [],
+            format=format,
+            tool=tool,
+            instance_id=instance_id,
+            instance_mode=instance_mode,
+            trace_body_recorded=trace_enabled,
+            error_summary=error_summary,
+            provider_usage=provider_usage,
+            created_at=now,
+            expires_at=now + timedelta(days=int(ttl_days)),
+        )
+        session.add(run)
+        await session.flush()
+        return run.run_id
+    except Exception:
+        logger.error("Failed to record RetrievalRun", exc_info=True)
+        return None
+
+
 class RetrievalService:
     """Orchestrates semantic retrieval with project-scope isolation.
 
@@ -1465,35 +1523,27 @@ class RetrievalService:
         """
         from rag_mcp.runtime.instance_context import get_instance
 
-        try:
-            trace_enabled = bool(self._settings.trace_body_enabled)
-            instance_id, instance_mode, _worker_id = get_instance()
-            now = datetime.now(timezone.utc)
-            run = RetrievalRun(
-                run_id=run_id if run_id is not None else generate_id(),
-                query_text=query if trace_enabled else None,
-                project_scopes=project_scopes,
-                completion_status=completion_status,
-                evidence_count=evidence_count,
-                duration_ms=duration_ms,
-                retrieval_mode=retrieval_mode,
-                subpath_timings=subpath_timings,
-                evidence_ref_ids=evidence_ref_ids or [],
-                format=format,
-                tool=tool,
-                instance_id=instance_id,
-                instance_mode=instance_mode,
-                trace_body_recorded=trace_enabled,
-                error_summary=error_summary,
-                provider_usage=provider_usage,
-                created_at=now,
-                expires_at=now + timedelta(days=int(self._settings.retrieval_ttl_days)),
-            )
-            self._session.add(run)
-            await self._session.flush()
-        except Exception:
-            # Audit failures must never break the search response
-            logger.error("Failed to record RetrievalRun", exc_info=True)
+        instance_id, instance_mode, _worker_id = get_instance()
+        await persist_retrieval_run(
+            self._session,
+            query=query,
+            project_scopes=project_scopes,
+            completion_status=completion_status,
+            evidence_count=evidence_count,
+            duration_ms=duration_ms,
+            retrieval_mode=retrieval_mode,
+            subpath_timings=subpath_timings,
+            evidence_ref_ids=evidence_ref_ids,
+            format=format,
+            run_id=run_id,
+            tool=tool,
+            error_summary=error_summary,
+            provider_usage=provider_usage,
+            trace_enabled=bool(self._settings.trace_body_enabled),
+            ttl_days=int(self._settings.retrieval_ttl_days),
+            instance_id=instance_id,
+            instance_mode=instance_mode,
+        )
 
     def _derive_index_version(self) -> str:
         """Derive the Qdrant collection index_version from settings."""

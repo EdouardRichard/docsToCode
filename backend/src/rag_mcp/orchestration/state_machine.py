@@ -345,6 +345,44 @@ class AgenticStateMachine:
         tokens = self._compute_llm_chars() / 3.0
         return round(tokens / 1_000_000 * price, 6)
 
+    def get_llm_usage(self) -> dict[str, int]:
+        """LLM call counts + prompt/completion chars across the wired agents.
+
+        Mirrors the 005 real-call contract (SC-007): only the clients'
+        real-call counters contribute; LLMClient cache hits never increment
+        calls / prompt_chars / completion_chars, so recorded usage always
+        reflects real LLM calls.
+        """
+        calls = 0
+        prompt_chars = 0
+        completion_chars = 0
+        for agent in (
+            self._query_planner,
+            self._evidence_analyst,
+            self._context_orchestrator,
+        ):
+            client = getattr(agent, "_llm_client", None) if agent is not None else None
+            if client is not None:
+                calls += int(getattr(client, "calls", 0))
+                prompt_chars += int(getattr(client, "prompt_chars", 0))
+                completion_chars += int(getattr(client, "completion_chars", 0))
+        return {
+            "llm_calls": calls,
+            "llm_prompt_chars": prompt_chars,
+            "llm_completion_chars": completion_chars,
+        }
+
+    def get_provider_usage(self) -> dict[str, int]:
+        """Full provider usage for the run record (FR-016): embedding/rerank
+        from the retrieval pipeline + LLM from the wired agents."""
+        usage: dict[str, int] = {"embedding_calls": 0, "rerank_calls": 0}
+        if self._retrieval_pipeline is not None:
+            pipe_usage = getattr(self._retrieval_pipeline, "get_provider_usage", None)
+            if callable(pipe_usage):
+                usage.update(pipe_usage())
+        usage.update(self.get_llm_usage())
+        return usage
+
     def _finalize_trace_and_cost(self) -> None:
         """Populate the trace recorder and run-record cost/tokens (T063/T072)."""
         for key, value in self._subpath_timings.items():

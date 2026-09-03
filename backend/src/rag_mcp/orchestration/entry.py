@@ -19,6 +19,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import time
 import uuid
 from typing import Any, Callable
 
@@ -54,6 +55,60 @@ def orchestration_budget_ms(total_timeout_ms: int) -> int:
     return max(_MIN_ORCHESTRATION_BUDGET_MS, budget)
 
 
+async def _record_agentic_retrieval_run(
+    session,
+    *,
+    machine,
+    record,
+    response,
+    query,
+    project_scopes,
+    duration_ms,
+) -> None:
+    """Write a retrieval_runs row for a successful agentic request (T085).
+
+    FR-016/FR-018: agentic activity must be visible in the runtime metrics
+    (request totals / status / latency / sub-path / provider usage). The row
+    is append-only audit state; failures never break the caller.
+    """
+    from rag_mcp.config import get_settings
+    from rag_mcp.runtime.instance_context import get_instance
+    from rag_mcp.services.retrieval_service import persist_retrieval_run
+
+    settings = get_settings()
+    instance_id, instance_mode, _worker_id = get_instance()
+    failed_paths = list(machine.get_failed_paths())
+    status = response.get("completion_status", record.get("completion_status", "failed"))
+    evidence_ref_ids = [e.get("evidence_id", "") for e in response.get("evidence", [])]
+
+    await persist_retrieval_run(
+        session,
+        query=query,
+        project_scopes=project_scopes,
+        completion_status=status,
+        evidence_count=len(evidence_ref_ids),
+        duration_ms=duration_ms,
+        retrieval_mode="agentic",
+        subpath_timings=machine.get_subpath_timings() or None,
+        evidence_ref_ids=evidence_ref_ids,
+        tool="search_knowledge",
+        error_summary=(
+            {
+                "code": "PARTIAL_PATHS_FAILED",
+                "message": "One or more retrieval sub-paths failed",
+                "failed_paths": failed_paths,
+            }
+            if failed_paths
+            else None
+        ),
+        provider_usage=machine.get_provider_usage(),
+        trace_enabled=bool(settings.trace_body_enabled),
+        ttl_days=int(settings.retrieval_ttl_days),
+        instance_id=instance_id,
+        instance_mode=instance_mode,
+    )
+
+
 class AgenticPathUnavailable(Exception):
     """The agentic path cannot produce a response; degrade deterministically."""
 
@@ -87,6 +142,7 @@ async def run_agentic_search(
     settings = get_settings()
     agentic_cfg = settings.agentic
     request_id = str(uuid.uuid4())
+    start_time = time.monotonic()
 
     # Step 1/2 reuse the deterministic 001 resolver (no behaviour change)
     async with session_factory() as session:
@@ -183,18 +239,29 @@ async def run_agentic_search(
 
         try:
             await persistence.persist_run_record(record)
-            await persistence.commit()
         except Exception as exc:  # noqa: BLE001
             logger.error("Agentic persistence failed: %s", exc, exc_info=True)
             await persistence.rollback()
             raise AgenticPathUnavailable(f"persistence failed: {exc}") from exc
 
-    response = _serialize_mcp_response(
-        record=record,
-        machine=machine,
-        request_id=request_id,
-        top_k=top_k,
-    )
+        response = _serialize_mcp_response(
+            record=record,
+            machine=machine,
+            request_id=request_id,
+            top_k=top_k,
+        )
+        duration_ms = int((time.monotonic() - start_time) * 1000)
+        await _record_agentic_retrieval_run(
+            run_session,
+            machine=machine,
+            record=record,
+            response=response,
+            query=query,
+            project_scopes=project_scopes,
+            duration_ms=duration_ms,
+        )
+        await persistence.commit()
+
     return (response, record) if return_record else response
 
 

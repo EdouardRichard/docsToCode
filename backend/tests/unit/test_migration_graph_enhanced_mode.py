@@ -20,6 +20,16 @@ async def test_retrieval_mode_check_accepts_graph_enhanced(db_session):
 
 
 @pytest.mark.asyncio
+async def test_retrieval_mode_check_accepts_agentic(db_session):
+    """0062: retrieval_runs.retrieval_mode accepts 'agentic' (FR-016/FR-018)."""
+    row = (await db_session.execute(text(
+        "SELECT pg_get_constraintdef(oid) FROM pg_constraint "
+        "WHERE conname = 'chk_retrieval_mode'"
+    ))).scalar_one()
+    assert "agentic" in row
+
+
+@pytest.mark.asyncio
 async def test_hybrid_timings_check_covers_graph_enhanced(db_session):
     row = (await db_session.execute(text(
         "SELECT pg_get_constraintdef(oid) FROM pg_constraint "
