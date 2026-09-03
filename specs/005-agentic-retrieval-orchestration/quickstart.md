@@ -1,4 +1,4 @@
-﻿# Quickstart: Agentic Retrieval Orchestration (005)
+# Quickstart: Agentic Retrieval Orchestration (005)
 
 **Branch**: `005-agentic-retrieval-orchestration` | **Date**: 2026-09-02 | **Spec**: [spec.md](./spec.md)
 
@@ -82,17 +82,32 @@
 3. 期望：单次调用总超时 30s 护栏低于目标 Host 最低 Tool Call 超时预算（蓝图 §19）；超时降级 `partial`。
 4. ChatGPT App / Claude Code 仅记录兼容性状态、不作 005 验收阻塞项。
 
-## 运行命令（示意）
+## 运行命令（实现阶段提供）
 
 ```bash
-# 启用 Agent 编排路径（运行配置开关，未达阈值时为可选路径）
-# 运行 Agent 编排对照评测（复用 002 评测 runner，扩展 Agent 判断与三段通过判定）
-# 校验契约
-#   - 账本条目：evidence-ledger-entry.schema.json
-#   - Agent 判断：agent-judgment.schema.json
-#   - 运行记录：agentic-retrieval-run.schema.json
-#   - 共享定义：common.schema.json
-# 凭 (request_id, evidence_id) 解析内部账本（不改对外 MCP 契约）
-```
+# 迁移：005 运行期表（alembic/versions/0050_create_agentic_tables.py，
+# 独立表定义见 backend/migrations/005_agentic_tables.py）
+cd backend && alembic upgrade head
 
-> 具体命令、迁移与完整测试套件由 tasks.md 与实现阶段提供；本指南只约束可观测的期望结果与验收口径。
+# 启动 MCP 服务并启用 Agent 编排路径（运行配置开关，未达阈值为可选路径）
+AGENTIC_RETRIEVAL_ENABLED=true python _run_mcp.py
+
+# 运行 Agent 编排对照评测（同会话先重跑确定性基线再跑 Agent，FR-030）：
+# 001 11 条 + 002/004 扩充集 + 005 新增批次，三段通过判定 + 硬性指标，
+# 产出 eval/agentic_comparison_report.json（含 enters_default_path）
+python eval/run_agentic_comparison.py \
+    --dataset eval/eval_dataset.json \
+    --agentic-dataset eval/agentic_eval_dataset.json \
+    --output eval/agentic_comparison_report.json
+
+# 契约校验（测试套件内执行）：
+#   - 账本条目：contracts/evidence-ledger-entry.schema.json
+#   - Agent 判断：contracts/agent-judgment.schema.json
+#   - 运行记录：contracts/agentic-retrieval-run.schema.json
+#   - 共享定义：contracts/common.schema.json
+# 凭 (request_id, evidence_id) 解析内部账本（不改对外 MCP 契约，SC-006）：
+#   SELECT * FROM evidence_ledger_entry WHERE request_id = :rid AND evidence_id = :eid;
+
+# 真实服务端验收套件（场景 1–7 + 硬性指标，AGENTIC_RETRIEVAL_ENABLED=true）
+cd backend && python -m pytest tests/integration/test_real_server_acceptance.py -q
+```

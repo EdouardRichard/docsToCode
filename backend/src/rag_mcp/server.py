@@ -27,9 +27,16 @@ logger = logging.getLogger(__name__)
 
 
 async def _ttl_cleanup_loop(interval_s: int) -> None:
-    """Periodically purge expired retrieval run records (blueprint §20)."""
+    """Periodically purge expired retrieval run records (blueprint §20).
+
+    Covers the 001 retrieval_runs audit table and the 005 Agent
+    orchestration runtime tables (T066).
+    """
     from rag_mcp.db import get_session_factory
-    from rag_mcp.services.maintenance_service import purge_expired_retrieval_runs
+    from rag_mcp.services.maintenance_service import (
+        purge_expired_agentic_runs,
+        purge_expired_retrieval_runs,
+    )
 
     while True:
         await asyncio.sleep(interval_s)
@@ -37,11 +44,12 @@ async def _ttl_cleanup_loop(interval_s: int) -> None:
             factory = get_session_factory()
             async with factory() as session:
                 await purge_expired_retrieval_runs(session)
+                await purge_expired_agentic_runs(session)
                 await session.commit()
         except asyncio.CancelledError:
             raise
         except Exception:  # noqa: BLE001 - keep the loop alive on transient errors
-            logger.exception("RetrievalRun TTL cleanup failed")
+            logger.exception("TTL cleanup failed")
 
 
 @asynccontextmanager

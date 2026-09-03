@@ -11,6 +11,7 @@ hardcoded (Constitution architecture constraint, sec 18).
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from typing import Any
 
@@ -53,6 +54,7 @@ class CapabilityRouter:
         llm_base_url: str = "",
         llm_api_key: str = "",
         node_timeout_ms: int = 5_000,
+        cache_dir: str | None = None,
     ) -> None:
         self._models = {
             "query_planner": query_planner_model,
@@ -63,6 +65,11 @@ class CapabilityRouter:
         self._llm_base_url = llm_base_url
         self._llm_api_key = llm_api_key
         self._node_timeout_ms = node_timeout_ms
+        # Response cache (T070, SC-008): env AGENTIC_LLM_CACHE_PATH opts
+        # in; production callers leave it unset (no cache, real calls).
+        self._cache_dir = cache_dir if cache_dir is not None else os.getenv(
+            "AGENTIC_LLM_CACHE_PATH", "",
+        ) or None
 
     @classmethod
     def from_settings(cls, settings: Any) -> "CapabilityRouter":
@@ -113,4 +120,5 @@ class CapabilityRouter:
             api_key=routed.llm_api_key,
             model=routed.model,
             timeout_s=self._node_timeout_ms / 1000.0,
+            cache_dir=self._cache_dir,
         )

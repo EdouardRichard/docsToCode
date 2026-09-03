@@ -24,7 +24,7 @@
           "type": "object",
           "description": "查询规划 Agent 输出：拆解子问题与所选检索信号/关系方向（蓝图 §11.1，FR-033）",
           "properties": {
-            "sub_problems": { "type": "array", "items": { "type": "object", "properties": { "sub_problem_id": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/SubProblemId" }, "query": { "type": "string" }, "signals": { "type": "array", "items": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/RetrieverType" } }, "relation_directions": { "type": "array", "items": { "type": "string", "enum": ["calls", "called_by", "fk_references", "fk_referenced_by"] } } }, "required": ["sub_problem_id", "query", "signals"], "additionalProperties": false } },
+            "sub_problems": { "type": "array", "items": { "type": "object", "properties": { "sub_problem_id": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/SubProblemId" }, "query": { "type": "string" }, "signals": { "type": "array", "items": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/RetrieverType" } }, "relation_directions": { "type": "array", "items": { "type": "string", "enum": ["calls", "called_by", "fk_references", "fk_referenced_by"] } }, "graph_hop": { "type": "integer", "minimum": 1, "maximum": 3, "description": "图扩展跳数上限（004 护栏 1~3 内，非法/缺失回退默认 2，FR-033；附加可选字段，向后兼容，宪法 VII）" } }, "required": ["sub_problem_id", "query", "signals"], "additionalProperties": false } },
             "schema_valid": { "type": "boolean" }
           },
           "required": ["sub_problems", "schema_valid"],
@@ -52,7 +52,8 @@
                 "type": "object",
                 "properties": {
                   "ledger_entry_id": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/LedgerEntryId" },
-                  "decision": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/SelectionDecision" }
+                  "decision": { "$ref": "https://ai-engineering-rag-mcp.local/schemas/005/common.schema.json#/definitions/SelectionDecision" },
+                  "evidence_id": { "type": "string", "description": "被截断证据的可展开标识（FR-018；附加可选字段，向后兼容，宪法 VII）" }
                 },
                 "required": ["ledger_entry_id", "decision"],
                 "additionalProperties": false
@@ -78,6 +79,7 @@
       "additionalProperties": false
     },
     "total_cost": { "type": ["number", "null"], "minimum": 0, "description": "单次调用 LLM 成本（SC-007）" },
+    "total_llm_tokens": { "type": "number", "minimum": 0, "description": "单次调用 LLM token 用量估算（chars/3，混合中英，SC-007；附加可选字段，向后兼容，宪法 VII）" },
     "schema_valid_all": { "type": "boolean", "description": "所有 Agent 节点 Schema 校验是否通过；任一 false 触发降级记录（SC-011）" }
   },
   "required": ["run_id", "request_id", "project_scope", "knowledge_scope_ids", "run_config", "completion_status", "max_rounds", "rounds_completed", "guardrail_state", "sub_path_timings", "agent_outputs_ref", "ledger_ref", "schema_valid_all"],

@@ -339,6 +339,34 @@ class QdrantStore:
             for p in response.points
         ]
 
+    def search_dense_named(
+        self,
+        collection: str,
+        vector: list[float],
+        scope_ids: list[int] | None = None,
+        version_id: int | None = None,
+        limit: int = 5,
+    ) -> list[dict[str, Any]]:
+        """Dense-only search on a collection with named vectors (005, T065).
+
+        Used by the agentic pipeline's dense fallback when only the hybrid
+        collection (dense+sparse named vectors) exists. Scope+version filters
+        are enforced like every other retrieval path (FR-008).
+        """
+        query_filter = self._build_scope_version_filter(scope_ids, version_id)
+        response = self._client.query_points(
+            collection_name=collection,
+            query=vector,
+            using="dense",
+            query_filter=query_filter,
+            limit=limit,
+            with_payload=True,
+        )
+        return [
+            {"id": p.id, "score": p.score, "payload": p.payload or {}}
+            for p in response.points
+        ]
+
     def query_hybrid(
         self,
         collection: str,

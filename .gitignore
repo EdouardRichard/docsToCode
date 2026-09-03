@@ -34,4 +34,6 @@ logs/
 
 # Eval run logs (transient)
 eval/_*.log
+# Agentic eval LLM response cache (record-replay fixture, T070)
+eval/.agentic_llm_cache/
 docs/1.0-iteration-roadmap.md

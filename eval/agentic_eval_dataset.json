@@ -1,30 +1,75 @@
 [
   {
-    "query": "Which services call UserService#validateToken and what does validateToken depend on?",
+    "query": "Which UserService methods use the repository field, and which repository methods do they invoke?",
     "project_scope": [
       "351193748123680768"
     ],
     "expected_evidence_ids": [
+      "352016027946582018",
       "352016027946582019",
-      "352016027946582018"
-    ],
-    "category": "multi_hop",
-    "language": "en"
-  },
-  {
-    "query": "Find the call chain from API entry point to database save operation.",
-    "project_scope": [
-      "351193748123680768"
-    ],
-    "expected_evidence_ids": [
-      "352016027946582016",
       "352016027946582020"
     ],
     "category": "multi_hop",
-    "language": "en"
+    "language": "en",
+    "_meta": {
+      "grounded_corpora": "Java call-graph (UserService)",
+      "expected_paths": [
+        "com.example.service.UserService#repository",
+        "com.example.service.UserService#findById",
+        "com.example.service.UserService#getActiveUsers"
+      ],
+      "review_status": "reviewed",
+      "review_notes": "Two-hop: locate repository field users, then resolve the repository methods each caller invokes."
+    }
   },
   {
-    "query": "What methods are not covered by the current test suite for UserService?",
+    "query": "Which tables reference the users table through foreign keys, and what constraint enforces it?",
+    "project_scope": [
+      "352016496592945153"
+    ],
+    "expected_evidence_ids": [
+      "352016498073534464",
+      "352016498073534471",
+      "352016498073534477"
+    ],
+    "category": "multi_hop",
+    "language": "en",
+    "_meta": {
+      "grounded_corpora": "DDL foreign keys (users/orders)",
+      "expected_paths": [
+        "table:users",
+        "table:orders",
+        "constraint:fk_orders_user"
+      ],
+      "review_status": "reviewed",
+      "review_notes": "FK chain hop: referencing table -> constraint -> referenced table."
+    }
+  },
+  {
+    "query": "UserService 中哪些方法依赖 repository 字段，它们各自调用了什么？",
+    "project_scope": [
+      "351193748123680768"
+    ],
+    "expected_evidence_ids": [
+      "352016027946582018",
+      "352016027946582019",
+      "352016027946582020"
+    ],
+    "category": "multi_hop",
+    "language": "zh",
+    "_meta": {
+      "grounded_corpora": "Java call-graph (UserService)",
+      "expected_paths": [
+        "com.example.service.UserService#repository",
+        "com.example.service.UserService#findById",
+        "com.example.service.UserService#getActiveUsers"
+      ],
+      "review_status": "reviewed",
+      "review_notes": "中文多跳查询（FR-027 CJK），与英文条目 1 同真值。"
+    }
+  },
+  {
+    "query": "How does UserService record audit logs when token validation fails?",
     "project_scope": [
       "351193748123680768"
     ],
@@ -32,52 +77,79 @@
       "352016027946582021"
     ],
     "category": "gap",
-    "language": "en"
+    "language": "en",
+    "_meta": {
+      "grounded_corpora": "Java call-graph (UserService)",
+      "expected_paths": [
+        "com.example.service.UserService#validateToken"
+      ],
+      "review_status": "reviewed",
+      "review_notes": "Verifiable gap: validateToken only throws; no audit logging exists in the corpus. Analyst should judge partial/uncovered and trigger bounded supplementary retrieval."
+    }
   },
   {
-    "query": "Find evidence gaps where error handling is missing in the service layer.",
+    "query": "What indexes are defined on the users table and how are they maintained?",
     "project_scope": [
-      "351193748123680768"
+      "352016496592945153"
     ],
     "expected_evidence_ids": [
-      "352016027946582022"
+      "352016498073534464"
     ],
     "category": "gap",
-    "language": "en"
+    "language": "en",
+    "_meta": {
+      "grounded_corpora": "DDL foreign keys (users/orders)",
+      "expected_paths": [
+        "table:users"
+      ],
+      "review_status": "reviewed",
+      "review_notes": "Verifiable gap: only orders has indexes (idx_orders_user_id/idx_orders_status); users has none. Expected evidence stops at the users table chunk."
+    }
   },
   {
-    "query": "Why does UserService#findById conflict with the repository interface version?",
+    "query": "Are the column types of users.id and orders.user_id compatible for the fk_orders_user foreign key?",
     "project_scope": [
-      "351193748123680768"
+      "352016496592945153"
     ],
     "expected_evidence_ids": [
-      "352016027946582019"
+      "352016498073534465",
+      "352016498073534473",
+      "352016498073534477"
     ],
     "category": "conflict",
-    "language": "en"
+    "language": "en",
+    "_meta": {
+      "grounded_corpora": "DDL foreign keys (users/orders)",
+      "expected_paths": [
+        "table:users.column:id",
+        "table:orders.column:user_id",
+        "constraint:fk_orders_user"
+      ],
+      "review_status": "reviewed",
+      "review_notes": "Conflict analysis: BIGSERIAL vs BIGINT type declarations must be compared across two column chunks plus the FK constraint; analyst surfaces the mismatch instead of fabricating an answer."
+    }
   },
   {
-    "query": "Show conflicting API signatures between UserService and UserRepository.",
+    "query": "orders.user_id 外键与 users 表主键的类型声明是否一致？",
     "project_scope": [
-      "351193748123680768"
+      "352016496592945153"
     ],
     "expected_evidence_ids": [
-      "352016027946582016",
-      "352016027946582017"
+      "352016498073534465",
+      "352016498073534473",
+      "352016498073534477"
     ],
     "category": "conflict",
-    "language": "en"
-  },
-  {
-    "query": "哪些服务调用了 UserService#validateToken，validateToken 自身依赖什么？",
-    "project_scope": [
-      "351193748123680768"
-    ],
-    "expected_evidence_ids": [
-      "352016027946582019",
-      "352016027946582018"
-    ],
-    "category": "multi_hop",
-    "language": "zh"
+    "language": "zh",
+    "_meta": {
+      "grounded_corpora": "DDL foreign keys (users/orders)",
+      "expected_paths": [
+        "table:users.column:id",
+        "table:orders.column:user_id",
+        "constraint:fk_orders_user"
+      ],
+      "review_status": "reviewed",
+      "review_notes": "中文冲突查询，与英文条目 6 同真值（FR-027 CJK）。"
+    }
   }
 ]

@@ -75,6 +75,42 @@ class TestSupplementaryLoop:
             assert "should_continue" in decision
             assert "reason" in decision
 
+    def test_partial_without_verifiable_gap_stops(self):
+        """T069 / US2-AC3: partial coverage WITHOUT an explicit gap signal
+        (needs_supplementary=False, no uncovered sub-problem ids) must NOT
+        trigger a second retrieval round — '无缺口 → 直接进入上下文编排'.
+
+        A bare "partial" coverage state alone is not a verifiable gap;
+        continuing on it wastes a full LLM round (the q0/q2 two-round
+        pattern that pushed P50 to ~15.8s and caused 30s degradations).
+        """
+        from rag_mcp.agents.query_planner import QueryPlannerAgent
+        from rag_mcp.agents.evidence_analyst import EvidenceAnalystAgent
+        from rag_mcp.orchestration.state_machine import AgenticStateMachine
+
+        planner = QueryPlannerAgent(model_and_version="test-v1")
+        planner._llm_decompose = lambda query, ctx: [
+            {"query": "sub-query", "signals": ["dense"]},
+        ]
+        analyst = EvidenceAnalystAgent(model_and_version="test-v1")
+        analyst._llm_judge = lambda ctx: {
+            "coverage_state": "partial",
+            "conflict_type": "none",
+            "uncovered_sub_problem_ids": [],
+            "needs_supplementary": False,
+            "gap_descriptions": [],
+        }
+        machine = AgenticStateMachine(
+            run_id="999", request_id="req-1",
+            project_scope=["proj-a"], knowledge_scope_ids=["100"], max_rounds=2,
+        )
+        machine.set_query_planner(planner)
+        machine.set_evidence_analyst(analyst)
+        machine.run(context={"query": "test"})
+        assert machine.rounds_completed == 1, (
+            "partial without a verifiable gap must stop after one round"
+        )
+
     def test_max_rounds_partial_with_gaps(self):
         """Reaching max_rounds with gaps -> partial (FR-016)."""
         machine = self._make_machine_with_agents(max_rounds=2, needs_supplementary=True)

@@ -162,7 +162,7 @@ class RetrievalService:
             graph_trace_data: dict | None = None
             if hybrid_result is not None:
                 (raw_results, subpath_timings, failed_paths,
-                 graph_used, graph_trace_data) = hybrid_result
+                 graph_used, graph_trace_data, _rich_candidates) = hybrid_result
                 retrieval_mode = "graph_enhanced" if graph_used else "hybrid"
             else:
                 # Dense-only path (001 behavior, backward compat)
@@ -369,6 +369,163 @@ class RetrievalService:
 
         return resolved_scope_ids, None
 
+    async def recall_candidates(
+        self,
+        query: str,
+        scope_ids: list[int],
+        limit: int = 20,
+        use_graph: bool = False,
+        graph_relation_types: list[str] | None = None,
+        graph_hop: int | None = None,
+    ) -> dict[str, Any]:
+        """Hybrid recall for the agentic pipeline (005, T058).
+
+        Runs the SAME retrieval components as search() — QdrantStore
+        dense+sparse recall, RRF fusion, Rerank, 004 graph expansion with its
+        guardrails — but returns raw recall candidates with per-retriever
+        metadata instead of an MCP response. The deterministic search() path
+        is untouched.
+
+        Args:
+            query: The sub-problem query text.
+            scope_ids: Resolved knowledge scope IDs (already isolated).
+            limit: Over-fetch limit for the recall sub-paths.
+            use_graph: Run the 004 graph sub-path for this query (planner
+                signal), independent of the global graph switch (FR-033).
+            graph_relation_types: Planner-selected relation directions.
+            graph_hop: Planner-selected hop cap, clamped to 004 hop_max.
+
+        Returns:
+            Dict with 'candidates' (per-retriever metadata + payload),
+            'subpath_timings', 'failed_paths', 'graph_used'.
+        """
+        from rag_mcp.orchestration.retrieval_pipeline import (
+            clamp01,
+            final_candidate_score,
+        )
+
+        query_vector = await self._embedding_provider.embed_query(query)
+
+        hybrid_result = await self._try_hybrid_recall(
+            query,
+            query_vector,
+            scope_ids,
+            limit,
+            graph_mode="on" if use_graph else "off",
+            graph_relation_types=graph_relation_types,
+            graph_hop=graph_hop,
+        )
+
+        if hybrid_result is not None:
+            (_raw, subpath_timings, failed_paths,
+             graph_used, _graph_trace, rich_candidates) = hybrid_result
+        else:
+            # Dense-only fallback (001 behaviour): no lexical_ready versions,
+            # hybrid collection missing, or query without sparse vocab terms.
+            subpath_timings = {}
+            failed_paths = []
+            graph_used = False
+            index_version = self._derive_index_version()
+            collection_name = f"chunks_dense_{index_version}"
+            hybrid_name = f"chunks_hybrid_{index_version}"
+            t_dense = time.monotonic()
+            dense_results: list[dict[str, Any]] = []
+            if self._qdrant_store.collection_exists(collection_name):
+                dense_results = self._qdrant_store.search(
+                    collection=collection_name,
+                    vector=query_vector,
+                    scope_ids=scope_ids,
+                    limit=limit,
+                )
+            if not dense_results and self._qdrant_store.collection_exists(hybrid_name):
+                # Dense-only recall against the hybrid collection (named
+                # vectors): keeps the agentic path available when the data
+                # lives in the 002 hybrid collection (T065).
+                dense_results = self._qdrant_store.search_dense_named(
+                    collection=hybrid_name,
+                    vector=query_vector,
+                    scope_ids=scope_ids,
+                    limit=limit,
+                )
+            subpath_timings["dense_recall_ms"] = round(
+                (time.monotonic() - t_dense) * 1000, 2
+            )
+            rich_candidates = [
+                {
+                    "chunk_id": str((r.get("payload") or {}).get("chunk_id", r.get("id", ""))),
+                    "retrievers": ["dense"],
+                    "dense_score": float(r.get("score", 0.0)),
+                    "sparse_score": None,
+                    "dense_rank": i + 1,
+                    "sparse_rank": None,
+                    "graph_rank": None,
+                    "graph_structure_weight": None,
+                    "fused_score": 0.0,
+                    "final_rank": i + 1,
+                    "rerank_score": None,
+                    "payload": r.get("payload", {}) or {},
+                }
+                for i, r in enumerate(dense_results)
+            ]
+
+        # Published-version isolation before candidates enter the ledger input
+        version_ids: set[int] = set()
+        for c in rich_candidates:
+            vid = (c.get("payload") or {}).get("version_id")
+            if vid is not None:
+                try:
+                    version_ids.add(int(vid))
+                except (ValueError, TypeError):
+                    pass
+        published: set[int] = set()
+        if version_ids:
+            result = await self._session.execute(
+                select(KnowledgeVersion.version_id).where(
+                    KnowledgeVersion.version_id.in_(version_ids),
+                    KnowledgeVersion.status == "published",
+                )
+            )
+            published = set(result.scalars().all())
+
+        candidates: list[dict[str, Any]] = []
+        for c in rich_candidates:
+            payload = c.get("payload") or {}
+            try:
+                vid = int(payload.get("version_id", 0))
+            except (ValueError, TypeError):
+                vid = 0
+            if vid not in published:
+                continue
+            score = final_candidate_score(
+                dense_score=c.get("dense_score"),
+                sparse_score=c.get("sparse_score"),
+                rerank_score=c.get("rerank_score"),
+                fused_score=c.get("fused_score") or 0.0,
+                structure_weight=c.get("graph_structure_weight"),
+            )
+            candidates.append({
+                "chunk_id": c["chunk_id"],
+                "retrievers": c["retrievers"],
+                "dense_score": c.get("dense_score"),
+                "sparse_score": c.get("sparse_score"),
+                "dense_rank": c.get("dense_rank"),
+                "sparse_rank": c.get("sparse_rank"),
+                "graph_rank": c.get("graph_rank"),
+                "graph_structure_weight": c.get("graph_structure_weight"),
+                "fused_score": c.get("fused_score") or 0.0,
+                "final_rank": c.get("final_rank"),
+                "rerank_score": c.get("rerank_score"),
+                "score": clamp01(score),
+                "payload": payload,
+            })
+
+        return {
+            "candidates": candidates,
+            "subpath_timings": subpath_timings,
+            "failed_paths": failed_paths,
+            "graph_used": graph_used,
+        }
+
     # ------------------------------------------------------------------
     # Private helpers
     # ------------------------------------------------------------------
@@ -381,15 +538,19 @@ class RetrievalService:
         2. Exact alias match
         3. Exact repo_path match
         4. Partial repo_path match (endswith)
+        5. Numeric knowledge_scope_id (005 T061: eval datasets and callers
+           may address a project through its knowledge scope stable ID;
+           additive — refs that previously failed to resolve now resolve)
 
         Returns all matching projects (may be 0, 1, or more).
         """
         conditions = []
 
-        # Try numeric ID match
+        # Try numeric ID match (project_id or knowledge_scope_id)
         try:
             numeric_id = int(ref)
             conditions.append(Project.project_id == numeric_id)
+            conditions.append(Project.knowledge_scope_id == numeric_id)
         except ValueError:
             pass
 
@@ -780,6 +941,9 @@ class RetrievalService:
         scope_ids: list[int],
         dense_results: list[dict[str, Any]],
         sparse_results: list[dict[str, Any]],
+        relation_types: list[str] | None = None,
+        hop: int | None = None,
+        direction: str | None = None,
     ) -> list[dict[str, Any]]:
         """Graph-expansion recall as the 3rd retriever input (004, FR-006).
 
@@ -788,6 +952,10 @@ class RetrievalService:
         FR-010 isolation). Guardrails (hop/budget/direction) come from
         GraphConfig via GraphExpansionEngine (FR-017). Returns candidates as
         fusion-ready dicts carrying graph_rank/structure_weight/edge_path.
+
+        005 (T058): optional planner-directed parameters — relation_types /
+        hop / direction override the config defaults while the 004 guardrails
+        (hop_max clamp, budget, sub-timeout) stay enforced (FR-033).
         """
         from rag_mcp.graph.expansion import GraphExpansionEngine
         from rag_mcp.graph.store.base import GraphScope
@@ -816,6 +984,10 @@ class RetrievalService:
             return []
 
         engine = GraphExpansionEngine(self._session)
+        graph_cfg = self._settings.graph
+        # Planner hop choice is clamped into the 004 guardrail band (FR-033)
+        if hop is not None:
+            hop = max(1, min(int(hop), graph_cfg.hop_max))
         graph_results: list[dict[str, Any]] = []
         for scope_id in scope_ids:
             triple = await self._graph_scope_triple(scope_id)
@@ -827,7 +999,13 @@ class RetrievalService:
                 project_id=project_id,
                 index_version=version_number,
             )
-            candidates = await engine.expand(seed_ids, scope)
+            candidates = await engine.expand(
+                seed_ids,
+                scope,
+                hop=hop,
+                direction=direction,
+                relation_types=relation_types,
+            )
             for cand in candidates:
                 graph_results.append({
                     "chunk_id": str(cand.chunk_id),
@@ -902,12 +1080,21 @@ class RetrievalService:
         query_vector: list[float],
         scope_ids: list[int],
         limit: int,
+        graph_mode: str | None = None,
+        graph_relation_types: list[str] | None = None,
+        graph_hop: int | None = None,
     ) -> tuple[list[dict[str, Any]], dict, list[str]] | None:
         """Attempt hybrid Dense+Sparse recall + RRF fusion + Rerank.
 
-        Returns (raw_results, subpath_timings, failed_paths) if hybrid is
-        available, or None if no lexical_ready versions or hybrid collection
-        missing (caller falls back to dense-only path).
+        Returns (raw_results, subpath_timings, failed_paths, graph_used,
+        graph_trace_data, rich_candidates) if hybrid is available, or None if
+        no lexical_ready versions or hybrid collection missing (caller falls
+        back to dense-only path).
+
+        005 (T058): graph_mode overrides the global graph switch for the
+        agentic pipeline — None = honour GRAPH_ENHANCED_RETRIEVAL_ENABLED,
+        'on' = run the graph sub-path, 'off' = skip it. rich_candidates carry
+        per-retriever scores for the evidence ledger input.
 
         FR-013: only lexical_ready versions participate in the Sparse path.
         FR-008: both Dense and Sparse enforce scope+version filter.
@@ -964,17 +1151,29 @@ class RetrievalService:
         graph_results: list[dict[str, Any]] = []
         graph_elapsed = 0.0
         graph_used = False
+        # 005 (T058): the agentic pipeline overrides the global graph switch
+        # with the planner's per-sub-problem signal choice (FR-033); the
+        # deterministic default path keeps honouring only the global switch.
+        graph_enabled = (
+            graph_cfg.enabled if graph_mode is None else graph_mode == "on"
+        )
         # Trace payload assembled whenever the graph path is attempted (T045);
         # stays None when the switch is off so the default path is untouched.
         graph_trace_data: dict[str, Any] | None = (
             {"graph_candidates": [], "fused_candidates": []}
-            if graph_cfg.enabled else None
+            if graph_enabled else None
         )
-        if graph_cfg.enabled:
+        if graph_enabled:
             t_graph_start = time.monotonic()
             try:
                 graph_results = await asyncio.wait_for(
-                    self._graph_recall(scope_ids, dense_results, sparse_results),
+                    self._graph_recall(
+                        scope_ids,
+                        dense_results,
+                        sparse_results,
+                        relation_types=graph_relation_types,
+                        hop=graph_hop,
+                    ),
                     timeout=graph_cfg.graph_sub_timeout_ms / 1000.0,
                 )
                 graph_used = bool(graph_results)
@@ -1045,6 +1244,7 @@ class RetrievalService:
 
         # Rerank (FR-004/FR-005): only if reranker is configured and results exist
         rerank_elapsed = 0.0
+        rerank_scores: dict[str, float] = {}
         if self._reranker is not None and raw_results:
             rerank_budget = self._settings.hybrid_retrieval.rerank_budget
             # Trim to rerank budget (FR-005, blueprint §18.5)
@@ -1086,6 +1286,8 @@ class RetrievalService:
                     cid = str(r.get("chunk_id", ""))
                     if cid:
                         reranked_map[cid] = r
+                        if r.get("rerank_score") is not None:
+                            rerank_scores[cid] = float(r["rerank_score"])
 
                 new_raw: list[dict[str, Any]] = []
                 for r in reranked:
@@ -1111,8 +1313,34 @@ class RetrievalService:
                 recall_elapsed + graph_elapsed + fusion_elapsed + rerank_elapsed, 2
             ),
         }
-        if graph_cfg.enabled:
+        if graph_enabled:
             subpath_timings["graph_recall_ms"] = round(graph_elapsed, 2)
+
+        # 005 (T058): rich candidates with per-retriever metadata — the
+        # evidence ledger input for the agentic pipeline. Order matches
+        # raw_results (post-rerank). Deterministic path ignores this field.
+        fused_by_cid = {str(c.chunk_id): c for c in fused}
+        rich_candidates: list[dict[str, Any]] = []
+        for r in raw_results:
+            payload = r.get("payload", {}) or {}
+            cid = str(payload.get("chunk_id", r.get("id", "")))
+            fc = fused_by_cid.get(cid)
+            if fc is None:
+                continue
+            rich_candidates.append({
+                "chunk_id": cid,
+                "retrievers": list(fc.source_retrievers),
+                "dense_score": fc.dense_score,
+                "sparse_score": fc.sparse_score,
+                "dense_rank": fc.dense_rank,
+                "sparse_rank": fc.sparse_rank,
+                "graph_rank": fc.graph_rank,
+                "graph_structure_weight": fc.graph_structure_weight,
+                "fused_score": fc.fused_score,
+                "final_rank": fc.final_rank,
+                "rerank_score": rerank_scores.get(cid),
+                "payload": payload,
+            })
 
         logger.info(
             "Hybrid recall: dense=%d sparse=%d graph=%d fused=%d rerank=%dms, "
@@ -1121,7 +1349,10 @@ class RetrievalService:
             len(raw_results), rerank_elapsed, failed_paths, subpath_timings,
         )
 
-        return raw_results, subpath_timings, failed_paths, graph_used, graph_trace_data
+        return (
+            raw_results, subpath_timings, failed_paths,
+            graph_used, graph_trace_data, rich_candidates,
+        )
 
     async def _fetch_chunk_content(self, chunk_ids: list[int]) -> dict[int, str]:
         """Fetch content_text for chunks by ID (for rerank query+passage pairs)."""

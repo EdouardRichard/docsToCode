@@ -45,6 +45,7 @@ NODE_SCHEMA: dict[str, Any] = {
                         "type": "array",
                         "items": {"type": "string", "enum": ["calls", "called_by", "fk_references", "fk_referenced_by"]},
                     },
+                    "graph_hop": {"type": "integer", "minimum": 1, "maximum": 3},
                 },
                 "required": ["sub_problem_id", "query", "signals"],
                 "additionalProperties": False,
@@ -73,12 +74,39 @@ class QueryPlannerAgent(AgentBase):
         "Decompose the user's retrieval query into traceable sub-problems. "
         "For multi-hop questions produce one sub-problem per hop; for "
         "single-intent questions return exactly ONE sub-problem.\n"
+        "\n"
+        "Signal selection rules (apply per sub-problem, T073/FR-001):\n"
+        "- 'dense' and 'sparse' recall chunks by semantic/lexical similarity "
+        "to the query text. They are the right signals for precision questions: "
+        "exact symbols or definitions, column/type/constraint/index/view "
+        "declarations, compatibility or consistency checks between named "
+        "items, version or source conflicts, configuration values, "
+        "'what/which fields does X have'.\n"
+        "- 'graph' traverses structural relations (method call edges, "
+        "foreign-key edges). Add 'graph' ONLY when the question itself asks "
+        "about relationships or traversal: who calls X, which methods X "
+        "invokes, which tables reference a table/column, callers/callees, "
+        "multi-hop chains across symbols or tables. Do NOT add 'graph' when "
+        "the question merely names a symbol, table or column but asks about "
+        "its content, definition or compatibility — use 'dense' and 'sparse' "
+        "there.\n"
+        "- Always include 'dense'; add 'sparse' when the query names "
+        "concrete identifiers (class, method, table, column, constraint "
+        "names).\n"
+        "\n"
+        "'relation_directions' (optional, only when 'graph' is in signals) "
+        "is a subset of [\"calls\", \"called_by\", \"fk_references\", "
+        "\"fk_referenced_by\"]. Pick the minimal direction the question "
+        "needs: who calls X -> [\"called_by\"]; what does X call -> "
+        "[\"calls\"]; FK-reference questions -> [\"fk_references\", "
+        "\"fk_referenced_by\"].\n"
+        "'graph_hop' (optional integer 1-3, only when 'graph' is in "
+        "signals): 1 for direct relations, 2 for one intermediate hop. "
+        "Omit when unsure.\n"
+        "\n"
         "Respond with ONLY a JSON object of the exact shape:\n"
         '{"sub_problems": [{"query": string, "signals": [string], '
         '"relation_directions": [string]}]}\n'
-        'where "signals" is a non-empty subset of ["dense", "sparse", "graph"], '
-        'and "relation_directions" (optional, only when "graph" is in signals) '
-        'is a subset of ["calls", "called_by", "fk_references", "fk_referenced_by"]. '
         "No markdown fences, no extra keys, no commentary."
     )
 
@@ -149,6 +177,10 @@ class QueryPlannerAgent(AgentBase):
             }
             if directions:
                 sub_problem["relation_directions"] = directions
+            if "graph" in signals:
+                # Planner hop cap within the 004 guardrail band; invalid or
+                # missing values fall back to the 004 default hop 2 (FR-033)
+                sub_problem["graph_hop"] = self._validate_hop(sp.get("graph_hop"))
             sub_problems.append(sub_problem)
 
         return {"sub_problems": sub_problems, "schema_valid": True}
@@ -178,6 +210,20 @@ class QueryPlannerAgent(AgentBase):
         if not valid:
             valid = ["dense"]  # default fallback
         return valid
+
+    def _validate_hop(self, value: Any) -> int:
+        """Validate the planner graph hop cap (FR-033, T067).
+
+        The 004 guardrail band is 1..3 (hop_default 2 / hop_max 3). Invalid
+        or missing values fall back to the 004 deterministic default 2.
+        """
+        try:
+            hop = int(value)
+        except (TypeError, ValueError):
+            return 2
+        if hop < 1 or hop > 3:
+            return 2
+        return hop
 
     def _validate_directions(
         self,

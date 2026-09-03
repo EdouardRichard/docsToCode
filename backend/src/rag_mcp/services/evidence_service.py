@@ -260,10 +260,13 @@ class EvidenceService:
 
             conditions = []
 
-            # Try numeric ID
+            # Try numeric ID (project_id or knowledge_scope_id; additive —
+            # callers/eval datasets may address a project via its stable
+            # knowledge scope ID, consistent with RetrievalService resolution)
             try:
                 numeric_id = int(ref_stripped)
                 conditions.append(Project.project_id == numeric_id)
+                conditions.append(Project.knowledge_scope_id == numeric_id)
             except ValueError:
                 pass
 

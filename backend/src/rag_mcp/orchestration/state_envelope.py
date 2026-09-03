@@ -55,6 +55,7 @@ class StateEnvelope:
         }
         self._ledger_ref: dict[str, Any] = {"ledger_entry_ids": [], "rounds": []}
         self._total_cost: float | None = None
+        self._total_llm_tokens: float | None = None
         self._schema_valid_all: bool = True
         self._run_config: dict[str, Any] = {}
 
@@ -88,6 +89,9 @@ class StateEnvelope:
     def set_total_cost(self, cost: float | None) -> None:
         self._total_cost = cost
 
+    def set_total_llm_tokens(self, tokens: float | None) -> None:
+        self._total_llm_tokens = tokens
+
     def to_dict(self) -> dict[str, Any]:
         """Return the full run record conforming to agentic-retrieval-run.schema.json."""
         record: dict[str, Any] = {
@@ -109,4 +113,6 @@ class StateEnvelope:
             record["task_context"] = self._task_context
         if self._total_cost is not None:
             record["total_cost"] = self._total_cost
+        if self._total_llm_tokens is not None:
+            record["total_llm_tokens"] = self._total_llm_tokens
         return record
