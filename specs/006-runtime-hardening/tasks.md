@@ -100,25 +100,25 @@
 
 ### Integration for User Story 1（先红，串起全链路）
 
-- [ ] T027 [US1] Red: 双写拒绝集成测试（两管理进程竞争）— `backend/tests/integration/test_runtime_double_writer.py`
+- [X] T027 [US1] Red: 双写拒绝集成测试（两管理进程竞争）— `backend/tests/integration/test_runtime_double_writer.py`
   - **AC**: 断言第二个 writer 100% 拒绝进入写模式、错误含持有者信息、全程双写事件=0（SC-002）。
-- [ ] T028 [US1] Green: 打通租约抢占 → server 模式 → 双写拒绝链路，使 T027 转绿 — 涉及 `backend/src/rag_mcp/runtime/write_coordinator.py`、`backend/src/rag_mcp/server.py`
+- [X] T028 [US1] Green: 打通租约抢占 → server 模式 → 双写拒绝链路，使 T027 转绿 — 涉及 `backend/src/rag_mcp/runtime/write_coordinator.py`、`backend/src/rag_mcp/server.py`
   - **AC**: T027 全绿；无静默降级为 reader。
-- [ ] T029 [US1] Red: reader 独立性集成测试（停 writer 后 reader 检索/展开成功、无 writer 本地文件访问）— `backend/tests/integration/test_runtime_reader_independence.py`
+- [X] T029 [US1] Red: reader 独立性集成测试（停 writer 后 reader 检索/展开成功、无 writer 本地文件访问）— `backend/tests/integration/test_runtime_reader_independence.py`
   - **AC**: 断言 writer 停止后 reader `get_evidence` 成功率 100%、失败数=0、无对 writer 本地路径访问（SC-003/FR-005）。
-- [ ] T030 [US1] Green: 打通 reader 路径（共享库证据展开），使 T029 转绿 — 涉及 `backend/src/rag_mcp/mcp/get_evidence.py`
+- [X] T030 [US1] Green: 打通 reader 路径（共享库证据展开），使 T029 转绿 — 涉及 `backend/src/rag_mcp/mcp/get_evidence.py`
   - **AC**: T029 全绿。
-- [ ] T031 [US1] Red: 租约恢复集成测试（强杀 writer、缩短过期窗口、重启抢回）— `backend/tests/integration/test_runtime_lease_recovery.py`
+- [X] T031 [US1] Red: 租约恢复集成测试（强杀 writer、缩短过期窗口、重启抢回）— `backend/tests/integration/test_runtime_lease_recovery.py`
   - **AC**: 断言回收窗口内第二个 writer 被拒、过期后新 writer 抢回续约、期间 reader 不受影响（FR-003）。
-- [ ] T032 [US1] Green: 打通租约过期回收 + 续约循环，使 T031 转绿 — 涉及 `backend/src/rag_mcp/runtime/write_coordinator.py`
+- [X] T032 [US1] Green: 打通租约过期回收 + 续约循环，使 T031 转绿 — 涉及 `backend/src/rag_mcp/runtime/write_coordinator.py`
   - **AC**: T031 全绿。
-- [ ] T033 [US1] Red: DeepSeek Harness 双形态必过集成测试（经 writer 与 reader 两 MCP 端点各完成 search_knowledge + get_evidence 并过 Schema）— `backend/tests/integration/test_deepseek_harness_dual_form.py`
+- [X] T033 [US1] Red: DeepSeek Harness 双形态必过集成测试（经 writer 与 reader 两 MCP 端点各完成 search_knowledge + get_evidence 并过 Schema）— `backend/tests/integration/test_deepseek_harness_dual_form.py`
   - **AC**: 断言 DeepSeek Harness 参考客户端在两实例形态端到端调用成功且输出过 Schema；ChatGPT App/Claude Code 记录兼容性状态不阻塞（SC-001/澄清 Q5）。
-- [ ] T034 [US1] Green: 复用 001 `test_deepseek_harness_e2e.py` 的 Harness 客户端适配为双形态（参数化 writer/reader 端点），使 T033 转绿 — `backend/tests/integration/test_deepseek_harness_dual_form.py`
+- [X] T034 [US1] Green: 复用 001 `test_deepseek_harness_e2e.py` 的 Harness 客户端适配为双形态（参数化 writer/reader 端点），使 T033 转绿 — `backend/tests/integration/test_deepseek_harness_dual_form.py`
   - **AC**: T033 全绿。
-- [ ] T035 [US1] Red: 跨实例并发隔离集成测试（writer + reader 混合 5 并发，状态/证据/作用域串扰=0）— `backend/tests/integration/test_runtime_cross_instance_concurrency.py`
+- [X] T035 [US1] Red: 跨实例并发隔离集成测试（writer + reader 混合 5 并发，状态/证据/作用域串扰=0）— `backend/tests/integration/test_runtime_cross_instance_concurrency.py`
   - **AC**: 断言混合 5 并发请求无请求状态/证据/项目作用域串扰，运行状态按 request_id/run_id 隔离（SC-011/FR-008）。
-- [ ] T036 [US1] Green: 复用 001 `test_concurrency.py` harness 扩展为跨实例并发，使 T035 转绿 — `backend/tests/integration/test_runtime_cross_instance_concurrency.py`
+- [X] T036 [US1] Green: 复用 001 `test_concurrency.py` harness 扩展为跨实例并发，使 T035 转绿 — `backend/tests/integration/test_runtime_cross_instance_concurrency.py`
   - **AC**: T035 全绿。
 
 ---
