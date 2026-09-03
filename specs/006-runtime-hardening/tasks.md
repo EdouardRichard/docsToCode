@@ -238,11 +238,11 @@
 
 **Purpose**: 文档、配置样例与全量回归闸门。
 
-- [ ] T073 [P] 更新 `.env.example`（006 全部新变量 + 注释与缺省值）— `.env.example`
+- [X] T073 [P] 更新 `.env.example`（006 全部新变量 + 注释与缺省值）— `.env.example`
   - **AC**: 列出 instance_mode/worker_id/租约/TTL/正文开关/三类 Provider/并发上限/超时档位变量；注释说明默认值与上限。
-- [ ] T074 [P] 运行 [quickstart.md](./quickstart.md) 8 个场景逐条对照，记录偏差 — `specs/006-runtime-hardening/quickstart.md`
+- [X] T074 [P] 运行 [quickstart.md](./quickstart.md) 8 个场景逐条对照，记录偏差 — `specs/006-runtime-hardening/quickstart.md`
   - **AC**: 8 个场景全部可复现；任何偏差回写为任务修正。
-- [ ] T075 全量回归闸门：001–005 既有 pytest 套件 + 006 新增套件全绿；`research.md §0` 非回归三项判定通过 — `backend/tests/`
+- [X] T075 全量回归闸门：001–005 既有 pytest 套件 + 006 新增套件全绿；`research.md §0` 非回归三项判定通过 — `backend/tests/`
   - **AC**: 001–005 既有测试零回归；006 契约/集成/单测全绿；非回归三项判定通过（对照评测要求：无）。
 
 ---
