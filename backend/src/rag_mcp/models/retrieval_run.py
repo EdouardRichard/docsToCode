@@ -2,13 +2,24 @@
 
 Append-only audit record for each retrieval invocation.  Rows are never
 updated or deleted by application code; a periodic cleanup task removes
-records past ``expires_at`` (default 7-day TTL, blueprint §20).
+records past ``expires_at`` (default 7-day TTL, blueprint §20; 006 makes the
+TTL configurable via RETRIEVAL_TTL_DAYS).
+
+006 (data-model §4.1) adds the runtime columns: tool (search_knowledge /
+get_evidence), instance_id / instance_mode (instance attribution),
+error_summary, trace_body_recorded, provider_usage; query_text becomes
+nullable so the unified trace-body switch (FR-018) can record runs without
+any query/evidence body.
 """
 
 from __future__ import annotations
 
+import uuid
+from datetime import datetime
+
 from sqlalchemy import (
     BigInteger,
+    Boolean,
     CheckConstraint,
     Index,
     Integer,
@@ -16,7 +27,7 @@ from sqlalchemy import (
     Text,
     text,
 )
-from sqlalchemy.dialects.postgresql import JSONB, TIMESTAMP
+from sqlalchemy.dialects.postgresql import JSONB, TIMESTAMP, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from rag_mcp.models import Base
@@ -38,14 +49,29 @@ class RetrievalRun(Base):
             "('markdown','java','openapi','ddl','go','python','word','pdf')",
             name="chk_retrieval_run_format",
         ),
+        # 006: tool attribution (FR-016, aggregation by Tool)
+        CheckConstraint(
+            "tool IN ('search_knowledge', 'get_evidence')",
+            name="chk_rr_tool",
+        ),
+        # 006: instance_mode is NULL for legacy (pre-006) rows
+        CheckConstraint(
+            "instance_mode IS NULL OR instance_mode IN ('writer', 'reader')",
+            name="chk_rr_instance_mode",
+        ),
         # Index for querying by mode + time range (data-model §6.2)
         Index("idx_rr_mode_created", "retrieval_mode", "created_at"),
+        # 006 aggregation support (data-model §6): metrics group by
+        # instance_mode/tool and completion_status within the TTL window.
+        Index("idx_rr_instance_tool_created", "instance_mode", "tool", "created_at"),
+        Index("idx_rr_status_created", "completion_status", "created_at"),
     )
 
     run_id: Mapped[int] = mapped_column(
         BigInteger, primary_key=True, autoincrement=False, comment="Snowflake ID"
     )
-    query_text: Mapped[str] = mapped_column(Text, nullable=False)
+    # 006 FR-018: nullable so TRACE_BODY_ENABLED=false stores no query body
+    query_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     project_scopes: Mapped[list] = mapped_column(
         JSONB,
         nullable=False,
@@ -85,6 +111,39 @@ class RetrievalRun(Base):
         String(8),
         nullable=True,
         comment="Format of top-1 evidence hit: markdown/java/openapi/ddl/go/python/word/pdf or NULL",
+    )
+    # 006 runtime columns (data-model §4.1)
+    tool: Mapped[str] = mapped_column(
+        String(16),
+        nullable=False,
+        server_default=text("'search_knowledge'"),
+        comment="'search_knowledge' or 'get_evidence' (FR-016 by-Tool metrics)",
+    )
+    instance_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        nullable=True,
+        comment="Serving instance (NULL for pre-006 rows)",
+    )
+    instance_mode: Mapped[str | None] = mapped_column(
+        String(8),
+        nullable=True,
+        comment="Instance mode redundancy (survives registry row purge)",
+    )
+    error_summary: Mapped[dict | None] = mapped_column(
+        JSONB,
+        nullable=True,
+        comment="{code, message, failed_paths[]} (FR-020 error backtrace)",
+    )
+    trace_body_recorded: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        server_default=text("TRUE"),
+        comment="Whether the query body was recorded for this row",
+    )
+    provider_usage: Mapped[dict | None] = mapped_column(
+        JSONB,
+        nullable=True,
+        comment="{embedding_calls, rerank_calls, llm_calls, llm_prompt_chars, llm_completion_chars}",
     )
     created_at: Mapped[str] = mapped_column(
         TIMESTAMP(timezone=True),

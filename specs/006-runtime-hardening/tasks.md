@@ -36,25 +36,25 @@
 
 **⚠️ CRITICAL**: 本阶段完成前，任何用户故事不可开始。
 
-- [ ] T003 [P] Red: 迁移 0060 测试（三张运行期表存在、约束齐全：worker_id active 部分唯一、lease active 部分唯一、CHECK 枚举）— `backend/tests/unit/test_migration_runtime_tables.py`
+- [X] T003 [P] Red: 迁移 0060 测试（三张运行期表存在、约束齐全：worker_id active 部分唯一、lease active 部分唯一、CHECK 枚举）— `backend/tests/unit/test_migration_runtime_tables.py`
   - **AC**: 测试对 `instance_registry`/`writer_lease`/`runtime_maintenance_log` 反射断言列/索引/约束，当前迁移缺失 → 失败（先红）。
-- [ ] T004 Green: 编写 Alembic 迁移 `0060_create_runtime_tables`（三表 + §2.2/§3.2 索引约束 + 外键 holder→instance_registry）— `backend/alembic/versions/0060_create_runtime_tables.py`
+- [X] T004 Green: 编写 Alembic 迁移 `0060_create_runtime_tables`（三表 + §2.2/§3.2 索引约束 + 外键 holder→instance_registry）— `backend/alembic/versions/0060_create_runtime_tables.py`
   - **AC**: T003 全绿；`alembic upgrade head` 幂等；`idx_registry_worker_active`（WHERE state='active'）与 `idx_lease_single_active`（WHERE state='active'）存在。
-- [ ] T005 [P] Red: 迁移 0061 测试（retrieval_runs 新列存在、query_text 可空、默认值）— `backend/tests/unit/test_migration_retrieval_runs_ext.py`
+- [X] T005 [P] Red: 迁移 0061 测试（retrieval_runs 新列存在、query_text 可空、默认值）— `backend/tests/unit/test_migration_retrieval_runs_ext.py`
   - **AC**: 断言 `tool`/`instance_id`/`instance_mode`/`error_summary`/`trace_body_recorded`/`provider_usage` 列与 `query_text` 可空、`trace_body_recorded` 默认 true；当前缺失 → 失败。
-- [ ] T006 Green: 编写迁移 `0061_extend_retrieval_runs`（7 列扩展 + query_text 可空化 + 聚合索引 `(instance_mode, tool, created_at)`/`(completion_status, created_at)`）— `backend/alembic/versions/0061_extend_retrieval_runs.py`
+- [X] T006 Green: 编写迁移 `0061_extend_retrieval_runs`（7 列扩展 + query_text 可空化 + 聚合索引 `(instance_mode, tool, created_at)`/`(completion_status, created_at)`）— `backend/alembic/versions/0061_extend_retrieval_runs.py`
   - **AC**: T005 全绿；旧行回填默认（tool='search_knowledge'、trace_body_recorded=TRUE、instance_id/instance_mode NULL）。
-- [ ] T007 [P] Red: ORM 模型测试（instance_registry/writer_lease/runtime_maintenance_log 字段/约束/关系）— `backend/tests/unit/test_runtime_models.py`
+- [X] T007 [P] Red: ORM 模型测试（instance_registry/writer_lease/runtime_maintenance_log 字段/约束/关系）— `backend/tests/unit/test_runtime_models.py`
   - **AC**: 对三模型反射字段类型/默认/关系（lease.holder_instance_id FK）；当前模型缺失 → ImportError 失败。
-- [ ] T008 [P] Green: 实现 ORM 模型 — `backend/src/rag_mcp/models/runtime.py`（含 `InstanceRegistry`/`WriterLease`/`RuntimeMaintenanceLog`）
+- [X] T008 [P] Green: 实现 ORM 模型 — `backend/src/rag_mcp/models/runtime.py`（含 `InstanceRegistry`/`WriterLease`/`RuntimeMaintenanceLog`）
   - **AC**: T007 全绿；模型与迁移列一致（雪花 BIGINT PK、UUID、CHECK 枚举、TIMESTAMPTZ）。
-- [ ] T009 [P] Red: retrieval_run 扩展模型测试 — `backend/tests/unit/test_retrieval_run_runtime.py`
+- [X] T009 [P] Red: retrieval_run 扩展模型测试 — `backend/tests/unit/test_retrieval_run_runtime.py`
   - **AC**: 断言新列映射与 `query_text nullable=True`；当前模型缺新列 → 失败。
-- [ ] T010 [P] Green: 扩展 `retrieval_run.py`（新增 7 列映射 + query_text 可空）— `backend/src/rag_mcp/models/retrieval_run.py`
+- [X] T010 [P] Green: 扩展 `retrieval_run.py`（新增 7 列映射 + query_text 可空）— `backend/src/rag_mcp/models/retrieval_run.py`
   - **AC**: T009 全绿；不破坏 002/004/005 既有字段（retrieval_mode/subpath_timings/evidence_ref_ids/format）。
-- [ ] T011 [P] Red: SnowflakeGenerator worker_id 参数化测试（互异 worker_id 同毫秒生成互异 ID；同 worker 同毫秒走 sequence；越界报错）— `backend/tests/unit/test_snowflake_worker.py`
+- [X] T011 [P] Red: SnowflakeGenerator worker_id 参数化测试（互异 worker_id 同毫秒生成互异 ID；同 worker 同毫秒走 sequence；越界报错）— `backend/tests/unit/test_snowflake_worker.py`
   - **AC**: 断言 worker_id 0 与 1 同毫秒生成结果不同；worker_id=1024 抛 ValueError；单实例默认 worker_id=0 兼容既有 `generate_id()`。
-- [ ] T012 [P] Green: `SnowflakeGenerator(worker_id=...)` 参数化（`generate_id(worker_id)` 或工厂函数）— `backend/src/rag_mcp/utils/snowflake.py`
+- [X] T012 [P] Green: `SnowflakeGenerator(worker_id=...)` 参数化（`generate_id(worker_id)` 或工厂函数）— `backend/src/rag_mcp/utils/snowflake.py`
   - **AC**: T011 全绿；保持既有默认调用不变（模块级 `generate_id()` 默认 worker_id=0）。
 
 **Checkpoint**: 基础就绪——用户故事实现可并行开始。

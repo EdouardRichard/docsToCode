@@ -1,7 +1,13 @@
 """Snowflake ID generator for distributed-unique, time-ordered IDs.
 
 Uses 64-bit integers compatible with PostgreSQL BIGINT and Qdrant u64 Point IDs.
-Worker ID is fixed at 0 for single-writer mode (001).
+
+001: single-writer mode with worker_id fixed at 0.
+006 (FR-030/SC-013): every instance process runs its own generator with a
+distinct worker_id allocated via instance_registry (explicit WORKER_ID or
+auto-assigned lowest free). The module-level API exposes per-worker-id
+generation while the legacy default generate_id() stays worker_id=0
+compatible with 001.
 """
 
 import threading
@@ -68,7 +74,32 @@ class SnowflakeGenerator:
 # Module-level singleton for convenience
 _default_generator = SnowflakeGenerator(worker_id=0)
 
+# Per-worker-id generator cache (006): each instance process generates IDs
+# with its own worker_id so concurrent instances never collide.
+_generator_lock = threading.Lock()
+_generators: dict[int, SnowflakeGenerator] = {}
 
-def generate_id() -> int:
-    """Generate a Snowflake ID using the default generator (worker_id=0)."""
-    return _default_generator.generate()
+
+def get_generator(worker_id: int = 0) -> SnowflakeGenerator:
+    """Return the cached generator for a worker_id (006, T012).
+
+    Raises ValueError when worker_id is outside 0-1023 (same contract as
+    SnowflakeGenerator itself).
+    """
+    if not 0 <= worker_id <= SnowflakeGenerator.MAX_WORKER:
+        raise ValueError(
+            f"worker_id must be 0-{SnowflakeGenerator.MAX_WORKER}, got {worker_id}"
+        )
+    with _generator_lock:
+        generator = _generators.get(worker_id)
+        if generator is None:
+            generator = SnowflakeGenerator(worker_id=worker_id)
+            _generators[worker_id] = generator
+        return generator
+
+
+def generate_id(worker_id: int = 0) -> int:
+    """Generate a Snowflake ID (default worker_id=0 keeps 001 behavior)."""
+    if worker_id == 0:
+        return _default_generator.generate()
+    return get_generator(worker_id).generate()

@@ -22,6 +22,11 @@ from rag_mcp.models.knowledge_version import KnowledgeVersion  # noqa: E402, F40
 from rag_mcp.models.chunk import Chunk  # noqa: E402, F401
 from rag_mcp.models.processing_run import ProcessingRun  # noqa: E402, F401
 from rag_mcp.models.retrieval_run import RetrievalRun  # noqa: E402, F401
+from rag_mcp.models.runtime import (  # noqa: E402, F401
+    InstanceRegistry,
+    WriterLease,
+    RuntimeMaintenanceLog,
+)
 from rag_mcp.graph.models import GraphEdge, SoftRelation, GraphExpansionPath  # noqa: E402, F401
 from rag_mcp.orchestration.models import (  # noqa: E402, F401
     EvidenceLedgerEntry,
@@ -39,6 +44,9 @@ __all__ = [
     "Chunk",
     "ProcessingRun",
     "RetrievalRun",
+    "InstanceRegistry",
+    "WriterLease",
+    "RuntimeMaintenanceLog",
     "GraphEdge",
     "SoftRelation",
     "GraphExpansionPath",
