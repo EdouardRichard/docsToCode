@@ -97,6 +97,10 @@ class RetrievalService:
         request_id = str(uuid.uuid4())
         start_time = time.monotonic()
 
+        from rag_mcp.services.provider_usage import ProviderUsageAccumulator
+
+        usage = ProviderUsageAccumulator()
+
         # Clamp top_k to configured bounds
         retrieval_cfg = self._settings.retrieval
         top_k = max(1, min(top_k, retrieval_cfg.top_k_max))
@@ -117,6 +121,12 @@ class RetrievalService:
                     retrieval_mode="dense",
                     subpath_timings=None,
                     evidence_ref_ids=[],
+                    provider_usage=usage.to_dict(),
+                    error_summary={
+                        "code": error_info.get("code", "RESOLUTION_FAILED"),
+                        "message": error_info.get("message", ""),
+                        "failed_paths": [],
+                    },
                 )
                 return {
                     "completion_status": "failed",
@@ -137,6 +147,12 @@ class RetrievalService:
                     retrieval_mode="dense",
                     subpath_timings=None,
                     evidence_ref_ids=[],
+                    provider_usage=usage.to_dict(),
+                    error_summary={
+                        "code": "MISSING_PROJECT_SCOPE",
+                        "message": "No valid project scopes could be resolved.",
+                        "failed_paths": [],
+                    },
                 )
                 return {
                     "completion_status": "failed",
@@ -150,6 +166,7 @@ class RetrievalService:
 
             # 2. Embed the query
             query_vector = await self._embedding_provider.embed_query(query)
+            usage.record_embedding(1)
 
             # 3. Hybrid or Dense recall based on version capabilities (FR-013)
             #    Only lexical_ready versions participate in the Sparse path.
@@ -175,6 +192,9 @@ class RetrievalService:
                     scope_ids=resolved_ids,
                     limit=top_k * 2,  # Over-fetch for per-source guard
                 )
+
+            if subpath_timings and "rerank_ms" in subpath_timings:
+                usage.record_rerank(1)
 
             # 5. Filter to published versions only
             filtered_results = await self._filter_published_versions(raw_results)
@@ -234,6 +254,16 @@ class RetrievalService:
                 subpath_timings=subpath_timings,
                 evidence_ref_ids=evidence_ref_ids,
                 run_id=run_id,
+                provider_usage=usage.to_dict(),
+                error_summary=(
+                    {
+                        "code": "PARTIAL_PATHS_FAILED",
+                        "message": "One or more retrieval sub-paths failed",
+                        "failed_paths": failed_paths,
+                    }
+                    if failed_paths
+                    else None
+                ),
             )
 
             # 11b. Runtime graph-expansion trace ledger (004, T041/T045,
@@ -283,6 +313,12 @@ class RetrievalService:
                     retrieval_mode="dense",
                     subpath_timings=None,
                     evidence_ref_ids=[],
+                    provider_usage=usage.to_dict(),
+                    error_summary={
+                        "code": "SYSTEM_ERROR",
+                        "message": f"Internal retrieval error: {type(exc).__name__}",
+                        "failed_paths": [],
+                    },
                 )
             except Exception:
                 logger.error("Failed to record retrieval run for failed search", exc_info=True)
