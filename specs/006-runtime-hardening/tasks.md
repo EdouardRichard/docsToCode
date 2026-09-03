@@ -287,3 +287,13 @@
 - [X] T081 将 `check_embedding_dimension` 接入入库/启动校验（Embedding 维度与既有索引版本不一致时显式拒绝混装） per FR-011/FR-013 (partial)
 - [X] T082 修正或删除 `config/timeout_profiles.py` 死代码 `_ENV_BY_HOST`（`claude_code` 被误映射为 `HOST_TIMEOUT_MS_CHATGPT_APP`） per plan: timeout profiles (partial)
 
+## Phase 9: Convergence
+
+> 收敛评估（/speckit-converge，二次）：pytest 全绿（1459 passed / 1 skipped，较上轮 1446 增 13）；Phase 8 的 T076–T082 接线项已核实落地（`assemble_or_fail`/`validate_provider_config` 启动接线、`set_instance`→`retrieval_runs.instance_id/instance_mode`、`ProviderUsageAccumulator`+`error_summary`+`trace_body_recorded`、`check_embedding_dimension` 入库校验、`_ENV_BY_HOST` 死代码修正）；对照评测报告 `eval/instance_form_smoke_report.json` 已产出（writer/reader 两形态各 11 条 + comparison）。本轮剩余项集中在 FR-016 运行指标覆盖面与 SC-009(1) 容差判定语义，无 Constitution MUST 违规（无 CRITICAL）。HIGH 优先。
+
+- [X] T083 将 LLM 用量接入运行指标 `provider_usage`：`ProviderUsageAccumulator.record_llm` 当前定义但生产路径从未调用，`runtime/metrics.py::aggregate_provider_usage` 仅聚合 `retrieval_runs.provider_usage`（embedding/rerank），未按 data-model §6 聚合 005 agentic 表 LLM 用量（沿用 005 真实调用口径、缓存命中不计），导致 `llm_calls/llm_prompt_chars/llm_completion_chars` 恒为 0 per FR-016/data-model §6 (partial)
+- [X] T084 将 `get_evidence` 调用纳入 `retrieval_runs` 运行记录（写入 `tool='get_evidence'` 行），使运行指标"按 Tool 聚合"覆盖两个核心 Tool（当前无任何 `tool='get_evidence'` 写入点） per FR-016/data-model §4.1 (partial)
+- [X] T085 使 agentic 检索请求进入运行指标聚合源（请求量/状态分布/延迟/子路径耗时）：agentic 路径仅写 `agentic_retrieval_run`（005）不写 `retrieval_runs`，导致 agentic 形态请求在 `request_totals`/`completion_status_distribution`/`latency`/`subpath_timings_ms` 中缺失 per FR-016/FR-018 (partial)
+- [X] T086 复核并固化 SC-009(1) 的 1% 容差判定语义：`eval/instance_form_smoke_report.json` 中 mrr（0.9545 vs 基线 0.909）与 ndcg（0.966 vs 0.933）`within_tolerance=false`（超出 1% 相对容差、改善方向），当前冒烟以单侧"no_regression"通过、未满足"在 1% 容差内逐条一致"字面口径；要么在同一 001 已发布知识库上复跑使非延迟指标落入 1% 内，要么在 research.md/spec 显式固化为单侧判定口径 per FR-028/SC-009 (partial)
+
+
