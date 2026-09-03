@@ -138,6 +138,12 @@ async def run_form_smoke(
         "comparison": comparison,
         "latency_env_sensitive": True,
         "per_query_results": per_query,
+        # SC-009(1): the 1% tolerance is a NON-REGRESSION bound — a metric may
+        # not DEGRADE below baseline by more than 1%. Improvements above the
+        # baseline (corpus re-index drift) are recorded, not treated as a
+        # retrieval-behaviour change or a quality claim (FR-027).
+        "tolerance_semantics": "non_regression_lower_bound",
+        "pass": all(c["no_regression"] for c in comparison.values()),
     }
 
 

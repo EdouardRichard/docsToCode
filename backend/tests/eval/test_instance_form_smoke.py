@@ -98,6 +98,8 @@ async def test_dual_form_smoke_matches_baseline(
                 f"measured={comp['measured']}, baseline={comp['baseline']}"
             )
         assert report["latency_env_sensitive"] is True
+        assert report["tolerance_semantics"] == "non_regression_lower_bound"
+        assert report["pass"] is True
         reports[mode] = report
 
     # T080: persist the instance-form comparison report (FR-028/SC-009).
