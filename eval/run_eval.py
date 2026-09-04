@@ -520,6 +520,9 @@ def check_reproducibility(
             "relative_delta": round(delta, 6),
             "tolerance": tolerance,
             "passed": passed,
+            # T052: latency percentiles are environment-sensitive; they are
+            # reported but excluded from the reproducibility veto (SC-007).
+            "env_sensitive": not is_deterministic,
         })
 
     return {

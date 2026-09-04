@@ -145,3 +145,26 @@ class TestNonInferiorityGate:
         pq = [self._pq(["1"], ["1"]) for _ in range(18)]
         gate = compute_non_inferiority_gate(pq, 5, None, None)
         assert gate["no_regression"] is None
+
+class TestCheckReproducibilityAnnotations:
+    """004 T052: latency checks must be annotated environment-sensitive."""
+
+    @staticmethod
+    def _metrics(recall, mrr, ndcg, p50, p95):
+        return {
+            "recall_at_k": {"mean": recall, "min": recall, "max": recall},
+            "mrr": {"mean": mrr, "min": mrr, "max": mrr},
+            "ndcg_at_k": {"mean": ndcg, "min": ndcg, "max": ndcg},
+            "latency_ms": {"p50": p50, "p95": p95, "mean": 1.0, "min": 1.0, "max": 1.0},
+        }
+
+    def test_latency_checks_annotated_env_sensitive(self):
+        from run_eval import check_reproducibility
+        m1 = self._metrics(1.0, 0.9, 0.9, 100.0, 200.0)
+        m2 = self._metrics(1.0, 0.9, 0.9, 150.0, 300.0)
+        report = check_reproducibility(m1, m2)
+        for check in report["checks"]:
+            is_latency = "latency" in check["metric"]
+            assert check["env_sensitive"] is is_latency, check["metric"]
+        # non-latency metrics still reproducible despite latency drift
+        assert report["reproducible"] is True

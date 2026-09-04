@@ -486,5 +486,5 @@ Task: T010 postgres_graph_store → T011 expansion → T013 fusion
 
 ## Phase 11: Convergence
 
-- [ ] T052 将报告可重复性检查的延迟项标注环境敏感并排除出通过闸口（当前 p50/p95 相对 delta 超 1% 容差却 passed=true 且无 env-sensitive 标注） per SC-007 (partial)
+- [X] T052 将报告可重复性检查的延迟项标注环境敏感并排除出通过闸口（当前 p50/p95 相对 delta 超 1% 容差却 passed=true 且无 env-sensitive 标注） per SC-007 (partial)
 - [ ] T053 核验 Java 调用图在评测语料中是否产生内部调用边：4 条 Java 结构性查询 graph_edge_path_summary 全空、SC-001 收益全部来自 DDL，需确认 US1 收益或记录原因 per US1/FR-023 (partial)

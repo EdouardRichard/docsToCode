@@ -984,7 +984,8 @@
         "run_2": 0.945946,
         "relative_delta": 0.0,
         "tolerance": 0.01,
-        "passed": true
+        "passed": true,
+        "env_sensitive": false
       },
       {
         "metric": "mrr.mean",
@@ -992,7 +993,8 @@
         "run_2": 0.896396,
         "relative_delta": 0.0,
         "tolerance": 0.01,
-        "passed": true
+        "passed": true,
+        "env_sensitive": false
       },
       {
         "metric": "ndcg_at_k.mean",
@@ -1000,7 +1002,8 @@
         "run_2": 0.906046,
         "relative_delta": 0.0,
         "tolerance": 0.01,
-        "passed": true
+        "passed": true,
+        "env_sensitive": false
       },
       {
         "metric": "latency_ms.p50",
@@ -1008,7 +1011,8 @@
         "run_2": 176.6354,
         "relative_delta": 0.025926,
         "tolerance": 0.01,
-        "passed": true
+        "passed": true,
+        "env_sensitive": true
       },
       {
         "metric": "latency_ms.p95",
@@ -1016,9 +1020,11 @@
         "run_2": 234.98026,
         "relative_delta": 0.034402,
         "tolerance": 0.01,
-        "passed": true
+        "passed": true,
+        "env_sensitive": true
       }
-    ]
+    ],
+    "latency_env_sensitive": true
   },
   "enters_default_path": true
 }
