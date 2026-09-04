@@ -529,6 +529,85 @@ def check_reproducibility(
     }
 
 
+def compute_non_inferiority_gate(
+    per_query_results: list[dict[str, Any]],
+    top_k: int,
+    stored_001_metrics: dict[str, Any] | None,
+    stored_002_metrics: dict[str, Any] | None,
+    tolerance: float = 0.01,
+) -> dict[str, Any]:
+    """Compute the 003 SC-002 non-inferiority verdict (FR-023 / T057).
+
+    Compares the original 18 queries of the current run against the 002
+    comparison report same-session Dense baseline (baseline_metrics) and
+    Hybrid baseline (hybrid_metrics). Recall@K must be non-decreasing
+    (exact); MRR/nDCG must not fall by more than tolerance (1% relative,
+    research.md section 0.2 track A). The same-session dense arm is used
+    because the stored absolute 001 baseline drifted across environments
+    (research.md section 0.2/0.6 2026-09-04 revision); absolute levels are
+    reference-only and do not gate.
+    """
+    n = min(18, len(per_query_results))
+    cur = compute_metrics(per_query_results[:n], top_k)
+
+    def _check(stored, label):
+        if stored is None:
+            return {"label": label, "status": "skipped", "no_regression": None}
+        recall_ok = cur["recall_at_k"]["mean"] >= stored["recall_at_k"]["mean"] - 1e-9
+        mrr_ok = cur["mrr"]["mean"] >= stored["mrr"]["mean"] * (1.0 - tolerance) - 1e-9
+        ndcg_ok = cur["ndcg_at_k"]["mean"] >= stored["ndcg_at_k"]["mean"] * (1.0 - tolerance) - 1e-9
+        no_regression = bool(recall_ok and mrr_ok and ndcg_ok)
+        return {
+            "label": label,
+            "status": "pass" if no_regression else "fail",
+            "no_regression": no_regression,
+            "recall_ok": recall_ok,
+            "mrr_ok": mrr_ok,
+            "ndcg_ok": ndcg_ok,
+            "current_recall": round(cur["recall_at_k"]["mean"], 6),
+            "current_mrr": round(cur["mrr"]["mean"], 6),
+            "current_ndcg": round(cur["ndcg_at_k"]["mean"], 6),
+            "stored_recall": round(stored["recall_at_k"]["mean"], 6),
+            "stored_mrr": round(stored["mrr"]["mean"], 6),
+            "stored_ndcg": round(stored["ndcg_at_k"]["mean"], 6),
+        }
+
+    checks = [
+        _check(stored_001_metrics, "001_dense_18_same_session"),
+        _check(stored_002_metrics, "002_hybrid_18"),
+    ]
+    verdicts = [c["no_regression"] for c in checks if c["no_regression"] is not None]
+    no_regression = None
+    if verdicts:
+        no_regression = all(verdicts)
+    return {"tolerance": tolerance, "checks": checks, "no_regression": no_regression}
+
+
+def _load_stored_baselines() -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
+    """Load the 002 comparison report same-session Dense + Hybrid baselines.
+
+    The 003 SC-002 non-inferiority compares against the 002 same-session
+    dense baseline (baseline_metrics) and hybrid baseline (hybrid_metrics)
+    rather than the stored absolute 001 baseline, which drifted across
+    environments (research.md section 0.2/0.6 2026-09-04 revision).
+    """
+    eval_dir = Path(__file__).resolve().parent
+    stored_dense: dict[str, Any] | None = None
+    stored_hybrid: dict[str, Any] | None = None
+
+    hpath = eval_dir / "hybrid_comparison_report.json"
+    if hpath.exists():
+        try:
+            with open(hpath, "r", encoding="utf-8") as f:
+                hdata = json.load(f)
+            stored_dense = hdata.get("baseline_metrics")
+            stored_hybrid = hdata.get("hybrid_metrics")
+        except (json.JSONDecodeError, KeyError, AttributeError):
+            logger.warning("Could not parse stored hybrid_comparison_report.json")
+
+    return stored_dense, stored_hybrid
+
+
 # ---------------------------------------------------------------------------
 # Evaluation run
 # ---------------------------------------------------------------------------
@@ -593,6 +672,32 @@ async def run_single_eval(
     return per_query_results, metrics
 
 
+def write_reproducibility_report(
+    reproducibility_report: dict[str, Any],
+    config: dict[str, Any],
+    output_dir: Path,
+    generated_at: str,
+) -> Path:
+    """Persist the standalone reproducibility artifact (003 T051/T056).
+
+    SC-010 requires the mixed-eval-set reproducibility check to be recorded;
+    T051 declared eval/reproducibility_report.json as the output. This writes
+    a self-contained artifact next to the parent report so the declared path
+    is actually produced (previously the checks were only embedded inline).
+    """
+    artifact = {
+        "report_type": "reproducibility",
+        "generated_at": generated_at,
+        "config": config,
+        "reproducibility": reproducibility_report,
+    }
+    out = output_dir / "reproducibility_report.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with open(out, "w", encoding="utf-8") as f:
+        json.dump(artifact, f, indent=2, ensure_ascii=False)
+    return out
+
+
 async def run_evaluation(
     dataset_path: str,
     output_path: str,
@@ -601,6 +706,7 @@ async def run_evaluation(
     db_url: str | None = None,
     qdrant_url: str | None = None,
     mode: str = "dense",
+    regression_gate: bool = False,
 ) -> int:
     """Main evaluation orchestration.
 
@@ -764,9 +870,29 @@ async def run_evaluation(
     if reproducibility_report is not None:
         report["reproducibility"] = reproducibility_report
 
+    # T057: non-inferiority gate on the original 001/002 subsets vs the stored
+    # baselines (SC-002 / FR-023).
+    if regression_gate:
+        stored_001, stored_002 = _load_stored_baselines()
+        report["gate"] = compute_non_inferiority_gate(
+            per_query_1, top_k, stored_001, stored_002,
+        )
+        logger.info(
+            "Non-inferiority gate: no_regression=%s",
+            report["gate"]["no_regression"],
+        )
+
     # Write report
     out_path = Path(output_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # T056: also persist the declared standalone reproducibility artifact
+    # (SC-010 / T051) next to the parent report.
+    if reproducibility_report is not None:
+        repro_out = write_reproducibility_report(
+            reproducibility_report, report["config"], out_path.parent, report["generated_at"],
+        )
+        logger.info("Reproducibility report written to %s", repro_out)
 
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
@@ -837,6 +963,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Skip the second evaluation run (SC-009 reproducibility check).",
     )
     parser.add_argument(
+        "--regression-gate",
+        action="store_true",
+        default=False,
+        help="Emit a non-inferiority gate on the original 18 queries vs stored "
+             "001/002 baselines (003 SC-002 / FR-023).",
+    )
+    parser.add_argument(
         "--db-url",
         type=str,
         default=None,
@@ -877,6 +1010,7 @@ async def main(argv: list[str] | None = None) -> int:
         db_url=args.db_url,
         qdrant_url=args.qdrant_url,
         mode=args.mode,
+        regression_gate=args.regression_gate,
     )
 
 

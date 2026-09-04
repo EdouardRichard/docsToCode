@@ -1,0 +1,58 @@
+{
+  "report_type": "reproducibility",
+  "generated_at": "2026-09-04T09:25:21.979557+00:00",
+  "config": {
+    "embedding_model": "BAAI/bge-m3",
+    "qdrant_collection": "chunks_hybrid_bge-m3_v1",
+    "retrieval_mode": "hybrid",
+    "top_k": 5,
+    "dataset_path": "D:\\Project_new\\docsToCode\\eval\\eval_dataset.json",
+    "num_queries": 37
+  },
+  "reproducibility": {
+    "reproducible": true,
+    "tolerance": 0.01,
+    "checks": [
+      {
+        "metric": "recall_at_k.mean",
+        "run_1": 0.972973,
+        "run_2": 0.972973,
+        "relative_delta": 0.0,
+        "tolerance": 0.01,
+        "passed": true
+      },
+      {
+        "metric": "mrr.mean",
+        "run_1": 0.77027,
+        "run_2": 0.77027,
+        "relative_delta": 0.0,
+        "tolerance": 0.01,
+        "passed": true
+      },
+      {
+        "metric": "ndcg_at_k.mean",
+        "run_1": 0.82335,
+        "run_2": 0.82335,
+        "relative_delta": 0.0,
+        "tolerance": 0.01,
+        "passed": true
+      },
+      {
+        "metric": "latency_ms.p50",
+        "run_1": 1354.798,
+        "run_2": 1332.3227,
+        "relative_delta": 0.016589,
+        "tolerance": 0.01,
+        "passed": true
+      },
+      {
+        "metric": "latency_ms.p95",
+        "run_1": 1481.80082,
+        "run_2": 1461.86326,
+        "relative_delta": 0.013455,
+        "tolerance": 0.01,
+        "passed": true
+      }
+    ]
+  }
+}

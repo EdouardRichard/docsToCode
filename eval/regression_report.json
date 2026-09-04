@@ -1,38 +1,38 @@
 {
   "report_type": "dense_retrieval_baseline",
-  "generated_at": "2026-08-29T09:13:34.259321+00:00",
+  "generated_at": "2026-09-04T09:25:21.979557+00:00",
   "config": {
     "embedding_model": "BAAI/bge-m3",
     "qdrant_collection": "chunks_hybrid_bge-m3_v1",
     "retrieval_mode": "hybrid",
     "top_k": 5,
     "dataset_path": "D:\\Project_new\\docsToCode\\eval\\eval_dataset.json",
-    "num_queries": 30
+    "num_queries": 37
   },
   "metrics": {
-    "num_queries": 30,
+    "num_queries": 37,
     "top_k": 5,
     "recall_at_k": {
-      "mean": 0.9666666666666667,
+      "mean": 0.972972972972973,
       "min": 0.0,
       "max": 1.0
     },
     "mrr": {
-      "mean": 0.9166666666666666,
+      "mean": 0.7702702702702703,
       "min": 0.0,
       "max": 1.0
     },
     "ndcg_at_k": {
-      "mean": 0.9297596420238124,
+      "mean": 0.8233499000965369,
       "min": 0.0,
       "max": 1.0
     },
     "latency_ms": {
-      "p50": 153.66139999969164,
-      "p95": 211.76493000075422,
-      "mean": 159.18104000059733,
-      "min": 88.55100000073435,
-      "max": 232.4759000002814
+      "p50": 1354.7980000003008,
+      "p95": 1481.8008199996257,
+      "mean": 1064.4787567562653,
+      "min": 211.41569999963394,
+      "max": 1729.0868000018236
     }
   },
   "per_query_results": [
@@ -59,43 +59,90 @@
         0.015625,
         0.015384615384615385
       ],
-      "latency_ms": 232.4759000002814,
+      "latency_ms": 1729.0868000018236,
       "status": "ok",
       "candidate_details": [
         {
           "chunk_id": "352016027946582016",
           "dense_score": 0.5638318,
-          "sparse_score": 8.298272,
+          "sparse_score": 8.186381,
           "fused_score": 0.03278688524590164,
-          "rerank_score": 0.03278688524590164
+          "rerank_score": 0.046207450330257416
         },
         {
           "chunk_id": "352016027946582018",
           "dense_score": 0.49755403,
           "sparse_score": null,
           "fused_score": 0.016129032258064516,
-          "rerank_score": 0.016129032258064516
+          "rerank_score": 0.0003900284646078944
         },
         {
           "chunk_id": "352016027946582019",
           "dense_score": 0.4343332,
           "sparse_score": null,
           "fused_score": 0.015873015873015872,
-          "rerank_score": 0.015873015873015872
+          "rerank_score": 0.00016695386148057878
         },
         {
           "chunk_id": "352016027946582020",
           "dense_score": 0.4190141,
           "sparse_score": null,
           "fused_score": 0.015625,
-          "rerank_score": 0.015625
+          "rerank_score": 7.158620428526774e-05
         },
         {
           "chunk_id": "352016027946582017",
           "dense_score": 0.41572762,
           "sparse_score": null,
           "fused_score": 0.015384615384615385,
-          "rerank_score": 0.015384615384615385
+          "rerank_score": 2.152596425730735e-05
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016027946582016",
+          "content_excerpt": "public class UserService {\n\n    private static final String DB_PASSWORD = \"<password>\";\n    private final UserRepository repository;\n\n    public UserService(UserRepository repository) {\n        this.repository = repository;\n    }\n\n    /**\n     * 根据ID查找用户。\n     */\n    public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }\n\n    /**\n     * 获取所有活跃用户。\n     */\n    public List<User> getActiveUsers() {\n        return repository.findByStatus(\"active\");\n    }\n\n    /**\n    ",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.046207450330257416
+        },
+        {
+          "evidence_id": "352016027946582018",
+          "content_excerpt": "private final UserRepository repository;",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#repository",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0003900284646078944
+        },
+        {
+          "evidence_id": "352016027946582019",
+          "content_excerpt": "public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#findById",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.00016695386148057878
+        },
+        {
+          "evidence_id": "352016027946582020",
+          "content_excerpt": "public List<User> getActiveUsers() {\n        return repository.findByStatus(\"active\");\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#getActiveUsers",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 7.158620428526774e-05
+        },
+        {
+          "evidence_id": "352016027946582017",
+          "content_excerpt": "private static final String DB_PASSWORD = \"<password>\";",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#DB_PASSWORD",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 2.152596425730735e-05
         }
       ]
     },
@@ -109,56 +156,103 @@
         "352016027946582017"
       ],
       "retrieved_evidence_ids": [
-        "352016027946582017",
         "352016027946582016",
+        "352016027946582017",
         "352016027946582018",
         "352016027946582019",
         "352016027946582020"
       ],
       "scores": [
-        0.03278688524590164,
         0.03225806451612903,
+        0.03278688524590164,
         0.015873015873015872,
         0.015625,
         0.015384615384615385
       ],
-      "latency_ms": 148.93540000048233,
+      "latency_ms": 1444.9547000003804,
       "status": "ok",
       "candidate_details": [
         {
-          "chunk_id": "352016027946582017",
-          "dense_score": 0.63132393,
-          "sparse_score": 18.473557,
-          "fused_score": 0.03278688524590164,
-          "rerank_score": 0.03278688524590164
-        },
-        {
           "chunk_id": "352016027946582016",
           "dense_score": 0.6199944,
-          "sparse_score": 14.714318,
+          "sparse_score": 21.190685,
           "fused_score": 0.03225806451612903,
-          "rerank_score": 0.03225806451612903
+          "rerank_score": 0.4023464620113373
+        },
+        {
+          "chunk_id": "352016027946582017",
+          "dense_score": 0.63132393,
+          "sparse_score": 70.51375,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.015244885347783566
         },
         {
           "chunk_id": "352016027946582018",
           "dense_score": 0.4977479,
           "sparse_score": null,
           "fused_score": 0.015873015873015872,
-          "rerank_score": 0.015873015873015872
+          "rerank_score": 0.00012705454719252884
         },
         {
           "chunk_id": "352016027946582019",
           "dense_score": 0.45250964,
           "sparse_score": null,
           "fused_score": 0.015625,
-          "rerank_score": 0.015625
+          "rerank_score": 5.02080365549773e-05
         },
         {
           "chunk_id": "352016027946582020",
           "dense_score": 0.4168055,
           "sparse_score": null,
           "fused_score": 0.015384615384615385,
-          "rerank_score": 0.015384615384615385
+          "rerank_score": 2.093969851557631e-05
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016027946582016",
+          "content_excerpt": "public class UserService {\n\n    private static final String DB_PASSWORD = \"<password>\";\n    private final UserRepository repository;\n\n    public UserService(UserRepository repository) {\n        this.repository = repository;\n    }\n\n    /**\n     * 根据ID查找用户。\n     */\n    public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }\n\n    /**\n     * 获取所有活跃用户。\n     */\n    public List<User> getActiveUsers() {\n        return repository.findByStatus(\"active\");\n    }\n\n    /**\n    ",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.4023464620113373
+        },
+        {
+          "evidence_id": "352016027946582017",
+          "content_excerpt": "private static final String DB_PASSWORD = \"<password>\";",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#DB_PASSWORD",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.015244885347783566
+        },
+        {
+          "evidence_id": "352016027946582018",
+          "content_excerpt": "private final UserRepository repository;",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#repository",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.00012705454719252884
+        },
+        {
+          "evidence_id": "352016027946582019",
+          "content_excerpt": "public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#findById",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 5.02080365549773e-05
+        },
+        {
+          "evidence_id": "352016027946582020",
+          "content_excerpt": "public List<User> getActiveUsers() {\n        return repository.findByStatus(\"active\");\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#getActiveUsers",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 2.093969851557631e-05
         }
       ]
     },
@@ -172,8 +266,8 @@
         "352016027946582018"
       ],
       "retrieved_evidence_ids": [
-        "352016027946582018",
         "352016027946582016",
+        "352016027946582018",
         "352016027946582019",
         "352016027946582020",
         "352016027946582017"
@@ -185,43 +279,90 @@
         0.03149801587301587,
         0.015384615384615385
       ],
-      "latency_ms": 216.08700000069803,
+      "latency_ms": 1489.1836999995576,
       "status": "ok",
       "candidate_details": [
         {
-          "chunk_id": "352016027946582018",
-          "dense_score": 0.6369271,
-          "sparse_score": 4.2948565,
-          "fused_score": 0.03252247488101534,
-          "rerank_score": 0.03252247488101534
-        },
-        {
           "chunk_id": "352016027946582016",
           "dense_score": 0.6217958,
-          "sparse_score": 12.000137,
+          "sparse_score": 10.994511,
           "fused_score": 0.03252247488101534,
-          "rerank_score": 0.03252247488101534
+          "rerank_score": 0.5007410049438477
+        },
+        {
+          "chunk_id": "352016027946582018",
+          "dense_score": 0.6369271,
+          "sparse_score": 5.513896,
+          "fused_score": 0.03252247488101534,
+          "rerank_score": 0.0024070481304079294
         },
         {
           "chunk_id": "352016027946582019",
           "dense_score": 0.51501554,
-          "sparse_score": 3.659453,
+          "sparse_score": 3.6136785,
           "fused_score": 0.03149801587301587,
-          "rerank_score": 0.03149801587301587
+          "rerank_score": 0.0004876769380643964
         },
         {
           "chunk_id": "352016027946582020",
           "dense_score": 0.4953874,
-          "sparse_score": 3.889634,
+          "sparse_score": 4.1914697,
           "fused_score": 0.03149801587301587,
-          "rerank_score": 0.03149801587301587
+          "rerank_score": 0.0004372441617306322
         },
         {
           "chunk_id": "352016027946582017",
           "dense_score": 0.47324246,
           "sparse_score": null,
           "fused_score": 0.015384615384615385,
-          "rerank_score": 0.015384615384615385
+          "rerank_score": 5.5460623116232455e-05
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016027946582016",
+          "content_excerpt": "public class UserService {\n\n    private static final String DB_PASSWORD = \"<password>\";\n    private final UserRepository repository;\n\n    public UserService(UserRepository repository) {\n        this.repository = repository;\n    }\n\n    /**\n     * 根据ID查找用户。\n     */\n    public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }\n\n    /**\n     * 获取所有活跃用户。\n     */\n    public List<User> getActiveUsers() {\n        return repository.findByStatus(\"active\");\n    }\n\n    /**\n    ",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.5007410049438477
+        },
+        {
+          "evidence_id": "352016027946582018",
+          "content_excerpt": "private final UserRepository repository;",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#repository",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0024070481304079294
+        },
+        {
+          "evidence_id": "352016027946582019",
+          "content_excerpt": "public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#findById",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0004876769380643964
+        },
+        {
+          "evidence_id": "352016027946582020",
+          "content_excerpt": "public List<User> getActiveUsers() {\n        return repository.findByStatus(\"active\");\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#getActiveUsers",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0004372441617306322
+        },
+        {
+          "evidence_id": "352016027946582017",
+          "content_excerpt": "private static final String DB_PASSWORD = \"<password>\";",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#DB_PASSWORD",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 5.5460623116232455e-05
         }
       ]
     },
@@ -235,56 +376,103 @@
         "352016027946582019"
       ],
       "retrieved_evidence_ids": [
-        "352016027946582019",
         "352016027946582016",
+        "352016027946582019",
         "352016027946582020",
         "352016027946582018",
         "352016027946582017"
       ],
       "scores": [
-        0.03252247488101534,
-        0.03252247488101534,
+        0.03225806451612903,
+        0.03278688524590164,
         0.015873015873015872,
         0.015625,
         0.015384615384615385
       ],
-      "latency_ms": 159.16550000110874,
+      "latency_ms": 1426.4643999995315,
       "status": "ok",
       "candidate_details": [
         {
-          "chunk_id": "352016027946582019",
-          "dense_score": 0.6522032,
-          "sparse_score": 12.14209,
-          "fused_score": 0.03252247488101534,
-          "rerank_score": 0.03252247488101534
-        },
-        {
           "chunk_id": "352016027946582016",
           "dense_score": 0.6322503,
-          "sparse_score": 14.025585,
-          "fused_score": 0.03252247488101534,
-          "rerank_score": 0.03252247488101534
+          "sparse_score": 26.385763,
+          "fused_score": 0.03225806451612903,
+          "rerank_score": 0.6875563263893127
+        },
+        {
+          "chunk_id": "352016027946582019",
+          "dense_score": 0.6522032,
+          "sparse_score": 71.62313,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.031117592006921768
         },
         {
           "chunk_id": "352016027946582020",
           "dense_score": 0.53230536,
           "sparse_score": null,
           "fused_score": 0.015873015873015872,
-          "rerank_score": 0.015873015873015872
+          "rerank_score": 0.0005627404898405075
         },
         {
           "chunk_id": "352016027946582018",
           "dense_score": 0.45831445,
           "sparse_score": null,
           "fused_score": 0.015625,
-          "rerank_score": 0.015625
+          "rerank_score": 0.0001268515334231779
         },
         {
           "chunk_id": "352016027946582017",
           "dense_score": 0.44223082,
           "sparse_score": null,
           "fused_score": 0.015384615384615385,
-          "rerank_score": 0.015384615384615385
+          "rerank_score": 5.308484469424002e-05
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016027946582016",
+          "content_excerpt": "public class UserService {\n\n    private static final String DB_PASSWORD = \"<password>\";\n    private final UserRepository repository;\n\n    public UserService(UserRepository repository) {\n        this.repository = repository;\n    }\n\n    /**\n     * 根据ID查找用户。\n     */\n    public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }\n\n    /**\n     * 获取所有活跃用户。\n     */\n    public List<User> getActiveUsers() {\n        return repository.findByStatus(\"active\");\n    }\n\n    /**\n    ",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.6875563263893127
+        },
+        {
+          "evidence_id": "352016027946582019",
+          "content_excerpt": "public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#findById",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.031117592006921768
+        },
+        {
+          "evidence_id": "352016027946582020",
+          "content_excerpt": "public List<User> getActiveUsers() {\n        return repository.findByStatus(\"active\");\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#getActiveUsers",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0005627404898405075
+        },
+        {
+          "evidence_id": "352016027946582018",
+          "content_excerpt": "private final UserRepository repository;",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#repository",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0001268515334231779
+        },
+        {
+          "evidence_id": "352016027946582017",
+          "content_excerpt": "private static final String DB_PASSWORD = \"<password>\";",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#DB_PASSWORD",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 5.308484469424002e-05
         }
       ]
     },
@@ -298,56 +486,103 @@
         "352016027946582020"
       ],
       "retrieved_evidence_ids": [
-        "352016027946582020",
         "352016027946582016",
+        "352016027946582020",
         "352016027946582019",
-        "352016027946582021",
-        "352016027946582017"
+        "352016027946582017",
+        "352016027946582021"
       ],
       "scores": [
-        0.03252247488101534,
-        0.03252247488101534,
+        0.03225806451612903,
+        0.03278688524590164,
         0.015873015873015872,
-        0.015625,
-        0.015384615384615385
+        0.015384615384615385,
+        0.015625
       ],
-      "latency_ms": 152.69379999881494,
+      "latency_ms": 1452.6225000008708,
       "status": "ok",
       "candidate_details": [
         {
-          "chunk_id": "352016027946582020",
-          "dense_score": 0.7410897,
-          "sparse_score": 10.094835,
-          "fused_score": 0.03252247488101534,
-          "rerank_score": 0.03252247488101534
-        },
-        {
           "chunk_id": "352016027946582016",
           "dense_score": 0.6330942,
-          "sparse_score": 11.645322,
-          "fused_score": 0.03252247488101534,
-          "rerank_score": 0.03252247488101534
+          "sparse_score": 17.501139,
+          "fused_score": 0.03225806451612903,
+          "rerank_score": 0.8545934557914734
+        },
+        {
+          "chunk_id": "352016027946582020",
+          "dense_score": 0.7410897,
+          "sparse_score": 53.668915,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.3023100197315216
         },
         {
           "chunk_id": "352016027946582019",
           "dense_score": 0.5005491,
           "sparse_score": null,
           "fused_score": 0.015873015873015872,
-          "rerank_score": 0.015873015873015872
-        },
-        {
-          "chunk_id": "352016027946582021",
-          "dense_score": 0.4539157,
-          "sparse_score": null,
-          "fused_score": 0.015625,
-          "rerank_score": 0.015625
+          "rerank_score": 0.0002924490545410663
         },
         {
           "chunk_id": "352016027946582017",
           "dense_score": 0.44622785,
           "sparse_score": null,
           "fused_score": 0.015384615384615385,
-          "rerank_score": 0.015384615384615385
+          "rerank_score": 0.00027214735746383667
+        },
+        {
+          "chunk_id": "352016027946582021",
+          "dense_score": 0.4539157,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": 0.00019235217769164592
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016027946582016",
+          "content_excerpt": "public class UserService {\n\n    private static final String DB_PASSWORD = \"<password>\";\n    private final UserRepository repository;\n\n    public UserService(UserRepository repository) {\n        this.repository = repository;\n    }\n\n    /**\n     * 根据ID查找用户。\n     */\n    public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }\n\n    /**\n     * 获取所有活跃用户。\n     */\n    public List<User> getActiveUsers() {\n        return repository.findByStatus(\"active\");\n    }\n\n    /**\n    ",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.8545934557914734
+        },
+        {
+          "evidence_id": "352016027946582020",
+          "content_excerpt": "public List<User> getActiveUsers() {\n        return repository.findByStatus(\"active\");\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#getActiveUsers",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.3023100197315216
+        },
+        {
+          "evidence_id": "352016027946582019",
+          "content_excerpt": "public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#findById",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0002924490545410663
+        },
+        {
+          "evidence_id": "352016027946582017",
+          "content_excerpt": "private static final String DB_PASSWORD = \"<password>\";",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#DB_PASSWORD",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.00027214735746383667
+        },
+        {
+          "evidence_id": "352016027946582021",
+          "content_excerpt": "private void validateToken(String token) {\n        if (token == null || token.isEmpty()) {\n            throw new IllegalArgumentException(\"Token required\");\n        }\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#validateToken",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.00019235217769164592
         }
       ]
     },
@@ -364,53 +599,100 @@
         "352016027946582016",
         "352016027946582021",
         "352016027946582018",
-        "352016027946582017",
-        "352016027946582019"
+        "352016027946582019",
+        "352016027946582017"
       ],
       "scores": [
         0.03278688524590164,
         0.03225806451612903,
         0.015873015873015872,
-        0.015625,
-        0.015384615384615385
+        0.015384615384615385,
+        0.015625
       ],
-      "latency_ms": 154.62900000056834,
+      "latency_ms": 1432.588299998315,
       "status": "ok",
       "candidate_details": [
         {
           "chunk_id": "352016027946582016",
           "dense_score": 0.6151389,
-          "sparse_score": 8.372923,
+          "sparse_score": 8.196437,
           "fused_score": 0.03278688524590164,
-          "rerank_score": 0.03278688524590164
+          "rerank_score": 0.23071034252643585
         },
         {
           "chunk_id": "352016027946582021",
           "dense_score": 0.6132928,
-          "sparse_score": 1.0366623,
+          "sparse_score": 2.6900938,
           "fused_score": 0.03225806451612903,
-          "rerank_score": 0.03225806451612903
+          "rerank_score": 0.03792592138051987
         },
         {
           "chunk_id": "352016027946582018",
           "dense_score": 0.46905667,
           "sparse_score": null,
           "fused_score": 0.015873015873015872,
-          "rerank_score": 0.015873015873015872
-        },
-        {
-          "chunk_id": "352016027946582017",
-          "dense_score": 0.46638557,
-          "sparse_score": null,
-          "fused_score": 0.015625,
-          "rerank_score": 0.015625
+          "rerank_score": 0.00012317414802964777
         },
         {
           "chunk_id": "352016027946582019",
           "dense_score": 0.45939714,
           "sparse_score": null,
           "fused_score": 0.015384615384615385,
-          "rerank_score": 0.015384615384615385
+          "rerank_score": 8.527458703611046e-05
+        },
+        {
+          "chunk_id": "352016027946582017",
+          "dense_score": 0.46638557,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": 3.260349330957979e-05
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016027946582016",
+          "content_excerpt": "public class UserService {\n\n    private static final String DB_PASSWORD = \"<password>\";\n    private final UserRepository repository;\n\n    public UserService(UserRepository repository) {\n        this.repository = repository;\n    }\n\n    /**\n     * 根据ID查找用户。\n     */\n    public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }\n\n    /**\n     * 获取所有活跃用户。\n     */\n    public List<User> getActiveUsers() {\n        return repository.findByStatus(\"active\");\n    }\n\n    /**\n    ",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.23071034252643585
+        },
+        {
+          "evidence_id": "352016027946582021",
+          "content_excerpt": "private void validateToken(String token) {\n        if (token == null || token.isEmpty()) {\n            throw new IllegalArgumentException(\"Token required\");\n        }\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#validateToken",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.03792592138051987
+        },
+        {
+          "evidence_id": "352016027946582018",
+          "content_excerpt": "private final UserRepository repository;",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#repository",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.00012317414802964777
+        },
+        {
+          "evidence_id": "352016027946582019",
+          "content_excerpt": "public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#findById",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 8.527458703611046e-05
+        },
+        {
+          "evidence_id": "352016027946582017",
+          "content_excerpt": "private static final String DB_PASSWORD = \"<password>\";",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#DB_PASSWORD",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 3.260349330957979e-05
         }
       ]
     },
@@ -429,15 +711,26 @@
       "scores": [
         0.03278688524590164
       ],
-      "latency_ms": 95.42630000214558,
+      "latency_ms": 221.2833999983559,
       "status": "ok",
       "candidate_details": [
         {
           "chunk_id": "352016115179716608",
-          "dense_score": 0.7660169,
-          "sparse_score": 2.8725564,
+          "dense_score": 0.7660171,
+          "sparse_score": 185.95201,
           "fused_score": 0.03278688524590164,
-          "rerank_score": 0.03278688524590164
+          "rerank_score": 0.922353208065033
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016115179716608",
+          "content_excerpt": "# extra\n\ncontent",
+          "source_version": 3,
+          "source_position": "# extra",
+          "knowledge_scope_id": "351207349697904640",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.922353208065033
         }
       ]
     },
@@ -456,15 +749,26 @@
       "scores": [
         0.03278688524590164
       ],
-      "latency_ms": 88.55100000073435,
+      "latency_ms": 211.4344000001438,
       "status": "ok",
       "candidate_details": [
         {
           "chunk_id": "352016116299595776",
-          "dense_score": 0.6973516,
-          "sparse_score": 2.369061,
+          "dense_score": 0.6973518,
+          "sparse_score": 82.29378,
           "fused_score": 0.03278688524590164,
-          "rerank_score": 0.03278688524590164
+          "rerank_score": 0.13903318345546722
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016116299595776",
+          "content_excerpt": "# Test Content\n\nSome body text for deletion testing.",
+          "source_version": 2,
+          "source_position": "# Test Content",
+          "knowledge_scope_id": "351221148429582336",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.13903318345546722
         }
       ]
     },
@@ -483,15 +787,26 @@
       "scores": [
         0.03278688524590164
       ],
-      "latency_ms": 103.57899999871734,
+      "latency_ms": 217.49149999959627,
       "status": "ok",
       "candidate_details": [
         {
           "chunk_id": "352016117394309120",
-          "dense_score": 0.7158757,
-          "sparse_score": 2.369061,
+          "dense_score": 0.7158759,
+          "sparse_score": 82.29378,
           "fused_score": 0.03278688524590164,
-          "rerank_score": 0.03278688524590164
+          "rerank_score": 0.12466633319854736
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016117394309120",
+          "content_excerpt": "# Test Content\n\nSome body text for deletion testing.",
+          "source_version": 2,
+          "source_position": "# Test Content",
+          "knowledge_scope_id": "351222351527936000",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.12466633319854736
         }
       ]
     },
@@ -510,15 +825,26 @@
       "scores": [
         0.03278688524590164
       ],
-      "latency_ms": 91.86369999952149,
+      "latency_ms": 220.44390000155545,
       "status": "ok",
       "candidate_details": [
         {
           "chunk_id": "352016118451273728",
-          "dense_score": 0.6359795,
-          "sparse_score": 2.369061,
+          "dense_score": 0.6359798,
+          "sparse_score": 82.29378,
           "fused_score": 0.03278688524590164,
-          "rerank_score": 0.03278688524590164
+          "rerank_score": 0.15643109381198883
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016118451273728",
+          "content_excerpt": "# Test Content\n\nSome body text for deletion testing.",
+          "source_version": 2,
+          "source_position": "# Test Content",
+          "knowledge_scope_id": "351222576757866496",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.15643109381198883
         }
       ]
     },
@@ -537,15 +863,26 @@
       "scores": [
         0.03278688524590164
       ],
-      "latency_ms": 100.02209999947809,
+      "latency_ms": 211.41569999963394,
       "status": "ok",
       "candidate_details": [
         {
           "chunk_id": "352016119487266816",
-          "dense_score": 0.7158757,
-          "sparse_score": 2.369061,
+          "dense_score": 0.7158759,
+          "sparse_score": 82.29378,
           "fused_score": 0.03278688524590164,
-          "rerank_score": 0.03278688524590164
+          "rerank_score": 0.12466633319854736
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016119487266816",
+          "content_excerpt": "# Test Content\n\nSome body text for deletion testing.",
+          "source_version": 3,
+          "source_position": "# Test Content",
+          "knowledge_scope_id": "351222872145920000",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.12466633319854736
         }
       ]
     },
@@ -572,43 +909,90 @@
         0.015625,
         0.015384615384615385
       ],
-      "latency_ms": 143.26870000149938,
+      "latency_ms": 1397.1442000001844,
       "status": "ok",
       "candidate_details": [
         {
           "chunk_id": "352016027946582021",
           "dense_score": 0.62098706,
-          "sparse_score": 1.0366623,
+          "sparse_score": 2.6900938,
           "fused_score": 0.03252247488101534,
-          "rerank_score": 0.03252247488101534
+          "rerank_score": 0.26931315660476685
         },
         {
           "chunk_id": "352016027946582016",
           "dense_score": 0.509596,
-          "sparse_score": 6.5626974,
+          "sparse_score": 12.059848,
           "fused_score": 0.03252247488101534,
-          "rerank_score": 0.03252247488101534
+          "rerank_score": 0.06954075396060944
         },
         {
           "chunk_id": "352016027946582019",
           "dense_score": 0.42903453,
           "sparse_score": null,
           "fused_score": 0.015873015873015872,
-          "rerank_score": 0.015873015873015872
+          "rerank_score": 7.979009387781844e-05
         },
         {
           "chunk_id": "352016027946582017",
           "dense_score": 0.40640825,
           "sparse_score": null,
           "fused_score": 0.015625,
-          "rerank_score": 0.015625
+          "rerank_score": 2.2793105017626658e-05
         },
         {
           "chunk_id": "352016027946582020",
           "dense_score": 0.38806242,
           "sparse_score": null,
           "fused_score": 0.015384615384615385,
-          "rerank_score": 0.015384615384615385
+          "rerank_score": 2.129897620761767e-05
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016027946582021",
+          "content_excerpt": "private void validateToken(String token) {\n        if (token == null || token.isEmpty()) {\n            throw new IllegalArgumentException(\"Token required\");\n        }\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#validateToken",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.26931315660476685
+        },
+        {
+          "evidence_id": "352016027946582016",
+          "content_excerpt": "public class UserService {\n\n    private static final String DB_PASSWORD = \"<password>\";\n    private final UserRepository repository;\n\n    public UserService(UserRepository repository) {\n        this.repository = repository;\n    }\n\n    /**\n     * 根据ID查找用户。\n     */\n    public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }\n\n    /**\n     * 获取所有活跃用户。\n     */\n    public List<User> getActiveUsers() {\n        return repository.findByStatus(\"active\");\n    }\n\n    /**\n    ",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.06954075396060944
+        },
+        {
+          "evidence_id": "352016027946582019",
+          "content_excerpt": "public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#findById",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 7.979009387781844e-05
+        },
+        {
+          "evidence_id": "352016027946582017",
+          "content_excerpt": "private static final String DB_PASSWORD = \"<password>\";",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#DB_PASSWORD",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 2.2793105017626658e-05
+        },
+        {
+          "evidence_id": "352016027946582020",
+          "content_excerpt": "public List<User> getActiveUsers() {\n        return repository.findByStatus(\"active\");\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#getActiveUsers",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 2.129897620761767e-05
         }
       ]
     },
@@ -624,54 +1008,101 @@
       "retrieved_evidence_ids": [
         "352016027946582016",
         "352016027946582018",
+        "352016027946582017",
         "352016027946582019",
-        "352016027946582020",
-        "352016027946582017"
+        "352016027946582020"
       ],
       "scores": [
         0.03278688524590164,
         0.016129032258064516,
+        0.015384615384615385,
         0.015873015873015872,
-        0.015625,
-        0.015384615384615385
+        0.015625
       ],
-      "latency_ms": 138.1247000026633,
+      "latency_ms": 1375.4447999999684,
       "status": "ok",
       "candidate_details": [
         {
           "chunk_id": "352016027946582016",
           "dense_score": 0.6091709,
-          "sparse_score": 7.5457745,
+          "sparse_score": 6.763732,
           "fused_score": 0.03278688524590164,
-          "rerank_score": 0.03278688524590164
+          "rerank_score": 0.7420181035995483
         },
         {
           "chunk_id": "352016027946582018",
           "dense_score": 0.50821483,
           "sparse_score": null,
           "fused_score": 0.016129032258064516,
-          "rerank_score": 0.016129032258064516
-        },
-        {
-          "chunk_id": "352016027946582019",
-          "dense_score": 0.40195632,
-          "sparse_score": null,
-          "fused_score": 0.015873015873015872,
-          "rerank_score": 0.015873015873015872
-        },
-        {
-          "chunk_id": "352016027946582020",
-          "dense_score": 0.37500072,
-          "sparse_score": null,
-          "fused_score": 0.015625,
-          "rerank_score": 0.015625
+          "rerank_score": 0.0002626802306622267
         },
         {
           "chunk_id": "352016027946582017",
           "dense_score": 0.3564031,
           "sparse_score": null,
           "fused_score": 0.015384615384615385,
-          "rerank_score": 0.015384615384615385
+          "rerank_score": 6.357806705636904e-05
+        },
+        {
+          "chunk_id": "352016027946582019",
+          "dense_score": 0.40195632,
+          "sparse_score": null,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": 5.502138810697943e-05
+        },
+        {
+          "chunk_id": "352016027946582020",
+          "dense_score": 0.37500072,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": 3.39618964062538e-05
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016027946582016",
+          "content_excerpt": "public class UserService {\n\n    private static final String DB_PASSWORD = \"<password>\";\n    private final UserRepository repository;\n\n    public UserService(UserRepository repository) {\n        this.repository = repository;\n    }\n\n    /**\n     * 根据ID查找用户。\n     */\n    public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }\n\n    /**\n     * 获取所有活跃用户。\n     */\n    public List<User> getActiveUsers() {\n        return repository.findByStatus(\"active\");\n    }\n\n    /**\n    ",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.7420181035995483
+        },
+        {
+          "evidence_id": "352016027946582018",
+          "content_excerpt": "private final UserRepository repository;",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#repository",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0002626802306622267
+        },
+        {
+          "evidence_id": "352016027946582017",
+          "content_excerpt": "private static final String DB_PASSWORD = \"<password>\";",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#DB_PASSWORD",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 6.357806705636904e-05
+        },
+        {
+          "evidence_id": "352016027946582019",
+          "content_excerpt": "public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#findById",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 5.502138810697943e-05
+        },
+        {
+          "evidence_id": "352016027946582020",
+          "content_excerpt": "public List<User> getActiveUsers() {\n        return repository.findByStatus(\"active\");\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#getActiveUsers",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 3.39618964062538e-05
         }
       ]
     },
@@ -698,43 +1129,90 @@
         0.015625,
         0.015384615384615385
       ],
-      "latency_ms": 139.93020000270917,
+      "latency_ms": 1378.4128999977838,
       "status": "ok",
       "candidate_details": [
         {
           "chunk_id": "352016027946582017",
           "dense_score": 0.6747874,
-          "sparse_score": 18.473557,
+          "sparse_score": 70.51375,
           "fused_score": 0.03278688524590164,
-          "rerank_score": 0.03278688524590164
+          "rerank_score": 0.5149078369140625
         },
         {
           "chunk_id": "352016027946582016",
           "dense_score": 0.55284417,
-          "sparse_score": 7.4958353,
+          "sparse_score": 14.967676,
           "fused_score": 0.03225806451612903,
-          "rerank_score": 0.03225806451612903
+          "rerank_score": 0.44665443897247314
         },
         {
           "chunk_id": "352016027946582018",
           "dense_score": 0.45319736,
           "sparse_score": null,
           "fused_score": 0.015873015873015872,
-          "rerank_score": 0.015873015873015872
+          "rerank_score": 0.00104687234852463
         },
         {
           "chunk_id": "352016027946582019",
           "dense_score": 0.44013804,
           "sparse_score": null,
           "fused_score": 0.015625,
-          "rerank_score": 0.015625
+          "rerank_score": 0.00025948931579478085
         },
         {
           "chunk_id": "352016027946582021",
           "dense_score": 0.39204687,
           "sparse_score": null,
           "fused_score": 0.015384615384615385,
-          "rerank_score": 0.015384615384615385
+          "rerank_score": 0.00010604785347823054
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016027946582017",
+          "content_excerpt": "private static final String DB_PASSWORD = \"<password>\";",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#DB_PASSWORD",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.5149078369140625
+        },
+        {
+          "evidence_id": "352016027946582016",
+          "content_excerpt": "public class UserService {\n\n    private static final String DB_PASSWORD = \"<password>\";\n    private final UserRepository repository;\n\n    public UserService(UserRepository repository) {\n        this.repository = repository;\n    }\n\n    /**\n     * 根据ID查找用户。\n     */\n    public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }\n\n    /**\n     * 获取所有活跃用户。\n     */\n    public List<User> getActiveUsers() {\n        return repository.findByStatus(\"active\");\n    }\n\n    /**\n    ",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.44665443897247314
+        },
+        {
+          "evidence_id": "352016027946582018",
+          "content_excerpt": "private final UserRepository repository;",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#repository",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.00104687234852463
+        },
+        {
+          "evidence_id": "352016027946582019",
+          "content_excerpt": "public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#findById",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.00025948931579478085
+        },
+        {
+          "evidence_id": "352016027946582021",
+          "content_excerpt": "private void validateToken(String token) {\n        if (token == null || token.isEmpty()) {\n            throw new IllegalArgumentException(\"Token required\");\n        }\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#validateToken",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.00010604785347823054
         }
       ]
     },
@@ -748,56 +1226,103 @@
         "352016027946582019"
       ],
       "retrieved_evidence_ids": [
-        "352016027946582019",
         "352016027946582016",
+        "352016027946582019",
         "352016027946582020",
-        "352016027946582021",
-        "352016027946582017"
+        "352016027946582017",
+        "352016027946582021"
       ],
       "scores": [
-        0.03278688524590164,
         0.03225806451612903,
+        0.03278688524590164,
         0.015873015873015872,
-        0.015625,
-        0.015384615384615385
+        0.015384615384615385,
+        0.015625
       ],
-      "latency_ms": 155.79950000028475,
+      "latency_ms": 1354.7980000003008,
       "status": "ok",
       "candidate_details": [
         {
-          "chunk_id": "352016027946582019",
-          "dense_score": 0.6103147,
-          "sparse_score": 12.14209,
-          "fused_score": 0.03278688524590164,
-          "rerank_score": 0.03278688524590164
-        },
-        {
           "chunk_id": "352016027946582016",
           "dense_score": 0.5068196,
-          "sparse_score": 6.1214314,
+          "sparse_score": 18.978395,
           "fused_score": 0.03225806451612903,
-          "rerank_score": 0.03225806451612903
+          "rerank_score": 0.8661422729492188
+        },
+        {
+          "chunk_id": "352016027946582019",
+          "dense_score": 0.6103147,
+          "sparse_score": 71.62313,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.5817132592201233
         },
         {
           "chunk_id": "352016027946582020",
           "dense_score": 0.4619837,
           "sparse_score": null,
           "fused_score": 0.015873015873015872,
-          "rerank_score": 0.015873015873015872
-        },
-        {
-          "chunk_id": "352016027946582021",
-          "dense_score": 0.44015968,
-          "sparse_score": null,
-          "fused_score": 0.015625,
-          "rerank_score": 0.015625
+          "rerank_score": 0.01010484341531992
         },
         {
           "chunk_id": "352016027946582017",
           "dense_score": 0.43504626,
           "sparse_score": null,
           "fused_score": 0.015384615384615385,
-          "rerank_score": 0.015384615384615385
+          "rerank_score": 0.0020496470388025045
+        },
+        {
+          "chunk_id": "352016027946582021",
+          "dense_score": 0.44015968,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": 0.0005396920605562627
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016027946582016",
+          "content_excerpt": "public class UserService {\n\n    private static final String DB_PASSWORD = \"<password>\";\n    private final UserRepository repository;\n\n    public UserService(UserRepository repository) {\n        this.repository = repository;\n    }\n\n    /**\n     * 根据ID查找用户。\n     */\n    public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }\n\n    /**\n     * 获取所有活跃用户。\n     */\n    public List<User> getActiveUsers() {\n        return repository.findByStatus(\"active\");\n    }\n\n    /**\n    ",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.8661422729492188
+        },
+        {
+          "evidence_id": "352016027946582019",
+          "content_excerpt": "public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#findById",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.5817132592201233
+        },
+        {
+          "evidence_id": "352016027946582020",
+          "content_excerpt": "public List<User> getActiveUsers() {\n        return repository.findByStatus(\"active\");\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#getActiveUsers",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.01010484341531992
+        },
+        {
+          "evidence_id": "352016027946582017",
+          "content_excerpt": "private static final String DB_PASSWORD = \"<password>\";",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#DB_PASSWORD",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0020496470388025045
+        },
+        {
+          "evidence_id": "352016027946582021",
+          "content_excerpt": "private void validateToken(String token) {\n        if (token == null || token.isEmpty()) {\n            throw new IllegalArgumentException(\"Token required\");\n        }\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#validateToken",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0005396920605562627
         }
       ]
     },
@@ -811,8 +1336,8 @@
         "352016027946582021"
       ],
       "retrieved_evidence_ids": [
-        "352016027946582021",
         "352016027946582016",
+        "352016027946582021",
         "352016027946582017",
         "352016027946582019",
         "352016027946582018"
@@ -824,43 +1349,90 @@
         0.015625,
         0.015384615384615385
       ],
-      "latency_ms": 176.51670000122976,
+      "latency_ms": 1399.3999999984226,
       "status": "ok",
       "candidate_details": [
         {
-          "chunk_id": "352016027946582021",
-          "dense_score": 0.6754324,
-          "sparse_score": 1.0366623,
-          "fused_score": 0.03252247488101534,
-          "rerank_score": 0.03252247488101534
-        },
-        {
           "chunk_id": "352016027946582016",
           "dense_score": 0.6043768,
-          "sparse_score": 8.372923,
+          "sparse_score": 8.196437,
           "fused_score": 0.03252247488101534,
-          "rerank_score": 0.03252247488101534
+          "rerank_score": 0.8862952589988708
+        },
+        {
+          "chunk_id": "352016027946582021",
+          "dense_score": 0.6754324,
+          "sparse_score": 2.6900938,
+          "fused_score": 0.03252247488101534,
+          "rerank_score": 0.3145390748977661
         },
         {
           "chunk_id": "352016027946582017",
           "dense_score": 0.5012307,
           "sparse_score": null,
           "fused_score": 0.015873015873015872,
-          "rerank_score": 0.015873015873015872
+          "rerank_score": 0.00014556857058778405
         },
         {
           "chunk_id": "352016027946582019",
           "dense_score": 0.4862655,
           "sparse_score": null,
           "fused_score": 0.015625,
-          "rerank_score": 0.015625
+          "rerank_score": 8.990341302705929e-05
         },
         {
           "chunk_id": "352016027946582018",
           "dense_score": 0.4848564,
           "sparse_score": null,
           "fused_score": 0.015384615384615385,
-          "rerank_score": 0.015384615384615385
+          "rerank_score": 7.85916781751439e-05
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016027946582016",
+          "content_excerpt": "public class UserService {\n\n    private static final String DB_PASSWORD = \"<password>\";\n    private final UserRepository repository;\n\n    public UserService(UserRepository repository) {\n        this.repository = repository;\n    }\n\n    /**\n     * 根据ID查找用户。\n     */\n    public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }\n\n    /**\n     * 获取所有活跃用户。\n     */\n    public List<User> getActiveUsers() {\n        return repository.findByStatus(\"active\");\n    }\n\n    /**\n    ",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.8862952589988708
+        },
+        {
+          "evidence_id": "352016027946582021",
+          "content_excerpt": "private void validateToken(String token) {\n        if (token == null || token.isEmpty()) {\n            throw new IllegalArgumentException(\"Token required\");\n        }\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#validateToken",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.3145390748977661
+        },
+        {
+          "evidence_id": "352016027946582017",
+          "content_excerpt": "private static final String DB_PASSWORD = \"<password>\";",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#DB_PASSWORD",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.00014556857058778405
+        },
+        {
+          "evidence_id": "352016027946582019",
+          "content_excerpt": "public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#findById",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 8.990341302705929e-05
+        },
+        {
+          "evidence_id": "352016027946582018",
+          "content_excerpt": "private final UserRepository repository;",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#repository",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 7.85916781751439e-05
         }
       ]
     },
@@ -887,43 +1459,90 @@
         0.015625,
         0.015384615384615385
       ],
-      "latency_ms": 145.36999999836553,
+      "latency_ms": 1391.1249999982829,
       "status": "ok",
       "candidate_details": [
         {
           "chunk_id": "352016027946582021",
           "dense_score": 0.7203253,
-          "sparse_score": 2.9967744,
+          "sparse_score": 13.108932,
           "fused_score": 0.03278688524590164,
-          "rerank_score": 0.03278688524590164
+          "rerank_score": 0.9088707566261292
         },
         {
           "chunk_id": "352016027946582016",
           "dense_score": 0.5113756,
-          "sparse_score": 1.7608838,
+          "sparse_score": 4.954926,
           "fused_score": 0.03225806451612903,
-          "rerank_score": 0.03225806451612903
+          "rerank_score": 0.7405776381492615
         },
         {
           "chunk_id": "352016027946582019",
           "dense_score": 0.44511378,
           "sparse_score": null,
           "fused_score": 0.015873015873015872,
-          "rerank_score": 0.015873015873015872
+          "rerank_score": 0.0002097074466291815
         },
         {
           "chunk_id": "352016027946582017",
           "dense_score": 0.42874143,
           "sparse_score": null,
           "fused_score": 0.015625,
-          "rerank_score": 0.015625
+          "rerank_score": 0.00011605018517002463
         },
         {
           "chunk_id": "352016027946582018",
           "dense_score": 0.39696297,
           "sparse_score": null,
           "fused_score": 0.015384615384615385,
-          "rerank_score": 0.015384615384615385
+          "rerank_score": 1.8481396182323806e-05
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016027946582021",
+          "content_excerpt": "private void validateToken(String token) {\n        if (token == null || token.isEmpty()) {\n            throw new IllegalArgumentException(\"Token required\");\n        }\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#validateToken",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.9088707566261292
+        },
+        {
+          "evidence_id": "352016027946582016",
+          "content_excerpt": "public class UserService {\n\n    private static final String DB_PASSWORD = \"<password>\";\n    private final UserRepository repository;\n\n    public UserService(UserRepository repository) {\n        this.repository = repository;\n    }\n\n    /**\n     * 根据ID查找用户。\n     */\n    public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }\n\n    /**\n     * 获取所有活跃用户。\n     */\n    public List<User> getActiveUsers() {\n        return repository.findByStatus(\"active\");\n    }\n\n    /**\n    ",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.7405776381492615
+        },
+        {
+          "evidence_id": "352016027946582019",
+          "content_excerpt": "public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#findById",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0002097074466291815
+        },
+        {
+          "evidence_id": "352016027946582017",
+          "content_excerpt": "private static final String DB_PASSWORD = \"<password>\";",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#DB_PASSWORD",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.00011605018517002463
+        },
+        {
+          "evidence_id": "352016027946582018",
+          "content_excerpt": "private final UserRepository repository;",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#repository",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 1.8481396182323806e-05
         }
       ]
     },
@@ -937,56 +1556,103 @@
         "352016027946582020"
       ],
       "retrieved_evidence_ids": [
-        "352016027946582020",
         "352016027946582016",
+        "352016027946582020",
         "352016027946582019",
         "352016027946582018",
         "352016027946582017"
       ],
       "scores": [
-        0.03278688524590164,
         0.03225806451612903,
+        0.03278688524590164,
         0.015873015873015872,
         0.015625,
         0.015384615384615385
       ],
-      "latency_ms": 143.37499999965075,
+      "latency_ms": 1382.600299999467,
       "status": "ok",
       "candidate_details": [
         {
-          "chunk_id": "352016027946582020",
-          "dense_score": 0.75820297,
-          "sparse_score": 28.922268,
-          "fused_score": 0.03278688524590164,
-          "rerank_score": 0.03278688524590164
-        },
-        {
           "chunk_id": "352016027946582016",
           "dense_score": 0.520045,
-          "sparse_score": 10.718657,
+          "sparse_score": 30.7813,
           "fused_score": 0.03225806451612903,
-          "rerank_score": 0.03225806451612903
+          "rerank_score": 0.9383310079574585
+        },
+        {
+          "chunk_id": "352016027946582020",
+          "dense_score": 0.75820297,
+          "sparse_score": 163.66519,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.867276668548584
         },
         {
           "chunk_id": "352016027946582019",
           "dense_score": 0.44185102,
           "sparse_score": null,
           "fused_score": 0.015873015873015872,
-          "rerank_score": 0.015873015873015872
+          "rerank_score": 0.0035024031531065702
         },
         {
           "chunk_id": "352016027946582018",
           "dense_score": 0.4018019,
           "sparse_score": null,
           "fused_score": 0.015625,
-          "rerank_score": 0.015625
+          "rerank_score": 0.0014078739332035184
         },
         {
           "chunk_id": "352016027946582017",
           "dense_score": 0.3614846,
           "sparse_score": null,
           "fused_score": 0.015384615384615385,
-          "rerank_score": 0.015384615384615385
+          "rerank_score": 5.020491880713962e-05
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016027946582016",
+          "content_excerpt": "public class UserService {\n\n    private static final String DB_PASSWORD = \"<password>\";\n    private final UserRepository repository;\n\n    public UserService(UserRepository repository) {\n        this.repository = repository;\n    }\n\n    /**\n     * 根据ID查找用户。\n     */\n    public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }\n\n    /**\n     * 获取所有活跃用户。\n     */\n    public List<User> getActiveUsers() {\n        return repository.findByStatus(\"active\");\n    }\n\n    /**\n    ",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.9383310079574585
+        },
+        {
+          "evidence_id": "352016027946582020",
+          "content_excerpt": "public List<User> getActiveUsers() {\n        return repository.findByStatus(\"active\");\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#getActiveUsers",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.867276668548584
+        },
+        {
+          "evidence_id": "352016027946582019",
+          "content_excerpt": "public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#findById",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0035024031531065702
+        },
+        {
+          "evidence_id": "352016027946582018",
+          "content_excerpt": "private final UserRepository repository;",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#repository",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0014078739332035184
+        },
+        {
+          "evidence_id": "352016027946582017",
+          "content_excerpt": "private static final String DB_PASSWORD = \"<password>\";",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#DB_PASSWORD",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 5.020491880713962e-05
         }
       ]
     },
@@ -1000,56 +1666,103 @@
         "352014592559284226"
       ],
       "retrieved_evidence_ids": [
+        "354183718245498884",
         "352014592559284226",
-        "352014592559284228",
-        "352014592559284225",
-        "352014592559284227",
-        "352014592559284229"
+        "354183718245498881",
+        "354183718245498883",
+        "354183718245498885"
       ],
       "scores": [
-        0.032266458495966696,
         0.01639344262295082,
+        0.032266458495966696,
         0.016129032258064516,
         0.015625,
         0.015384615384615385
       ],
-      "latency_ms": 150.6002999994962,
+      "latency_ms": 1195.081999998365,
       "status": "ok",
       "candidate_details": [
         {
-          "chunk_id": "352014592559284226",
-          "dense_score": 0.55312264,
-          "sparse_score": 12.401229,
-          "fused_score": 0.032266458495966696,
-          "rerank_score": 0.032266458495966696
-        },
-        {
-          "chunk_id": "352014592559284228",
+          "chunk_id": "354183718245498884",
           "dense_score": 0.6005074,
           "sparse_score": null,
           "fused_score": 0.01639344262295082,
-          "rerank_score": 0.01639344262295082
+          "rerank_score": 0.15443876385688782
         },
         {
-          "chunk_id": "352014592559284225",
+          "chunk_id": "352014592559284226",
+          "dense_score": 0.55312264,
+          "sparse_score": 20.561188,
+          "fused_score": 0.032266458495966696,
+          "rerank_score": 0.12838752567768097
+        },
+        {
+          "chunk_id": "354183718245498881",
           "dense_score": 0.58515495,
           "sparse_score": null,
           "fused_score": 0.016129032258064516,
-          "rerank_score": 0.016129032258064516
+          "rerank_score": 0.07407215982675552
         },
         {
-          "chunk_id": "352014592559284227",
+          "chunk_id": "354183718245498883",
           "dense_score": 0.53246915,
           "sparse_score": null,
           "fused_score": 0.015625,
-          "rerank_score": 0.015625
+          "rerank_score": 0.008081271313130856
         },
         {
-          "chunk_id": "352014592559284229",
+          "chunk_id": "354183718245498885",
           "dense_score": 0.5073981,
           "sparse_score": null,
           "fused_score": 0.015384615384615385,
-          "rerank_score": 0.015384615384615385
+          "rerank_score": 0.0005795111646875739
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "354183718245498884",
+          "content_excerpt": "{\n  \"summary\": \"Get a user by ID\",\n  \"operationId\": \"getUserById\",\n  \"parameters\": [\n    {\n      \"name\": \"id\",\n      \"in\": \"path\",\n      \"required\": true,\n      \"schema\": {\n        \"type\": \"integer\"\n      }\n    }\n  ],\n  \"responses\": {\n    \"200\": {\n      \"description\": \"A single user\",\n      \"content\": {\n        \"application/json\": {\n          \"schema\": {\n            \"$ref\": \"#/components/schemas/User\"\n          }\n        }\n      }\n    },\n    \"404\": {\n      \"description\": \"User not found\"\n    }\n ",
+          "source_version": 1,
+          "source_position": "GET /api/v1/users/{id}",
+          "knowledge_scope_id": "352014591405850625",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.15443876385688782
+        },
+        {
+          "evidence_id": "352014592559284226",
+          "content_excerpt": "{\n  \"summary\": \"List all users\",\n  \"operationId\": \"listUsers\",\n  \"responses\": {\n    \"200\": {\n      \"description\": \"A list of users\",\n      \"content\": {\n        \"application/json\": {\n          \"schema\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"$ref\": \"#/components/schemas/User\"\n            }\n          }\n        }\n      }\n    }\n  }\n}",
+          "source_version": 1,
+          "source_position": "GET /api/v1/users",
+          "knowledge_scope_id": "352014591405850625",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.12838752567768097
+        },
+        {
+          "evidence_id": "354183718245498881",
+          "content_excerpt": "{\n  \"type\": \"string\",\n  \"enum\": [\n    \"admin\",\n    \"user\",\n    \"guest\"\n  ]\n}",
+          "source_version": 1,
+          "source_position": "schema:components.schemas.Role",
+          "knowledge_scope_id": "352014591405850625",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.07407215982675552
+        },
+        {
+          "evidence_id": "354183718245498883",
+          "content_excerpt": "{\n  \"summary\": \"Create a new user\",\n  \"operationId\": \"createUser\",\n  \"requestBody\": {\n    \"required\": true,\n    \"content\": {\n      \"application/json\": {\n        \"schema\": {\n          \"$ref\": \"#/components/schemas/User\"\n        }\n      }\n    }\n  },\n  \"responses\": {\n    \"201\": {\n      \"description\": \"User created\",\n      \"content\": {\n        \"application/json\": {\n          \"schema\": {\n            \"$ref\": \"#/components/schemas/User\"\n          }\n        }\n      }\n    }\n  }\n}",
+          "source_version": 1,
+          "source_position": "POST /api/v1/users",
+          "knowledge_scope_id": "352014591405850625",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.008081271313130856
+        },
+        {
+          "evidence_id": "354183718245498885",
+          "content_excerpt": "{\n  \"summary\": \"Delete a user by ID\",\n  \"operationId\": \"deleteUser\",\n  \"parameters\": [\n    {\n      \"name\": \"id\",\n      \"in\": \"path\",\n      \"required\": true,\n      \"schema\": {\n        \"type\": \"integer\"\n      }\n    }\n  ],\n  \"responses\": {\n    \"204\": {\n      \"description\": \"User deleted\"\n    }\n  }\n}",
+          "source_version": 1,
+          "source_position": "DELETE /api/v1/users/{id}",
+          "knowledge_scope_id": "352014591405850625",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0005795111646875739
         }
       ]
     },
@@ -1063,56 +1776,103 @@
         "352014592559284224"
       ],
       "retrieved_evidence_ids": [
-        "352014592559284228",
-        "352014592559284227",
-        "352014592559284225",
-        "352014592559284229",
-        "352014592559284226"
+        "352014592559284226",
+        "354183718245498884",
+        "354183718245498883",
+        "354183718245498885",
+        "354183718245498881"
       ],
       "scores": [
+        0.03125,
         0.03252247488101534,
         0.03252247488101534,
         0.03125763125763126,
-        0.03125763125763126,
-        0.03125
+        0.03125763125763126
       ],
-      "latency_ms": 199.98860000123386,
+      "latency_ms": 1204.9508999989484,
       "status": "ok",
       "candidate_details": [
         {
-          "chunk_id": "352014592559284228",
-          "dense_score": 0.53683597,
-          "sparse_score": 3.512752,
-          "fused_score": 0.03252247488101534,
-          "rerank_score": 0.03252247488101534
-        },
-        {
-          "chunk_id": "352014592559284227",
-          "dense_score": 0.5269698,
-          "sparse_score": 3.591345,
-          "fused_score": 0.03252247488101534,
-          "rerank_score": 0.03252247488101534
-        },
-        {
-          "chunk_id": "352014592559284225",
-          "dense_score": 0.5263778,
-          "sparse_score": 0.5783744,
-          "fused_score": 0.03125763125763126,
-          "rerank_score": 0.03125763125763126
-        },
-        {
-          "chunk_id": "352014592559284229",
-          "dense_score": 0.46187466,
-          "sparse_score": 2.9577174,
-          "fused_score": 0.03125763125763126,
-          "rerank_score": 0.03125763125763126
-        },
-        {
           "chunk_id": "352014592559284226",
           "dense_score": 0.5150733,
-          "sparse_score": 2.7521808,
+          "sparse_score": 29.03048,
           "fused_score": 0.03125,
-          "rerank_score": 0.03125
+          "rerank_score": 0.3138022720813751
+        },
+        {
+          "chunk_id": "354183718245498884",
+          "dense_score": 0.53683597,
+          "sparse_score": 43.151924,
+          "fused_score": 0.03252247488101534,
+          "rerank_score": 0.07725550979375839
+        },
+        {
+          "chunk_id": "354183718245498883",
+          "dense_score": 0.5269698,
+          "sparse_score": 45.329002,
+          "fused_score": 0.03252247488101534,
+          "rerank_score": 0.03236299380660057
+        },
+        {
+          "chunk_id": "354183718245498885",
+          "dense_score": 0.46187466,
+          "sparse_score": 33.972637,
+          "fused_score": 0.03125763125763126,
+          "rerank_score": 0.018494224175810814
+        },
+        {
+          "chunk_id": "354183718245498881",
+          "dense_score": 0.5263778,
+          "sparse_score": 11.791014,
+          "fused_score": 0.03125763125763126,
+          "rerank_score": 0.0009479717118665576
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352014592559284226",
+          "content_excerpt": "{\n  \"summary\": \"List all users\",\n  \"operationId\": \"listUsers\",\n  \"responses\": {\n    \"200\": {\n      \"description\": \"A list of users\",\n      \"content\": {\n        \"application/json\": {\n          \"schema\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"$ref\": \"#/components/schemas/User\"\n            }\n          }\n        }\n      }\n    }\n  }\n}",
+          "source_version": 1,
+          "source_position": "GET /api/v1/users",
+          "knowledge_scope_id": "352014591405850625",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.3138022720813751
+        },
+        {
+          "evidence_id": "354183718245498884",
+          "content_excerpt": "{\n  \"summary\": \"Get a user by ID\",\n  \"operationId\": \"getUserById\",\n  \"parameters\": [\n    {\n      \"name\": \"id\",\n      \"in\": \"path\",\n      \"required\": true,\n      \"schema\": {\n        \"type\": \"integer\"\n      }\n    }\n  ],\n  \"responses\": {\n    \"200\": {\n      \"description\": \"A single user\",\n      \"content\": {\n        \"application/json\": {\n          \"schema\": {\n            \"$ref\": \"#/components/schemas/User\"\n          }\n        }\n      }\n    },\n    \"404\": {\n      \"description\": \"User not found\"\n    }\n ",
+          "source_version": 1,
+          "source_position": "GET /api/v1/users/{id}",
+          "knowledge_scope_id": "352014591405850625",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.07725550979375839
+        },
+        {
+          "evidence_id": "354183718245498883",
+          "content_excerpt": "{\n  \"summary\": \"Create a new user\",\n  \"operationId\": \"createUser\",\n  \"requestBody\": {\n    \"required\": true,\n    \"content\": {\n      \"application/json\": {\n        \"schema\": {\n          \"$ref\": \"#/components/schemas/User\"\n        }\n      }\n    }\n  },\n  \"responses\": {\n    \"201\": {\n      \"description\": \"User created\",\n      \"content\": {\n        \"application/json\": {\n          \"schema\": {\n            \"$ref\": \"#/components/schemas/User\"\n          }\n        }\n      }\n    }\n  }\n}",
+          "source_version": 1,
+          "source_position": "POST /api/v1/users",
+          "knowledge_scope_id": "352014591405850625",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.03236299380660057
+        },
+        {
+          "evidence_id": "354183718245498885",
+          "content_excerpt": "{\n  \"summary\": \"Delete a user by ID\",\n  \"operationId\": \"deleteUser\",\n  \"parameters\": [\n    {\n      \"name\": \"id\",\n      \"in\": \"path\",\n      \"required\": true,\n      \"schema\": {\n        \"type\": \"integer\"\n      }\n    }\n  ],\n  \"responses\": {\n    \"204\": {\n      \"description\": \"User deleted\"\n    }\n  }\n}",
+          "source_version": 1,
+          "source_position": "DELETE /api/v1/users/{id}",
+          "knowledge_scope_id": "352014591405850625",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.018494224175810814
+        },
+        {
+          "evidence_id": "354183718245498881",
+          "content_excerpt": "{\n  \"type\": \"string\",\n  \"enum\": [\n    \"admin\",\n    \"user\",\n    \"guest\"\n  ]\n}",
+          "source_version": 1,
+          "source_position": "schema:components.schemas.Role",
+          "knowledge_scope_id": "352014591405850625",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0009479717118665576
         }
       ]
     },
@@ -1127,55 +1887,102 @@
       ],
       "retrieved_evidence_ids": [
         "352016498073534464",
-        "352016498073534477",
         "352016498073534471",
+        "352016498073534477",
         "352016498073534479",
         "352016498073534481"
       ],
       "scores": [
-        0.03278688524590164,
-        0.03200204813108039,
-        0.031754032258064516,
+        0.03252247488101534,
+        0.03149801587301587,
+        0.03252247488101534,
         0.015873015873015872,
         0.015384615384615385
       ],
-      "latency_ms": 201.31600000240724,
+      "latency_ms": 993.618399999832,
       "status": "ok",
       "candidate_details": [
         {
           "chunk_id": "352016498073534464",
           "dense_score": 0.6103912,
-          "sparse_score": 16.689026,
-          "fused_score": 0.03278688524590164,
-          "rerank_score": 0.03278688524590164
+          "sparse_score": 17.594948,
+          "fused_score": 0.03252247488101534,
+          "rerank_score": 0.8232855796813965
+        },
+        {
+          "chunk_id": "352016498073534471",
+          "dense_score": 0.5357373,
+          "sparse_score": 11.321615,
+          "fused_score": 0.03149801587301587,
+          "rerank_score": 0.05156804248690605
         },
         {
           "chunk_id": "352016498073534477",
           "dense_score": 0.5733143,
-          "sparse_score": 10.368946,
-          "fused_score": 0.03200204813108039,
-          "rerank_score": 0.03200204813108039
-        },
-        {
-          "chunk_id": "352016498073534471",
-          "dense_score": 0.53573734,
-          "sparse_score": 11.758663,
-          "fused_score": 0.031754032258064516,
-          "rerank_score": 0.031754032258064516
+          "sparse_score": 18.360283,
+          "fused_score": 0.03252247488101534,
+          "rerank_score": 0.044473033398389816
         },
         {
           "chunk_id": "352016498073534479",
           "dense_score": 0.56285185,
           "sparse_score": null,
           "fused_score": 0.015873015873015872,
-          "rerank_score": 0.015873015873015872
+          "rerank_score": 0.012559223920106888
         },
         {
           "chunk_id": "352016498073534481",
           "dense_score": 0.502002,
           "sparse_score": null,
           "fused_score": 0.015384615384615385,
-          "rerank_score": 0.015384615384615385
+          "rerank_score": 0.005994746927171946
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016498073534464",
+          "content_excerpt": "CREATE TABLE users (\n    id BIGSERIAL PRIMARY KEY,\n    username VARCHAR(100) NOT NULL UNIQUE,\n    email VARCHAR(255) NOT NULL,\n    password_hash VARCHAR(255) NOT NULL,\n    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n);",
+          "source_version": 1,
+          "source_position": "table:users",
+          "knowledge_scope_id": "352016496592945153",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.8232855796813965
+        },
+        {
+          "evidence_id": "352016498073534471",
+          "content_excerpt": "CREATE TABLE orders (\n    id BIGSERIAL PRIMARY KEY,\n    user_id BIGINT NOT NULL,\n    total_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,\n    status VARCHAR(20) DEFAULT 'pending',\n    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n    CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES users(id),\n    CONSTRAINT chk_order_amount CHECK (total_amount >= 0)\n);",
+          "source_version": 1,
+          "source_position": "table:orders",
+          "knowledge_scope_id": "352016496592945153",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.05156804248690605
+        },
+        {
+          "evidence_id": "352016498073534477",
+          "content_excerpt": "CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES users(id)",
+          "source_version": 1,
+          "source_position": "constraint:fk_orders_user",
+          "knowledge_scope_id": "352016496592945153",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.044473033398389816
+        },
+        {
+          "evidence_id": "352016498073534479",
+          "content_excerpt": "CREATE INDEX idx_orders_user_id ON orders(user_id);",
+          "source_version": 1,
+          "source_position": "index:idx_orders_user_id",
+          "knowledge_scope_id": "352016496592945153",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.012559223920106888
+        },
+        {
+          "evidence_id": "352016498073534481",
+          "content_excerpt": "CREATE VIEW active_orders AS\nSELECT id, user_id, total_amount, status\nFROM orders\nWHERE status = 'pending';",
+          "source_version": 1,
+          "source_position": "view:active_orders",
+          "knowledge_scope_id": "352016496592945153",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.005994746927171946
         }
       ]
     },
@@ -1189,65 +1996,112 @@
         "352016498073534471"
       ],
       "retrieved_evidence_ids": [
-        "352016498073534480",
         "352016498073534471",
+        "352016498073534480",
         "352016498073534479",
+        "352016498073534477",
         "352016498073534481",
-        "352016498073534464",
-        "352016498073534477"
+        "352016498073534482"
       ],
       "scores": [
-        0.03252247488101534,
-        0.032266458495966696,
-        0.03200204813108039,
-        0.031009615384615385,
-        0.015625,
-        0.015384615384615385
+        0.015873015873015872,
+        0.03278688524590164,
+        0.03225806451612903,
+        0.03076923076923077,
+        0.03149801587301587,
+        0.015625
       ],
-      "latency_ms": 206.48240000082296,
+      "latency_ms": 1145.389699999214,
       "status": "ok",
       "candidate_details": [
         {
-          "chunk_id": "352016498073534480",
-          "dense_score": 0.55651855,
-          "sparse_score": 12.234738,
-          "fused_score": 0.03252247488101534,
-          "rerank_score": 0.03252247488101534
+          "chunk_id": "352016498073534471",
+          "dense_score": 0.5193894,
+          "sparse_score": null,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": 0.033651772886514664
         },
         {
-          "chunk_id": "352016498073534471",
-          "dense_score": 0.51938957,
-          "sparse_score": 12.994142,
-          "fused_score": 0.032266458495966696,
-          "rerank_score": 0.032266458495966696
+          "chunk_id": "352016498073534480",
+          "dense_score": 0.55651855,
+          "sparse_score": 47.84748,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.0015926583437249064
         },
         {
           "chunk_id": "352016498073534479",
           "dense_score": 0.5243674,
-          "sparse_score": 11.179035,
-          "fused_score": 0.03200204813108039,
-          "rerank_score": 0.03200204813108039
-        },
-        {
-          "chunk_id": "352016498073534481",
-          "dense_score": 0.4326858,
-          "sparse_score": 10.291048,
-          "fused_score": 0.031009615384615385,
-          "rerank_score": 0.031009615384615385
-        },
-        {
-          "chunk_id": "352016498073534464",
-          "dense_score": null,
-          "sparse_score": 10.478713,
-          "fused_score": 0.015625,
-          "rerank_score": 0.015625
+          "sparse_score": 39.433243,
+          "fused_score": 0.03225806451612903,
+          "rerank_score": 0.0012499545700848103
         },
         {
           "chunk_id": "352016498073534477",
           "dense_score": 0.41948783,
-          "sparse_score": null,
-          "fused_score": 0.015384615384615385,
-          "rerank_score": 0.015384615384615385
+          "sparse_score": 22.988522,
+          "fused_score": 0.03076923076923077,
+          "rerank_score": 0.0008895292994566262
+        },
+        {
+          "chunk_id": "352016498073534481",
+          "dense_score": 0.4326858,
+          "sparse_score": 33.535797,
+          "fused_score": 0.03149801587301587,
+          "rerank_score": 0.000360452220775187
+        },
+        {
+          "chunk_id": "352016498073534482",
+          "dense_score": null,
+          "sparse_score": 25.814428,
+          "fused_score": 0.015625,
+          "rerank_score": null
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016498073534471",
+          "content_excerpt": "CREATE TABLE orders (\n    id BIGSERIAL PRIMARY KEY,\n    user_id BIGINT NOT NULL,\n    total_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,\n    status VARCHAR(20) DEFAULT 'pending',\n    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n    CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES users(id),\n    CONSTRAINT chk_order_amount CHECK (total_amount >= 0)\n);",
+          "source_version": 1,
+          "source_position": "table:orders",
+          "knowledge_scope_id": "352016496592945153",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.033651772886514664
+        },
+        {
+          "evidence_id": "352016498073534480",
+          "content_excerpt": "CREATE INDEX idx_orders_status ON orders(status);",
+          "source_version": 1,
+          "source_position": "index:idx_orders_status",
+          "knowledge_scope_id": "352016496592945153",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0015926583437249064
+        },
+        {
+          "evidence_id": "352016498073534479",
+          "content_excerpt": "CREATE INDEX idx_orders_user_id ON orders(user_id);",
+          "source_version": 1,
+          "source_position": "index:idx_orders_user_id",
+          "knowledge_scope_id": "352016496592945153",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0012499545700848103
+        },
+        {
+          "evidence_id": "352016498073534477",
+          "content_excerpt": "CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES users(id)",
+          "source_version": 1,
+          "source_position": "constraint:fk_orders_user",
+          "knowledge_scope_id": "352016496592945153",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0008895292994566262
+        },
+        {
+          "evidence_id": "352016498073534481",
+          "content_excerpt": "CREATE VIEW active_orders AS\nSELECT id, user_id, total_amount, status\nFROM orders\nWHERE status = 'pending';",
+          "source_version": 1,
+          "source_position": "view:active_orders",
+          "knowledge_scope_id": "352016496592945153",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.000360452220775187
         }
       ]
     },
@@ -1274,43 +2128,90 @@
         0.015625,
         0.015384615384615385
       ],
-      "latency_ms": 157.39269999903627,
+      "latency_ms": 632.4567999981809,
       "status": "ok",
       "candidate_details": [
         {
           "chunk_id": "352017436767158274",
           "dense_score": 0.736678,
-          "sparse_score": 12.15675,
+          "sparse_score": 40.434486,
           "fused_score": 0.03278688524590164,
-          "rerank_score": 0.03278688524590164
+          "rerank_score": 0.9206688404083252
         },
         {
           "chunk_id": "352017436767158273",
           "dense_score": 0.68873143,
-          "sparse_score": 7.6190577,
+          "sparse_score": 28.118994,
           "fused_score": 0.03225806451612903,
-          "rerank_score": 0.03225806451612903
+          "rerank_score": 0.5220780372619629
         },
         {
           "chunk_id": "352017436767158272",
           "dense_score": 0.6140276,
           "sparse_score": null,
           "fused_score": 0.015873015873015872,
-          "rerank_score": 0.015873015873015872
+          "rerank_score": 0.0220491923391819
         },
         {
           "chunk_id": "352017436767158276",
           "dense_score": 0.48995543,
           "sparse_score": null,
           "fused_score": 0.015625,
-          "rerank_score": 0.015625
+          "rerank_score": 0.0008721979684196413
         },
         {
           "chunk_id": "352017436767158275",
           "dense_score": 0.44933712,
           "sparse_score": null,
           "fused_score": 0.015384615384615385,
-          "rerank_score": 0.015384615384615385
+          "rerank_score": 1.9822608010144904e-05
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352017436767158274",
+          "content_excerpt": "func (s *UserService) FindUser(id int) (*User, error) {\n\tu, ok := s.users[id]\n\tif !ok {\n\t\treturn nil, fmt.Errorf(\"user %d not found\", id)\n\t}\n\treturn u, nil\n}",
+          "source_version": 2,
+          "source_position": "main.UserService#FindUser",
+          "knowledge_scope_id": "351989134090305537",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.9206688404083252
+        },
+        {
+          "evidence_id": "352017436767158273",
+          "content_excerpt": "UserService struct {\n\tusers map[int]*User\n}",
+          "source_version": 2,
+          "source_position": "main.UserService",
+          "knowledge_scope_id": "351989134090305537",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.5220780372619629
+        },
+        {
+          "evidence_id": "352017436767158272",
+          "content_excerpt": "User struct {\n\tID    int\n\tName  string\n\tEmail string\n}",
+          "source_version": 2,
+          "source_position": "main.User",
+          "knowledge_scope_id": "351989134090305537",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0220491923391819
+        },
+        {
+          "evidence_id": "352017436767158276",
+          "content_excerpt": "Reader interface {\n\tRead(p []byte) (n int, err error)\n}",
+          "source_version": 2,
+          "source_position": "main.Reader",
+          "knowledge_scope_id": "351989134090305537",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0008721979684196413
+        },
+        {
+          "evidence_id": "352017436767158275",
+          "content_excerpt": "func ProcessData(data []byte) (int, error) {\n\treturn len(data), nil\n}",
+          "source_version": 2,
+          "source_position": "main.ProcessData",
+          "knowledge_scope_id": "351989134090305537",
+          "knowledge_scope_type": "project",
+          "relevance_score": 1.9822608010144904e-05
         }
       ]
     },
@@ -1337,43 +2238,90 @@
         0.015625,
         0.015384615384615385
       ],
-      "latency_ms": 140.4203999991296,
+      "latency_ms": 601.7804999974032,
       "status": "ok",
       "candidate_details": [
         {
           "chunk_id": "352017436767158274",
-          "dense_score": 0.6860729,
-          "sparse_score": 8.790993,
+          "dense_score": 0.68607306,
+          "sparse_score": 38.019955,
           "fused_score": 0.03278688524590164,
-          "rerank_score": 0.03278688524590164
+          "rerank_score": 0.967801034450531
         },
         {
           "chunk_id": "352017436767158272",
           "dense_score": 0.59709156,
           "sparse_score": null,
           "fused_score": 0.016129032258064516,
-          "rerank_score": 0.016129032258064516
+          "rerank_score": 0.0690649226307869
         },
         {
           "chunk_id": "352017436767158273",
           "dense_score": 0.5852135,
           "sparse_score": null,
           "fused_score": 0.015873015873015872,
-          "rerank_score": 0.015873015873015872
+          "rerank_score": 0.06712985783815384
         },
         {
           "chunk_id": "352017436767158276",
           "dense_score": 0.4766584,
           "sparse_score": null,
           "fused_score": 0.015625,
-          "rerank_score": 0.015625
+          "rerank_score": 0.0008909318712539971
         },
         {
           "chunk_id": "352017436767158275",
           "dense_score": 0.42365617,
           "sparse_score": null,
           "fused_score": 0.015384615384615385,
-          "rerank_score": 0.015384615384615385
+          "rerank_score": 7.511285366490483e-05
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352017436767158274",
+          "content_excerpt": "func (s *UserService) FindUser(id int) (*User, error) {\n\tu, ok := s.users[id]\n\tif !ok {\n\t\treturn nil, fmt.Errorf(\"user %d not found\", id)\n\t}\n\treturn u, nil\n}",
+          "source_version": 2,
+          "source_position": "main.UserService#FindUser",
+          "knowledge_scope_id": "351989134090305537",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.967801034450531
+        },
+        {
+          "evidence_id": "352017436767158272",
+          "content_excerpt": "User struct {\n\tID    int\n\tName  string\n\tEmail string\n}",
+          "source_version": 2,
+          "source_position": "main.User",
+          "knowledge_scope_id": "351989134090305537",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0690649226307869
+        },
+        {
+          "evidence_id": "352017436767158273",
+          "content_excerpt": "UserService struct {\n\tusers map[int]*User\n}",
+          "source_version": 2,
+          "source_position": "main.UserService",
+          "knowledge_scope_id": "351989134090305537",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.06712985783815384
+        },
+        {
+          "evidence_id": "352017436767158276",
+          "content_excerpt": "Reader interface {\n\tRead(p []byte) (n int, err error)\n}",
+          "source_version": 2,
+          "source_position": "main.Reader",
+          "knowledge_scope_id": "351989134090305537",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0008909318712539971
+        },
+        {
+          "evidence_id": "352017436767158275",
+          "content_excerpt": "func ProcessData(data []byte) (int, error) {\n\treturn len(data), nil\n}",
+          "source_version": 2,
+          "source_position": "main.ProcessData",
+          "knowledge_scope_id": "351989134090305537",
+          "knowledge_scope_type": "project",
+          "relevance_score": 7.511285366490483e-05
         }
       ]
     },
@@ -1387,56 +2335,103 @@
         "352016589903626244"
       ],
       "retrieved_evidence_ids": [
-        "352016589903626244",
         "352016589903626242",
+        "352016589903626244",
         "352016589903626249",
         "352016589903626247",
         "352016589903626246"
       ],
       "scores": [
-        0.03278688524590164,
-        0.03225806451612903,
-        0.031746031746031744,
-        0.03125,
-        0.03076923076923077
+        0.0315136476426799,
+        0.03252247488101534,
+        0.032266458495966696,
+        0.03149801587301587,
+        0.031009615384615385
       ],
-      "latency_ms": 182.9271000024164,
+      "latency_ms": 939.7318999981508,
       "status": "ok",
       "candidate_details": [
         {
-          "chunk_id": "352016589903626244",
-          "dense_score": 0.61546445,
-          "sparse_score": 10.5862055,
-          "fused_score": 0.03278688524590164,
-          "rerank_score": 0.03278688524590164
-        },
-        {
           "chunk_id": "352016589903626242",
           "dense_score": 0.5714574,
-          "sparse_score": 8.5803385,
-          "fused_score": 0.03225806451612903,
-          "rerank_score": 0.03225806451612903
+          "sparse_score": 32.48109,
+          "fused_score": 0.0315136476426799,
+          "rerank_score": 0.6860881447792053
+        },
+        {
+          "chunk_id": "352016589903626244",
+          "dense_score": 0.61546445,
+          "sparse_score": 67.17134,
+          "fused_score": 0.03252247488101534,
+          "rerank_score": 0.5243000984191895
         },
         {
           "chunk_id": "352016589903626249",
           "dense_score": 0.5663223,
-          "sparse_score": 8.033416,
-          "fused_score": 0.031746031746031744,
-          "rerank_score": 0.031746031746031744
+          "sparse_score": 69.92374,
+          "fused_score": 0.032266458495966696,
+          "rerank_score": 0.05107179284095764
         },
         {
           "chunk_id": "352016589903626247",
           "dense_score": 0.5277386,
-          "sparse_score": 6.7603436,
-          "fused_score": 0.03125,
-          "rerank_score": 0.03125
+          "sparse_score": 42.164333,
+          "fused_score": 0.03149801587301587,
+          "rerank_score": 0.025487689301371574
         },
         {
           "chunk_id": "352016589903626246",
           "dense_score": 0.49416214,
-          "sparse_score": 6.5218363,
-          "fused_score": 0.03076923076923077,
-          "rerank_score": 0.03076923076923077
+          "sparse_score": 38.625664,
+          "fused_score": 0.031009615384615385,
+          "rerank_score": 0.023139048367738724
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016589903626242",
+          "content_excerpt": "class User:\n    \"\"\"A user entity.\"\"\"\n\n    def __init__(self, name: str, email: str):\n        self.name = name\n        self.email = email\n\n    def validate(self) -> bool:\n        \"\"\"Validate user data.\"\"\"\n        return \"@\" in self.email and len(self.name) > 0\n\n    def get_display_name(self) -> str:\n        \"\"\"Return display name.\"\"\"\n        return self.name.upper()",
+          "source_version": 1,
+          "source_position": "module.User",
+          "knowledge_scope_id": "352016589224148993",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.6860881447792053
+        },
+        {
+          "evidence_id": "352016589903626244",
+          "content_excerpt": "def validate(self) -> bool:\n        \"\"\"Validate user data.\"\"\"\n        return \"@\" in self.email and len(self.name) > 0",
+          "source_version": 1,
+          "source_position": "module.User.validate",
+          "knowledge_scope_id": "352016589224148993",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.5243000984191895
+        },
+        {
+          "evidence_id": "352016589903626249",
+          "content_excerpt": "def validate(self) -> bool:\n            \"\"\"Validate inner value.\"\"\"\n            return self.value > 0",
+          "source_version": 1,
+          "source_position": "module.Outer.Inner.validate",
+          "knowledge_scope_id": "352016589224148993",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.05107179284095764
+        },
+        {
+          "evidence_id": "352016589903626247",
+          "content_excerpt": "class Inner:\n        \"\"\"Nested inner class.\"\"\"\n\n        def __init__(self, value: int):\n            self.value = value\n\n        def validate(self) -> bool:\n            \"\"\"Validate inner value.\"\"\"\n            return self.value > 0",
+          "source_version": 1,
+          "source_position": "module.Outer.Inner",
+          "knowledge_scope_id": "352016589224148993",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.025487689301371574
+        },
+        {
+          "evidence_id": "352016589903626246",
+          "content_excerpt": "class Outer:\n    \"\"\"Outer class with nested class.\"\"\"\n\n    class Inner:\n        \"\"\"Nested inner class.\"\"\"\n\n        def __init__(self, value: int):\n            self.value = value\n\n        def validate(self) -> bool:\n            \"\"\"Validate inner value.\"\"\"\n            return self.value > 0",
+          "source_version": 1,
+          "source_position": "module.Outer",
+          "knowledge_scope_id": "352016589224148993",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.023139048367738724
         }
       ]
     },
@@ -1452,63 +2447,110 @@
       "retrieved_evidence_ids": [
         "352016589903626240",
         "352016589903626241",
-        "352016589903626245",
+        "352016589903626242",
         "352016589903626248",
-        "352016589903626249",
-        "352016589903626242"
+        "352016589903626245",
+        "352016589903626249"
       ],
       "scores": [
         0.03278688524590164,
         0.03225806451612903,
-        0.03125763125763126,
-        0.015873015873015872,
         0.015625,
+        0.015873015873015872,
+        0.03125763125763126,
         0.015625
       ],
-      "latency_ms": 200.78930000090622,
+      "latency_ms": 1361.950099999376,
       "status": "ok",
       "candidate_details": [
         {
           "chunk_id": "352016589903626240",
           "dense_score": 0.65910625,
-          "sparse_score": 27.568563,
+          "sparse_score": 71.27661,
           "fused_score": 0.03278688524590164,
-          "rerank_score": 0.03278688524590164
+          "rerank_score": 0.9255698323249817
         },
         {
           "chunk_id": "352016589903626241",
           "dense_score": 0.5753647,
-          "sparse_score": 25.572653,
+          "sparse_score": 67.557175,
           "fused_score": 0.03225806451612903,
-          "rerank_score": 0.03225806451612903
+          "rerank_score": 0.763014018535614
         },
         {
-          "chunk_id": "352016589903626245",
-          "dense_score": 0.42471826,
-          "sparse_score": 7.4015965,
-          "fused_score": 0.03125763125763126,
-          "rerank_score": 0.03125763125763126
+          "chunk_id": "352016589903626242",
+          "dense_score": null,
+          "sparse_score": 11.474165,
+          "fused_score": 0.015625,
+          "rerank_score": 0.0015493695391342044
         },
         {
           "chunk_id": "352016589903626248",
           "dense_score": 0.45293874,
           "sparse_score": null,
           "fused_score": 0.015873015873015872,
-          "rerank_score": 0.015873015873015872
+          "rerank_score": 0.0014379613567143679
+        },
+        {
+          "chunk_id": "352016589903626245",
+          "dense_score": 0.42471826,
+          "sparse_score": 27.83118,
+          "fused_score": 0.03125763125763126,
+          "rerank_score": 0.0011948234168812633
         },
         {
           "chunk_id": "352016589903626249",
           "dense_score": 0.43542948,
           "sparse_score": null,
           "fused_score": 0.015625,
-          "rerank_score": 0.015625
+          "rerank_score": null
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016589903626240",
+          "content_excerpt": "def parse_config(path: str) -> dict:\n    \"\"\"Parse a configuration file.\"\"\"\n    result = {}\n\n    def parse_line(line: str) -> tuple:\n        \"\"\"Parse a single config line.\"\"\"\n        if \"=\" in line:\n            key, val = line.split(\"=\", 1)\n            return key.strip(), val.strip()\n        return line.strip(), \"\"\n\n    with open(path, \"r\") as f:\n        for line in f:\n            line = line.strip()\n            if line and not line.startswith(\"#\"):\n                k, v = parse_line(line)\n       ",
+          "source_version": 1,
+          "source_position": "module.parse_config",
+          "knowledge_scope_id": "352016589224148993",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.9255698323249817
         },
         {
-          "chunk_id": "352016589903626242",
-          "dense_score": null,
-          "sparse_score": 5.152827,
-          "fused_score": 0.015625,
-          "rerank_score": 0.015625
+          "evidence_id": "352016589903626241",
+          "content_excerpt": "def parse_line(line: str) -> tuple:\n        \"\"\"Parse a single config line.\"\"\"\n        if \"=\" in line:\n            key, val = line.split(\"=\", 1)\n            return key.strip(), val.strip()\n        return line.strip(), \"\"",
+          "source_version": 1,
+          "source_position": "module.parse_config.parse_line",
+          "knowledge_scope_id": "352016589224148993",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.763014018535614
+        },
+        {
+          "evidence_id": "352016589903626242",
+          "content_excerpt": "class User:\n    \"\"\"A user entity.\"\"\"\n\n    def __init__(self, name: str, email: str):\n        self.name = name\n        self.email = email\n\n    def validate(self) -> bool:\n        \"\"\"Validate user data.\"\"\"\n        return \"@\" in self.email and len(self.name) > 0\n\n    def get_display_name(self) -> str:\n        \"\"\"Return display name.\"\"\"\n        return self.name.upper()",
+          "source_version": 1,
+          "source_position": "module.User",
+          "knowledge_scope_id": "352016589224148993",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0015493695391342044
+        },
+        {
+          "evidence_id": "352016589903626248",
+          "content_excerpt": "def __init__(self, value: int):\n            self.value = value",
+          "source_version": 1,
+          "source_position": "module.Outer.Inner.__init__",
+          "knowledge_scope_id": "352016589224148993",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0014379613567143679
+        },
+        {
+          "evidence_id": "352016589903626245",
+          "content_excerpt": "def get_display_name(self) -> str:\n        \"\"\"Return display name.\"\"\"\n        return self.name.upper()",
+          "source_version": 1,
+          "source_position": "module.User.get_display_name",
+          "knowledge_scope_id": "352016589224148993",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0011948234168812633
         }
       ]
     },
@@ -1524,63 +2566,110 @@
       "retrieved_evidence_ids": [
         "352016599349198848",
         "352016599349198853",
-        "352016599349198855",
         "352016599349198850",
-        "352016599349198851",
-        "352016599349198849"
+        "352016599349198849",
+        "352016599349198855",
+        "352016599349198851"
       ],
       "scores": [
         0.03278688524590164,
         0.03225806451612903,
         0.015873015873015872,
+        0.015384615384615385,
         0.015873015873015872,
-        0.015625,
-        0.015384615384615385
+        0.015625
       ],
-      "latency_ms": 201.32880000164732,
+      "latency_ms": 492.42189999858965,
       "status": "ok",
       "candidate_details": [
         {
           "chunk_id": "352016599349198848",
           "dense_score": 1.0000001,
-          "sparse_score": 34.167824,
+          "sparse_score": 250.25797,
           "fused_score": 0.03278688524590164,
-          "rerank_score": 0.03278688524590164
+          "rerank_score": 0.9998623132705688
         },
         {
           "chunk_id": "352016599349198853",
           "dense_score": 0.73556626,
-          "sparse_score": 17.083912,
+          "sparse_score": 125.12898,
           "fused_score": 0.03225806451612903,
-          "rerank_score": 0.03225806451612903
-        },
-        {
-          "chunk_id": "352016599349198855",
-          "dense_score": 0.61274815,
-          "sparse_score": null,
-          "fused_score": 0.015873015873015872,
-          "rerank_score": 0.015873015873015872
+          "rerank_score": 0.02148478664457798
         },
         {
           "chunk_id": "352016599349198850",
           "dense_score": null,
-          "sparse_score": 12.293417,
+          "sparse_score": 82.61176,
           "fused_score": 0.015873015873015872,
-          "rerank_score": 0.015873015873015872
-        },
-        {
-          "chunk_id": "352016599349198851",
-          "dense_score": 0.56391513,
-          "sparse_score": null,
-          "fused_score": 0.015625,
-          "rerank_score": 0.015625
+          "rerank_score": 0.011994431726634502
         },
         {
           "chunk_id": "352016599349198849",
           "dense_score": 0.48394912,
           "sparse_score": null,
           "fused_score": 0.015384615384615385,
-          "rerank_score": 0.015384615384615385
+          "rerank_score": 0.010456644929945469
+        },
+        {
+          "chunk_id": "352016599349198855",
+          "dense_score": 0.61274815,
+          "sparse_score": null,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": 0.0022959690541028976
+        },
+        {
+          "chunk_id": "352016599349198851",
+          "dense_score": 0.56391513,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": null
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016599349198848",
+          "content_excerpt": "# Architecture Design",
+          "source_version": 1,
+          "source_position": "# Architecture Design",
+          "knowledge_scope_id": "352016598489366529",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.9998623132705688
+        },
+        {
+          "evidence_id": "352016599349198853",
+          "content_excerpt": "## API Design",
+          "source_version": 1,
+          "source_position": "# Architecture Design > ## API Design",
+          "knowledge_scope_id": "352016598489366529",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.02148478664457798
+        },
+        {
+          "evidence_id": "352016599349198850",
+          "content_excerpt": "This document describes the overall system architecture. The system uses a front-end/back-end separation architecture.",
+          "source_version": 1,
+          "source_position": "# Architecture Design > ## System Overview",
+          "knowledge_scope_id": "352016598489366529",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.011994431726634502
+        },
+        {
+          "evidence_id": "352016599349198849",
+          "content_excerpt": "## System Overview",
+          "source_version": 1,
+          "source_position": "# Architecture Design > ## System Overview",
+          "knowledge_scope_id": "352016598489366529",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.010456644929945469
+        },
+        {
+          "evidence_id": "352016599349198855",
+          "content_excerpt": "## Deployment",
+          "source_version": 1,
+          "source_position": "# Architecture Design > ## Deployment",
+          "knowledge_scope_id": "352016598489366529",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0022959690541028976
         }
       ]
     },
@@ -1596,54 +2685,101 @@
       "retrieved_evidence_ids": [
         "352016599349198851",
         "352016599349198852",
-        "352016599349198853",
         "352016599349198855",
+        "352016599349198853",
         "352016599349198857"
       ],
       "scores": [
         0.03278688524590164,
         0.03225806451612903,
-        0.015873015873015872,
         0.015625,
+        0.015873015873015872,
         0.015384615384615385
       ],
-      "latency_ms": 144.29410000229836,
+      "latency_ms": 400.63670000017737,
       "status": "ok",
       "candidate_details": [
         {
           "chunk_id": "352016599349198851",
           "dense_score": 0.79845506,
-          "sparse_score": 35.083702,
+          "sparse_score": 153.35423,
           "fused_score": 0.03278688524590164,
-          "rerank_score": 0.03278688524590164
+          "rerank_score": 0.9960307478904724
         },
         {
           "chunk_id": "352016599349198852",
-          "dense_score": 0.58915514,
-          "sparse_score": 6.860459,
+          "dense_score": 0.5891551,
+          "sparse_score": 17.009079,
           "fused_score": 0.03225806451612903,
-          "rerank_score": 0.03225806451612903
-        },
-        {
-          "chunk_id": "352016599349198853",
-          "dense_score": 0.54213274,
-          "sparse_score": null,
-          "fused_score": 0.015873015873015872,
-          "rerank_score": 0.015873015873015872
+          "rerank_score": 0.514622151851654
         },
         {
           "chunk_id": "352016599349198855",
           "dense_score": 0.5404614,
           "sparse_score": null,
           "fused_score": 0.015625,
-          "rerank_score": 0.015625
+          "rerank_score": 0.0013370730448514223
+        },
+        {
+          "chunk_id": "352016599349198853",
+          "dense_score": 0.54213274,
+          "sparse_score": null,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": 0.0009144328651018441
         },
         {
           "chunk_id": "352016599349198857",
-          "dense_score": 0.5394993,
+          "dense_score": 0.5394991,
           "sparse_score": null,
           "fused_score": 0.015384615384615385,
-          "rerank_score": 0.015384615384615385
+          "rerank_score": 0.0003232847957406193
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016599349198851",
+          "content_excerpt": "### Data Flow",
+          "source_version": 1,
+          "source_position": "# Architecture Design > ## System Overview > ### Data Flow",
+          "knowledge_scope_id": "352016598489366529",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.9960307478904724
+        },
+        {
+          "evidence_id": "352016599349198852",
+          "content_excerpt": "Data flows from user requests into the API gateway, processed by the service layer, and written to the database.",
+          "source_version": 1,
+          "source_position": "# Architecture Design > ## System Overview > ### Data Flow",
+          "knowledge_scope_id": "352016598489366529",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.514622151851654
+        },
+        {
+          "evidence_id": "352016599349198855",
+          "content_excerpt": "## Deployment",
+          "source_version": 1,
+          "source_position": "# Architecture Design > ## Deployment",
+          "knowledge_scope_id": "352016598489366529",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0013370730448514223
+        },
+        {
+          "evidence_id": "352016599349198853",
+          "content_excerpt": "## API Design",
+          "source_version": 1,
+          "source_position": "# Architecture Design > ## API Design",
+          "knowledge_scope_id": "352016598489366529",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0009144328651018441
+        },
+        {
+          "evidence_id": "352016599349198857",
+          "content_excerpt": "| Field | Type |\n| id | integer |\n| name | string |",
+          "source_version": 1,
+          "source_position": "# Architecture Design > ## Deployment",
+          "knowledge_scope_id": "352016598489366529",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0003232847957406193
         }
       ]
     },
@@ -1658,64 +2794,111 @@
       ],
       "retrieved_evidence_ids": [
         "352016603132461057",
-        "352016603132461060",
         "352016603132461064",
+        "352016603132461068",
         "352016603132461065",
         "352016603132461062",
-        "352016603132461068"
+        "352016603132461060"
       ],
       "scores": [
         0.03278688524590164,
-        0.03200204813108039,
         0.016129032258064516,
+        0.015384615384615385,
         0.015873015873015872,
         0.015625,
-        0.015384615384615385
+        0.03200204813108039
       ],
-      "latency_ms": 201.80189999882714,
+      "latency_ms": 784.3339999999444,
       "status": "ok",
       "candidate_details": [
         {
           "chunk_id": "352016603132461057",
           "dense_score": 0.8665284,
-          "sparse_score": 48.97704,
+          "sparse_score": 139.03532,
           "fused_score": 0.03278688524590164,
-          "rerank_score": 0.03278688524590164
-        },
-        {
-          "chunk_id": "352016603132461060",
-          "dense_score": 0.51882374,
-          "sparse_score": 17.256042,
-          "fused_score": 0.03200204813108039,
-          "rerank_score": 0.03200204813108039
+          "rerank_score": 0.9969297051429749
         },
         {
           "chunk_id": "352016603132461064",
           "dense_score": 0.5247697,
           "sparse_score": null,
           "fused_score": 0.016129032258064516,
-          "rerank_score": 0.016129032258064516
-        },
-        {
-          "chunk_id": "352016603132461065",
-          "dense_score": null,
-          "sparse_score": 8.165506,
-          "fused_score": 0.015873015873015872,
-          "rerank_score": 0.015873015873015872
-        },
-        {
-          "chunk_id": "352016603132461062",
-          "dense_score": 0.5145868,
-          "sparse_score": null,
-          "fused_score": 0.015625,
-          "rerank_score": 0.015625
+          "rerank_score": 0.004759855568408966
         },
         {
           "chunk_id": "352016603132461068",
           "dense_score": 0.5111464,
           "sparse_score": null,
           "fused_score": 0.015384615384615385,
-          "rerank_score": 0.015384615384615385
+          "rerank_score": 0.0012329169549047947
+        },
+        {
+          "chunk_id": "352016603132461065",
+          "dense_score": null,
+          "sparse_score": 5.745932,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": 0.00027792761102318764
+        },
+        {
+          "chunk_id": "352016603132461062",
+          "dense_score": 0.5145868,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": 0.00025836582062765956
+        },
+        {
+          "chunk_id": "352016603132461060",
+          "dense_score": 0.51882374,
+          "sparse_score": 22.666012,
+          "fused_score": 0.03200204813108039,
+          "rerank_score": null
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016603132461057",
+          "content_excerpt": "1 Introduction",
+          "source_version": 1,
+          "source_position": "page:1 §1 Introduction",
+          "knowledge_scope_id": "352016602247462913",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.9969297051429749
+        },
+        {
+          "evidence_id": "352016603132461064",
+          "content_excerpt": "3 Methodology",
+          "source_version": 1,
+          "source_position": "page:1 §3 Methodology",
+          "knowledge_scope_id": "352016602247462913",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.004759855568408966
+        },
+        {
+          "evidence_id": "352016603132461068",
+          "content_excerpt": "5 Conclusion",
+          "source_version": 1,
+          "source_position": "page:1 §5 Conclusion",
+          "knowledge_scope_id": "352016602247462913",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0012329169549047947
+        },
+        {
+          "evidence_id": "352016603132461065",
+          "content_excerpt": "We conducted experiments on a cluster of 100\nnodes. Each node was equipped with 64GB RAM\nand 16 CPU cores. The network had a round-trip\nlatency of 1 millisecond and a bandwidth of 10\ngigabits per second. We measured throughput,\nlatency, and fault tolerance under various failure\nscenarios.",
+          "source_version": 1,
+          "source_position": "page:1 §3 Methodology",
+          "knowledge_scope_id": "352016602247462913",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.00027792761102318764
+        },
+        {
+          "evidence_id": "352016603132461062",
+          "content_excerpt": "2.2 Data Flow",
+          "source_version": 1,
+          "source_position": "page:1 §2 Background 2.2 Data Flow",
+          "knowledge_scope_id": "352016602247462913",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.00025836582062765956
         }
       ]
     },
@@ -1729,56 +2912,891 @@
         "352016603132461061"
       ],
       "retrieved_evidence_ids": [
-        "352016603132461060",
         "352016603132461061",
+        "352016603132461060",
         "352016603132461069",
         "352016603132461067",
         "352016603132461068"
       ],
       "scores": [
-        0.03278688524590164,
         0.03225806451612903,
+        0.03278688524590164,
         0.031746031746031744,
         0.03125,
         0.015384615384615385
       ],
-      "latency_ms": 202.27610000074492,
+      "latency_ms": 734.8910000000615,
       "status": "ok",
       "candidate_details": [
         {
-          "chunk_id": "352016603132461060",
-          "dense_score": 0.77444243,
-          "sparse_score": 35.420162,
-          "fused_score": 0.03278688524590164,
-          "rerank_score": 0.03278688524590164
-        },
-        {
           "chunk_id": "352016603132461061",
           "dense_score": 0.7240062,
-          "sparse_score": 22.355413,
+          "sparse_score": 75.75121,
           "fused_score": 0.03225806451612903,
-          "rerank_score": 0.03225806451612903
+          "rerank_score": 0.999242901802063
+        },
+        {
+          "chunk_id": "352016603132461060",
+          "dense_score": 0.77444243,
+          "sparse_score": 185.14786,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.9878149032592773
         },
         {
           "chunk_id": "352016603132461069",
           "dense_score": 0.6737437,
-          "sparse_score": 10.1122265,
+          "sparse_score": 46.88857,
           "fused_score": 0.031746031746031744,
-          "rerank_score": 0.031746031746031744
+          "rerank_score": 0.9697689414024353
         },
         {
           "chunk_id": "352016603132461067",
           "dense_score": 0.601592,
-          "sparse_score": 5.4819946,
+          "sparse_score": 18.039513,
           "fused_score": 0.03125,
-          "rerank_score": 0.03125
+          "rerank_score": 0.6598115563392639
         },
         {
           "chunk_id": "352016603132461068",
           "dense_score": 0.52020574,
           "sparse_score": null,
           "fused_score": 0.015384615384615385,
-          "rerank_score": 0.015384615384615385
+          "rerank_score": 0.00011994097440037876
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016603132461061",
+          "content_excerpt": "Consensus algorithms are fundamental to\ndistributed systems. They ensure that multiple\nnodes agree on a single value. The Paxos algorithm\nis one of the most well-known consensus protocols.\nRaft is a more recent alternative that is easier to\nunderstand and implement.",
+          "source_version": 1,
+          "source_position": "page:1 §2 Background 2.1 Consensus Algorithms",
+          "knowledge_scope_id": "352016602247462913",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.999242901802063
+        },
+        {
+          "evidence_id": "352016603132461060",
+          "content_excerpt": "2.1 Consensus Algorithms",
+          "source_version": 1,
+          "source_position": "page:1 §2 Background 2.1 Consensus Algorithms",
+          "knowledge_scope_id": "352016602247462913",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.9878149032592773
+        },
+        {
+          "evidence_id": "352016603132461069",
+          "content_excerpt": "We have demonstrated that our distributed\nconsensus algorithm provides high availability and\nlow latency under both normal and failure",
+          "source_version": 1,
+          "source_position": "page:1 §5 Conclusion",
+          "knowledge_scope_id": "352016602247462913",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.9697689414024353
+        },
+        {
+          "evidence_id": "352016603132461067",
+          "content_excerpt": "The results show that our proposed algorithm\nachieves 99.9 percent availability under normal\nconditions. The latency remains below 50\nmilliseconds for 95 percent of requests. Under\nfailure conditions with up to 30 percent of nodes\nfailing, the system continues to operate with slightly\ndegraded performance. The consensus protocol\nconverges within 200 milliseconds in all tested\nscenarios.",
+          "source_version": 1,
+          "source_position": "page:1 §4 Results",
+          "knowledge_scope_id": "352016602247462913",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.6598115563392639
+        },
+        {
+          "evidence_id": "352016603132461068",
+          "content_excerpt": "5 Conclusion",
+          "source_version": 1,
+          "source_position": "page:1 §5 Conclusion",
+          "knowledge_scope_id": "352016602247462913",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.00011994097440037876
+        }
+      ]
+    },
+    {
+      "query_index": 30,
+      "query": "Who calls com.example.service.UserService#validateToken?",
+      "project_scope": [
+        "351193748123680768"
+      ],
+      "expected_evidence_ids": [
+        "352016027946582021"
+      ],
+      "retrieved_evidence_ids": [
+        "352016027946582016",
+        "352016027946582021",
+        "352016027946582019",
+        "352016027946582018",
+        "352016027946582017"
+      ],
+      "scores": [
+        0.03252247488101534,
+        0.03252247488101534,
+        0.015625,
+        0.015384615384615385,
+        0.015873015873015872
+      ],
+      "latency_ms": 1441.852199997811,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016027946582016",
+          "dense_score": 0.60528255,
+          "sparse_score": 7.4842386,
+          "fused_score": 0.03252247488101534,
+          "rerank_score": 0.1107027530670166
+        },
+        {
+          "chunk_id": "352016027946582021",
+          "dense_score": 0.62312216,
+          "sparse_score": 2.4563482,
+          "fused_score": 0.03252247488101534,
+          "rerank_score": 0.008948486298322678
+        },
+        {
+          "chunk_id": "352016027946582019",
+          "dense_score": 0.4468618,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": 3.3231051929760724e-05
+        },
+        {
+          "chunk_id": "352016027946582018",
+          "dense_score": 0.4391995,
+          "sparse_score": null,
+          "fused_score": 0.015384615384615385,
+          "rerank_score": 3.063571421080269e-05
+        },
+        {
+          "chunk_id": "352016027946582017",
+          "dense_score": 0.45181435,
+          "sparse_score": null,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": 2.1502206436707638e-05
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016027946582016",
+          "content_excerpt": "public class UserService {\n\n    private static final String DB_PASSWORD = \"<password>\";\n    private final UserRepository repository;\n\n    public UserService(UserRepository repository) {\n        this.repository = repository;\n    }\n\n    /**\n     * 根据ID查找用户。\n     */\n    public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }\n\n    /**\n     * 获取所有活跃用户。\n     */\n    public List<User> getActiveUsers() {\n        return repository.findByStatus(\"active\");\n    }\n\n    /**\n    ",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.1107027530670166
+        },
+        {
+          "evidence_id": "352016027946582021",
+          "content_excerpt": "private void validateToken(String token) {\n        if (token == null || token.isEmpty()) {\n            throw new IllegalArgumentException(\"Token required\");\n        }\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#validateToken",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.008948486298322678
+        },
+        {
+          "evidence_id": "352016027946582019",
+          "content_excerpt": "public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#findById",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 3.3231051929760724e-05
+        },
+        {
+          "evidence_id": "352016027946582018",
+          "content_excerpt": "private final UserRepository repository;",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#repository",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 3.063571421080269e-05
+        },
+        {
+          "evidence_id": "352016027946582017",
+          "content_excerpt": "private static final String DB_PASSWORD = \"<password>\";",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#DB_PASSWORD",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 2.1502206436707638e-05
+        }
+      ]
+    },
+    {
+      "query_index": 31,
+      "query": "Which methods are called by com.example.service.UserService#findById?",
+      "project_scope": [
+        "351193748123680768"
+      ],
+      "expected_evidence_ids": [
+        "352016027946582019"
+      ],
+      "retrieved_evidence_ids": [
+        "352016027946582016",
+        "352016027946582019",
+        "352016027946582020",
+        "352016027946582018",
+        "352016027946582017"
+      ],
+      "scores": [
+        0.03225806451612903,
+        0.03278688524590164,
+        0.015873015873015872,
+        0.015384615384615385,
+        0.015625
+      ],
+      "latency_ms": 1479.9550999996427,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016027946582016",
+          "dense_score": 0.60544646,
+          "sparse_score": 22.166958,
+          "fused_score": 0.03225806451612903,
+          "rerank_score": 0.4090171456336975
+        },
+        {
+          "chunk_id": "352016027946582019",
+          "dense_score": 0.62934196,
+          "sparse_score": 60.171345,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.03710879758000374
+        },
+        {
+          "chunk_id": "352016027946582020",
+          "dense_score": 0.5136595,
+          "sparse_score": null,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": 0.0008429386653006077
+        },
+        {
+          "chunk_id": "352016027946582018",
+          "dense_score": 0.42733955,
+          "sparse_score": null,
+          "fused_score": 0.015384615384615385,
+          "rerank_score": 5.701677218894474e-05
+        },
+        {
+          "chunk_id": "352016027946582017",
+          "dense_score": 0.42896512,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": 3.40288424922619e-05
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016027946582016",
+          "content_excerpt": "public class UserService {\n\n    private static final String DB_PASSWORD = \"<password>\";\n    private final UserRepository repository;\n\n    public UserService(UserRepository repository) {\n        this.repository = repository;\n    }\n\n    /**\n     * 根据ID查找用户。\n     */\n    public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }\n\n    /**\n     * 获取所有活跃用户。\n     */\n    public List<User> getActiveUsers() {\n        return repository.findByStatus(\"active\");\n    }\n\n    /**\n    ",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.4090171456336975
+        },
+        {
+          "evidence_id": "352016027946582019",
+          "content_excerpt": "public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#findById",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.03710879758000374
+        },
+        {
+          "evidence_id": "352016027946582020",
+          "content_excerpt": "public List<User> getActiveUsers() {\n        return repository.findByStatus(\"active\");\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#getActiveUsers",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0008429386653006077
+        },
+        {
+          "evidence_id": "352016027946582018",
+          "content_excerpt": "private final UserRepository repository;",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#repository",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 5.701677218894474e-05
+        },
+        {
+          "evidence_id": "352016027946582017",
+          "content_excerpt": "private static final String DB_PASSWORD = \"<password>\";",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#DB_PASSWORD",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 3.40288424922619e-05
+        }
+      ]
+    },
+    {
+      "query_index": 32,
+      "query": "Show all callers of the validateToken method",
+      "project_scope": [
+        "351193748123680768"
+      ],
+      "expected_evidence_ids": [
+        "352016027946582021"
+      ],
+      "retrieved_evidence_ids": [
+        "352016027946582016",
+        "352016027946582021",
+        "352016027946582020",
+        "352016027946582019",
+        "352016027946582017"
+      ],
+      "scores": [
+        0.03225806451612903,
+        0.03278688524590164,
+        0.015873015873015872,
+        0.015625,
+        0.015384615384615385
+      ],
+      "latency_ms": 1392.4890000016603,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016027946582016",
+          "dense_score": 0.49656093,
+          "sparse_score": 0.97454506,
+          "fused_score": 0.03225806451612903,
+          "rerank_score": 0.22552883625030518
+        },
+        {
+          "chunk_id": "352016027946582021",
+          "dense_score": 0.61048293,
+          "sparse_score": 3.3224142,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.02639320120215416
+        },
+        {
+          "chunk_id": "352016027946582020",
+          "dense_score": 0.45356858,
+          "sparse_score": null,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": 0.0001051522558555007
+        },
+        {
+          "chunk_id": "352016027946582019",
+          "dense_score": 0.41645408,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": 5.419656736194156e-05
+        },
+        {
+          "chunk_id": "352016027946582017",
+          "dense_score": 0.4074095,
+          "sparse_score": null,
+          "fused_score": 0.015384615384615385,
+          "rerank_score": 3.1214174669003114e-05
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016027946582016",
+          "content_excerpt": "public class UserService {\n\n    private static final String DB_PASSWORD = \"<password>\";\n    private final UserRepository repository;\n\n    public UserService(UserRepository repository) {\n        this.repository = repository;\n    }\n\n    /**\n     * 根据ID查找用户。\n     */\n    public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }\n\n    /**\n     * 获取所有活跃用户。\n     */\n    public List<User> getActiveUsers() {\n        return repository.findByStatus(\"active\");\n    }\n\n    /**\n    ",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.22552883625030518
+        },
+        {
+          "evidence_id": "352016027946582021",
+          "content_excerpt": "private void validateToken(String token) {\n        if (token == null || token.isEmpty()) {\n            throw new IllegalArgumentException(\"Token required\");\n        }\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#validateToken",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.02639320120215416
+        },
+        {
+          "evidence_id": "352016027946582020",
+          "content_excerpt": "public List<User> getActiveUsers() {\n        return repository.findByStatus(\"active\");\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#getActiveUsers",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0001051522558555007
+        },
+        {
+          "evidence_id": "352016027946582019",
+          "content_excerpt": "public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#findById",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 5.419656736194156e-05
+        },
+        {
+          "evidence_id": "352016027946582017",
+          "content_excerpt": "private static final String DB_PASSWORD = \"<password>\";",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#DB_PASSWORD",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 3.1214174669003114e-05
+        }
+      ]
+    },
+    {
+      "query_index": 33,
+      "query": "Which tables have foreign keys referencing the users table?",
+      "project_scope": [
+        "352016496592945153"
+      ],
+      "expected_evidence_ids": [
+        "352016498073534471"
+      ],
+      "retrieved_evidence_ids": [
+        "352016498073534471",
+        "352016498073534477",
+        "352016498073534464",
+        "352016498073534473",
+        "352016498073534479"
+      ],
+      "scores": [
+        0.03200204813108039,
+        0.03278688524590164,
+        0.03200204813108039,
+        0.015625,
+        0.015384615384615385
+      ],
+      "latency_ms": 1040.274999999383,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016498073534471",
+          "dense_score": 0.52753186,
+          "sparse_score": 12.075263,
+          "fused_score": 0.03200204813108039,
+          "rerank_score": 0.3312544822692871
+        },
+        {
+          "chunk_id": "352016498073534477",
+          "dense_score": 0.66353774,
+          "sparse_score": 27.482718,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.1001516729593277
+        },
+        {
+          "chunk_id": "352016498073534464",
+          "dense_score": 0.5524673,
+          "sparse_score": 11.479562,
+          "fused_score": 0.03200204813108039,
+          "rerank_score": 0.007057580631226301
+        },
+        {
+          "chunk_id": "352016498073534473",
+          "dense_score": 0.46852165,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": 6.140868208603933e-05
+        },
+        {
+          "chunk_id": "352016498073534479",
+          "dense_score": 0.4586795,
+          "sparse_score": null,
+          "fused_score": 0.015384615384615385,
+          "rerank_score": 5.875419083167799e-05
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016498073534471",
+          "content_excerpt": "CREATE TABLE orders (\n    id BIGSERIAL PRIMARY KEY,\n    user_id BIGINT NOT NULL,\n    total_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,\n    status VARCHAR(20) DEFAULT 'pending',\n    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n    CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES users(id),\n    CONSTRAINT chk_order_amount CHECK (total_amount >= 0)\n);",
+          "source_version": 1,
+          "source_position": "table:orders",
+          "knowledge_scope_id": "352016496592945153",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.3312544822692871
+        },
+        {
+          "evidence_id": "352016498073534477",
+          "content_excerpt": "CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES users(id)",
+          "source_version": 1,
+          "source_position": "constraint:fk_orders_user",
+          "knowledge_scope_id": "352016496592945153",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.1001516729593277
+        },
+        {
+          "evidence_id": "352016498073534464",
+          "content_excerpt": "CREATE TABLE users (\n    id BIGSERIAL PRIMARY KEY,\n    username VARCHAR(100) NOT NULL UNIQUE,\n    email VARCHAR(255) NOT NULL,\n    password_hash VARCHAR(255) NOT NULL,\n    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n);",
+          "source_version": 1,
+          "source_position": "table:users",
+          "knowledge_scope_id": "352016496592945153",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.007057580631226301
+        },
+        {
+          "evidence_id": "352016498073534473",
+          "content_excerpt": "user_id BIGINT NOT NULL",
+          "source_version": 1,
+          "source_position": "table:orders.column:user_id",
+          "knowledge_scope_id": "352016496592945153",
+          "knowledge_scope_type": "project",
+          "relevance_score": 6.140868208603933e-05
+        },
+        {
+          "evidence_id": "352016498073534479",
+          "content_excerpt": "CREATE INDEX idx_orders_user_id ON orders(user_id);",
+          "source_version": 1,
+          "source_position": "index:idx_orders_user_id",
+          "knowledge_scope_id": "352016496592945153",
+          "knowledge_scope_type": "project",
+          "relevance_score": 5.875419083167799e-05
+        }
+      ]
+    },
+    {
+      "query_index": 34,
+      "query": "Tables that reference users.id through foreign keys",
+      "project_scope": [
+        "352016496592945153"
+      ],
+      "expected_evidence_ids": [
+        "352016498073534471"
+      ],
+      "retrieved_evidence_ids": [
+        "352016498073534477",
+        "352016498073534471",
+        "352016498073534464",
+        "352016498073534473",
+        "352016498073534479",
+        "352016498073534465",
+        "352016498073534472"
+      ],
+      "scores": [
+        0.03278688524590164,
+        0.03125,
+        0.016129032258064516,
+        0.03076923076923077,
+        0.015873015873015872,
+        0.015873015873015872,
+        0.016129032258064516
+      ],
+      "latency_ms": 1358.6336000007577,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016498073534477",
+          "dense_score": 0.731954,
+          "sparse_score": 41.268433,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.9403892755508423
+        },
+        {
+          "chunk_id": "352016498073534471",
+          "dense_score": 0.55877984,
+          "sparse_score": 16.78971,
+          "fused_score": 0.03125,
+          "rerank_score": 0.9208775758743286
+        },
+        {
+          "chunk_id": "352016498073534464",
+          "dense_score": 0.5886526,
+          "sparse_score": null,
+          "fused_score": 0.016129032258064516,
+          "rerank_score": 0.049279361963272095
+        },
+        {
+          "chunk_id": "352016498073534473",
+          "dense_score": 0.54429895,
+          "sparse_score": 15.575596,
+          "fused_score": 0.03076923076923077,
+          "rerank_score": 0.005658861715346575
+        },
+        {
+          "chunk_id": "352016498073534479",
+          "dense_score": 0.5595206,
+          "sparse_score": null,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": 0.004845186602324247
+        },
+        {
+          "chunk_id": "352016498073534465",
+          "dense_score": null,
+          "sparse_score": 17.21365,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": null
+        },
+        {
+          "chunk_id": "352016498073534472",
+          "dense_score": null,
+          "sparse_score": 17.21365,
+          "fused_score": 0.016129032258064516,
+          "rerank_score": null
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016498073534477",
+          "content_excerpt": "CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES users(id)",
+          "source_version": 1,
+          "source_position": "constraint:fk_orders_user",
+          "knowledge_scope_id": "352016496592945153",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.9403892755508423
+        },
+        {
+          "evidence_id": "352016498073534471",
+          "content_excerpt": "CREATE TABLE orders (\n    id BIGSERIAL PRIMARY KEY,\n    user_id BIGINT NOT NULL,\n    total_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,\n    status VARCHAR(20) DEFAULT 'pending',\n    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n    CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES users(id),\n    CONSTRAINT chk_order_amount CHECK (total_amount >= 0)\n);",
+          "source_version": 1,
+          "source_position": "table:orders",
+          "knowledge_scope_id": "352016496592945153",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.9208775758743286
+        },
+        {
+          "evidence_id": "352016498073534464",
+          "content_excerpt": "CREATE TABLE users (\n    id BIGSERIAL PRIMARY KEY,\n    username VARCHAR(100) NOT NULL UNIQUE,\n    email VARCHAR(255) NOT NULL,\n    password_hash VARCHAR(255) NOT NULL,\n    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n);",
+          "source_version": 1,
+          "source_position": "table:users",
+          "knowledge_scope_id": "352016496592945153",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.049279361963272095
+        },
+        {
+          "evidence_id": "352016498073534473",
+          "content_excerpt": "user_id BIGINT NOT NULL",
+          "source_version": 1,
+          "source_position": "table:orders.column:user_id",
+          "knowledge_scope_id": "352016496592945153",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.005658861715346575
+        },
+        {
+          "evidence_id": "352016498073534479",
+          "content_excerpt": "CREATE INDEX idx_orders_user_id ON orders(user_id);",
+          "source_version": 1,
+          "source_position": "index:idx_orders_user_id",
+          "knowledge_scope_id": "352016496592945153",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.004845186602324247
+        }
+      ]
+    },
+    {
+      "query_index": 35,
+      "query": "谁调用了validateToken方法？",
+      "project_scope": [
+        "351193748123680768"
+      ],
+      "expected_evidence_ids": [
+        "352016027946582021"
+      ],
+      "retrieved_evidence_ids": [
+        "352016027946582021",
+        "352016027946582016",
+        "352016027946582017",
+        "352016027946582019",
+        "352016027946582018"
+      ],
+      "scores": [
+        0.03278688524590164,
+        0.03225806451612903,
+        0.015625,
+        0.015873015873015872,
+        0.015384615384615385
+      ],
+      "latency_ms": 1379.8492999994778,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016027946582021",
+          "dense_score": 0.61646944,
+          "sparse_score": 2.6900938,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.039869993925094604
+        },
+        {
+          "chunk_id": "352016027946582016",
+          "dense_score": 0.49086612,
+          "sparse_score": 0.78907007,
+          "fused_score": 0.03225806451612903,
+          "rerank_score": 0.0322042740881443
+        },
+        {
+          "chunk_id": "352016027946582017",
+          "dense_score": 0.43604344,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": 1.6965381291811354e-05
+        },
+        {
+          "chunk_id": "352016027946582019",
+          "dense_score": 0.44603658,
+          "sparse_score": null,
+          "fused_score": 0.015873015873015872,
+          "rerank_score": 1.6940823115874082e-05
+        },
+        {
+          "chunk_id": "352016027946582018",
+          "dense_score": 0.419662,
+          "sparse_score": null,
+          "fused_score": 0.015384615384615385,
+          "rerank_score": 1.6418458471889608e-05
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016027946582021",
+          "content_excerpt": "private void validateToken(String token) {\n        if (token == null || token.isEmpty()) {\n            throw new IllegalArgumentException(\"Token required\");\n        }\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#validateToken",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.039869993925094604
+        },
+        {
+          "evidence_id": "352016027946582016",
+          "content_excerpt": "public class UserService {\n\n    private static final String DB_PASSWORD = \"<password>\";\n    private final UserRepository repository;\n\n    public UserService(UserRepository repository) {\n        this.repository = repository;\n    }\n\n    /**\n     * 根据ID查找用户。\n     */\n    public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }\n\n    /**\n     * 获取所有活跃用户。\n     */\n    public List<User> getActiveUsers() {\n        return repository.findByStatus(\"active\");\n    }\n\n    /**\n    ",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0322042740881443
+        },
+        {
+          "evidence_id": "352016027946582017",
+          "content_excerpt": "private static final String DB_PASSWORD = \"<password>\";",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#DB_PASSWORD",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 1.6965381291811354e-05
+        },
+        {
+          "evidence_id": "352016027946582019",
+          "content_excerpt": "public Optional<User> findById(Long id) {\n        return repository.findById(id);\n    }",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#findById",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 1.6940823115874082e-05
+        },
+        {
+          "evidence_id": "352016027946582018",
+          "content_excerpt": "private final UserRepository repository;",
+          "source_version": 2,
+          "source_position": "com.example.service.UserService#repository",
+          "knowledge_scope_id": "351193748123680768",
+          "knowledge_scope_type": "project",
+          "relevance_score": 1.6418458471889608e-05
+        }
+      ]
+    },
+    {
+      "query_index": 36,
+      "query": "哪些表通过外键引用了users表？",
+      "project_scope": [
+        "352016496592945153"
+      ],
+      "expected_evidence_ids": [
+        "352016498073534471"
+      ],
+      "retrieved_evidence_ids": [
+        "352016498073534477",
+        "352016498073534471",
+        "352016498073534464",
+        "352016498073534479",
+        "352016498073534473"
+      ],
+      "scores": [
+        0.03278688524590164,
+        0.03125763125763126,
+        0.03200204813108039,
+        0.016129032258064516,
+        0.015625
+      ],
+      "latency_ms": 1069.5214000006672,
+      "status": "ok",
+      "candidate_details": [
+        {
+          "chunk_id": "352016498073534477",
+          "dense_score": 0.59133255,
+          "sparse_score": 10.205378,
+          "fused_score": 0.03278688524590164,
+          "rerank_score": 0.02775125950574875
+        },
+        {
+          "chunk_id": "352016498073534471",
+          "dense_score": 0.4760487,
+          "sparse_score": 3.086295,
+          "fused_score": 0.03125763125763126,
+          "rerank_score": 0.02744564414024353
+        },
+        {
+          "chunk_id": "352016498073534464",
+          "dense_score": 0.51716703,
+          "sparse_score": 4.7964177,
+          "fused_score": 0.03200204813108039,
+          "rerank_score": 0.003696412779390812
+        },
+        {
+          "chunk_id": "352016498073534479",
+          "dense_score": 0.5571501,
+          "sparse_score": null,
+          "fused_score": 0.016129032258064516,
+          "rerank_score": 0.0002466837759129703
+        },
+        {
+          "chunk_id": "352016498073534473",
+          "dense_score": 0.4801525,
+          "sparse_score": null,
+          "fused_score": 0.015625,
+          "rerank_score": 6.871803634567186e-05
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "352016498073534477",
+          "content_excerpt": "CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES users(id)",
+          "source_version": 1,
+          "source_position": "constraint:fk_orders_user",
+          "knowledge_scope_id": "352016496592945153",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.02775125950574875
+        },
+        {
+          "evidence_id": "352016498073534471",
+          "content_excerpt": "CREATE TABLE orders (\n    id BIGSERIAL PRIMARY KEY,\n    user_id BIGINT NOT NULL,\n    total_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,\n    status VARCHAR(20) DEFAULT 'pending',\n    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n    CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES users(id),\n    CONSTRAINT chk_order_amount CHECK (total_amount >= 0)\n);",
+          "source_version": 1,
+          "source_position": "table:orders",
+          "knowledge_scope_id": "352016496592945153",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.02744564414024353
+        },
+        {
+          "evidence_id": "352016498073534464",
+          "content_excerpt": "CREATE TABLE users (\n    id BIGSERIAL PRIMARY KEY,\n    username VARCHAR(100) NOT NULL UNIQUE,\n    email VARCHAR(255) NOT NULL,\n    password_hash VARCHAR(255) NOT NULL,\n    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n);",
+          "source_version": 1,
+          "source_position": "table:users",
+          "knowledge_scope_id": "352016496592945153",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.003696412779390812
+        },
+        {
+          "evidence_id": "352016498073534479",
+          "content_excerpt": "CREATE INDEX idx_orders_user_id ON orders(user_id);",
+          "source_version": 1,
+          "source_position": "index:idx_orders_user_id",
+          "knowledge_scope_id": "352016496592945153",
+          "knowledge_scope_type": "project",
+          "relevance_score": 0.0002466837759129703
+        },
+        {
+          "evidence_id": "352016498073534473",
+          "content_excerpt": "user_id BIGINT NOT NULL",
+          "source_version": 1,
+          "source_position": "table:orders.column:user_id",
+          "knowledge_scope_id": "352016496592945153",
+          "knowledge_scope_type": "project",
+          "relevance_score": 6.871803634567186e-05
         }
       ]
     }
@@ -1789,44 +3807,78 @@
     "checks": [
       {
         "metric": "recall_at_k.mean",
-        "run_1": 0.966667,
-        "run_2": 0.966667,
+        "run_1": 0.972973,
+        "run_2": 0.972973,
         "relative_delta": 0.0,
         "tolerance": 0.01,
         "passed": true
       },
       {
         "metric": "mrr.mean",
-        "run_1": 0.916667,
-        "run_2": 0.916667,
+        "run_1": 0.77027,
+        "run_2": 0.77027,
         "relative_delta": 0.0,
         "tolerance": 0.01,
         "passed": true
       },
       {
         "metric": "ndcg_at_k.mean",
-        "run_1": 0.92976,
-        "run_2": 0.92976,
+        "run_1": 0.82335,
+        "run_2": 0.82335,
         "relative_delta": 0.0,
         "tolerance": 0.01,
         "passed": true
       },
       {
         "metric": "latency_ms.p50",
-        "run_1": 153.6614,
-        "run_2": 154.4968,
-        "relative_delta": 0.005407,
+        "run_1": 1354.798,
+        "run_2": 1332.3227,
+        "relative_delta": 0.016589,
         "tolerance": 0.01,
         "passed": true
       },
       {
         "metric": "latency_ms.p95",
-        "run_1": 211.76493,
-        "run_2": 215.72359,
-        "relative_delta": 0.018351,
+        "run_1": 1481.80082,
+        "run_2": 1461.86326,
+        "relative_delta": 0.013455,
         "tolerance": 0.01,
         "passed": true
       }
     ]
+  },
+  "gate": {
+    "tolerance": 0.01,
+    "checks": [
+      {
+        "label": "001_dense_18_same_session",
+        "status": "pass",
+        "no_regression": true,
+        "recall_ok": true,
+        "mrr_ok": true,
+        "ndcg_ok": true,
+        "current_recall": 1.0,
+        "current_mrr": 0.777778,
+        "current_ndcg": 0.835969,
+        "stored_recall": 1.0,
+        "stored_mrr": 0.6852,
+        "stored_ndcg": 0.7672
+      },
+      {
+        "label": "002_hybrid_18",
+        "status": "pass",
+        "no_regression": true,
+        "recall_ok": true,
+        "mrr_ok": true,
+        "ndcg_ok": true,
+        "current_recall": 1.0,
+        "current_mrr": 0.777778,
+        "current_ndcg": 0.835969,
+        "stored_recall": 1.0,
+        "stored_mrr": 0.7778,
+        "stored_ndcg": 0.836
+      }
+    ],
+    "no_regression": true
   }
 }
