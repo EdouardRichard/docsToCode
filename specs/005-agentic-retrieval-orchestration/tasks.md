@@ -464,9 +464,10 @@ Phase 1 + Phase 2 + Phase 3（US1 查询规划）即可演示“多跳查询被�
   - [路径] backend/src/rag_mcp/agents/{query_planner.py,evidence_analyst.py,context_orchestrator.py,capability_router.py} + backend/src/rag_mcp/orchestration/{state_machine.py,retrieval_pipeline.py} + eval/run_agentic_comparison.py
   - [AC] 受益子集（14 条）MRR/nDCG 相对确定性基线提升 ≥3% 且 Recall@K 不下降（SC-001）；保持 SC-002（001 11 条非劣）与 SC-015（002/004 非受益非回归）通过及硬性指标全过（泄漏 0/Schema 100%/定位 100%）；可重复性（reproducible=true）与 P95 ≤30s、成本非零口径不回退；重新生成 eval/agentic_comparison_report.json 并按新结果记录 enters_default_path；本任务完成后即视为 T069 剩余 AC 完成（可同时勾选 T069）
   - [证据] 现报告（generated_at 2026-09-02T19:36:54Z）sc001_relative_mrr_improvement_pct=-5.9701、sc001_relative_ndcg_improvement_pct=-1.7807（阈值 ≥+3%）；受益子集 14 条中排名回退集中于 2 条 conflict 类查询（idx 42/43，期望证据 rank 1→3，Agent 路径将 352016498073534464/471 排至 477 之前）；sc002/sc015/hard_metrics 均已通过；agentic_degraded_queries=2/44；T069 存储证据（-16.4/-12.6、8/44 降级）为旧一轮报告状态，以本条为准
+  - [证据·终态 T075] 最终报告（generated_at 2026-09-03T02:21:47Z）已三段通过：sc001_relative_mrr_improvement_pct=+7.4627、sc001_relative_ndcg_improvement_pct=+5.5097（阈值 ≥+3%）、Recall@K 0.9394 持平；sc002/sc015/hard_metrics 全过（泄漏=0/Schema 1.0/定位 1.0/账本桥接 1.0）；reproducible=true；agentic_degraded_queries=0/44；enters_default_path=true——SC-001/FR-029 达成，Agent 编排进入默认检索路径（运行配置开关仍由运维启用）
   - [deps] 无
 
 ## Phase 10: Convergence
 
-- [ ] T074 在 eval/agentic_comparison_report.json 中标注 reproducibility 延迟为 cache-replay 口径（当前与冷启动真实延迟 p50≈7.9s/p95≈21.3s 相矛盾） per SC-008 (contradicts)
-- [ ] T075 记录最终通过报告状态：Phase 9/T073 证据仍引用 2026-09-02 旧失败报告（-5.97%/-1.78%），现报告 2026-09-03 已 +7.46%/+5.51%、enters_default_path=true per T073 (contradicts)
+- [X] T074 在 eval/agentic_comparison_report.json 中标注 reproducibility 延迟为 cache-replay 口径（当前与冷启动真实延迟 p50≈7.9s/p95≈21.3s 相矛盾） per SC-008 (contradicts)
+- [X] T075 记录最终通过报告状态：Phase 9/T073 证据仍引用 2026-09-02 旧失败报告（-5.97%/-1.78%），现报告 2026-09-03 已 +7.46%/+5.51%、enters_default_path=true per T073 (contradicts)

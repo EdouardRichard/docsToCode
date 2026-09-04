@@ -463,6 +463,13 @@ def build_comparison_report(
         "latency_cost_source": "cold pass with real LLM calls and real guardrails",
         "fairness": "each pass reruns the deterministic baseline before the agentic path (FR-030)",
         "reproducibility_source": "metric pass 1 vs metric pass 2 (SC-008, 1% tolerance)",
+        # T074: the reproducibility block's latency checks are warm cache-replay
+        # (the metric passes); the headline agentic_metrics.latency_ms comes
+        # from the cold real-LLM pass. The two are different measurement arms.
+        "reproducibility_latency_source": (
+            "warm cache-replay metric passes (NOT the cold real-LLM latency "
+            "recorded in agentic_metrics.latency_ms)"
+        ),
     }
     return report
 

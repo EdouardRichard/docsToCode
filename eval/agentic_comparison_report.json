@@ -3640,6 +3640,7 @@
     "metrics_source": "deterministic warm metric passes (LLM response-cache replay)",
     "latency_cost_source": "cold pass with real LLM calls and real guardrails",
     "fairness": "each pass reruns the deterministic baseline before the agentic path (FR-030)",
-    "reproducibility_source": "metric pass 1 vs metric pass 2 (SC-008, 1% tolerance)"
+    "reproducibility_source": "metric pass 1 vs metric pass 2 (SC-008, 1% tolerance)",
+    "reproducibility_latency_source": "warm cache-replay metric passes (NOT the cold real-LLM latency recorded in agentic_metrics.latency_ms)"
   }
 }
