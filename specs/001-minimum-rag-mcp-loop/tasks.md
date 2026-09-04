@@ -407,6 +407,6 @@ Every task above modifies ≤ 2 files. Most modify exactly 1 file. The only exce
 
 ## Phase 10: Convergence
 
-- [ ] T065 修正 eval/baseline_report.json 的可重复性语义：延迟指标标注环境敏感（non_latency_reproducible），使 reproducible=false 仅反映延迟漂移而非整体不可复现 per SC-009 (partial)
+- [X] T065 修正 eval/baseline_report.json 的可重复性语义：延迟指标标注环境敏感（non_latency_reproducible），使 reproducible=false 仅反映延迟漂移而非整体不可复现 per SC-009 (partial)
 - [X] T066 为 mcp/search_knowledge.py 与 mcp/get_evidence.py 的 Tool 注册补 readOnlyHint=true 注解 per T043/FR-022 (missing)
 - [X] T067 落实或核验 search_knowledge 的 mirrored TextContent（当前仅 docstring 声明，需确认 FastMCP SDK 自动 marshal 或显式实现） per FR-021 (partial)
