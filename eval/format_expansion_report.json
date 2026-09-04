@@ -1,6 +1,6 @@
 {
   "report_type": "format_expansion_comparison",
-  "generated_at": "2026-09-04T03:47:08.264714+00:00",
+  "generated_at": "2026-09-04T08:44:45.450589+00:00",
   "config": {
     "embedding_model": "BAAI/bge-m3",
     "reranker_model": "BAAI/bge-reranker-v2-m3",
@@ -10,50 +10,50 @@
     "rrf_k": 60,
     "rerank_budget": 20,
     "dataset_path": "D:\\Project_new\\docsToCode\\eval\\eval_dataset.json",
-    "num_queries": 18
+    "num_queries": 37
   },
   "per_format": {
     "java": {
-      "num_queries": 13,
+      "num_queries": 17,
       "dense": {
-        "num_queries": 13,
+        "num_queries": 17,
         "recall_at_5": {
           "mean": 1.0,
           "min": 1.0,
           "max": 1.0
         },
         "mrr": {
-          "mean": 0.5641,
+          "mean": 0.5784,
           "min": 0.3333,
           "max": 1.0
         },
         "ndcg_at_5": {
-          "mean": 0.6776,
+          "mean": 0.6884,
           "min": 0.5,
           "max": 1.0
         },
-        "p50": 138.59,
-        "p95": 186.23
+        "p50": 138.94,
+        "p95": 162.89
       },
       "hybrid": {
-        "num_queries": 13,
+        "num_queries": 17,
         "recall_at_5": {
           "mean": 1.0,
           "min": 1.0,
           "max": 1.0
         },
         "mrr": {
-          "mean": 0.6923,
+          "mean": 0.6765,
           "min": 0.5,
           "max": 1.0
         },
         "ndcg_at_5": {
-          "mean": 0.7729,
+          "mean": 0.7612,
           "min": 0.6309,
           "max": 1.0
         },
-        "p50": 1397.33,
-        "p95": 1538.11
+        "p50": 1409.02,
+        "p95": 1499.22
       }
     },
     "markdown": {
@@ -75,8 +75,8 @@
           "min": 1.0,
           "max": 1.0
         },
-        "p50": 77.11,
-        "p95": 77.9
+        "p50": 75.94,
+        "p95": 80.25
       },
       "hybrid": {
         "num_queries": 5,
@@ -95,266 +95,266 @@
           "min": 1.0,
           "max": 1.0
         },
-        "p50": 200.46,
-        "p95": 215.12
+        "p50": 197.23,
+        "p95": 199.81
       }
     },
     "openapi": {
-      "num_queries": 0,
+      "num_queries": 2,
       "dense": {
-        "num_queries": 0,
+        "num_queries": 2,
         "recall_at_5": {
-          "mean": 0.0,
+          "mean": 0.5,
           "min": 0.0,
-          "max": 0.0
+          "max": 1.0
         },
         "mrr": {
-          "mean": 0.0,
+          "mean": 0.1667,
           "min": 0.0,
-          "max": 0.0
+          "max": 0.3333
         },
         "ndcg_at_5": {
-          "mean": 0.0,
+          "mean": 0.25,
           "min": 0.0,
-          "max": 0.0
+          "max": 0.5
         },
-        "p50": 0.0,
-        "p95": 0.0
+        "p50": 132.11,
+        "p95": 139.48
       },
       "hybrid": {
-        "num_queries": 0,
+        "num_queries": 2,
         "recall_at_5": {
-          "mean": 0.0,
+          "mean": 0.5,
           "min": 0.0,
-          "max": 0.0
+          "max": 1.0
         },
         "mrr": {
-          "mean": 0.0,
+          "mean": 0.25,
           "min": 0.0,
-          "max": 0.0
+          "max": 0.5
         },
         "ndcg_at_5": {
-          "mean": 0.0,
+          "mean": 0.3155,
           "min": 0.0,
-          "max": 0.0
+          "max": 0.6309
         },
-        "p50": 0.0,
-        "p95": 0.0
+        "p50": 1173.15,
+        "p95": 1181.61
       }
     },
     "ddl": {
-      "num_queries": 0,
+      "num_queries": 5,
       "dense": {
-        "num_queries": 0,
+        "num_queries": 5,
         "recall_at_5": {
-          "mean": 0.0,
-          "min": 0.0,
-          "max": 0.0
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
         },
         "mrr": {
-          "mean": 0.0,
-          "min": 0.0,
-          "max": 0.0
+          "mean": 0.4233,
+          "min": 0.2,
+          "max": 1.0
         },
         "ndcg_at_5": {
-          "mean": 0.0,
-          "min": 0.0,
-          "max": 0.0
+          "mean": 0.5635,
+          "min": 0.3869,
+          "max": 1.0
         },
-        "p50": 0.0,
-        "p95": 0.0
+        "p50": 127.09,
+        "p95": 151.61
       },
       "hybrid": {
-        "num_queries": 0,
+        "num_queries": 5,
         "recall_at_5": {
-          "mean": 0.0,
-          "min": 0.0,
-          "max": 0.0
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
         },
         "mrr": {
-          "mean": 0.0,
-          "min": 0.0,
-          "max": 0.0
+          "mean": 0.8,
+          "min": 0.5,
+          "max": 1.0
         },
         "ndcg_at_5": {
-          "mean": 0.0,
-          "min": 0.0,
-          "max": 0.0
+          "mean": 0.8524,
+          "min": 0.6309,
+          "max": 1.0
         },
-        "p50": 0.0,
-        "p95": 0.0
+        "p50": 1032.74,
+        "p95": 1299.17
       }
     },
     "go": {
-      "num_queries": 0,
+      "num_queries": 2,
       "dense": {
-        "num_queries": 0,
+        "num_queries": 2,
         "recall_at_5": {
-          "mean": 0.0,
-          "min": 0.0,
-          "max": 0.0
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
         },
         "mrr": {
-          "mean": 0.0,
-          "min": 0.0,
-          "max": 0.0
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
         },
         "ndcg_at_5": {
-          "mean": 0.0,
-          "min": 0.0,
-          "max": 0.0
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
         },
-        "p50": 0.0,
-        "p95": 0.0
+        "p50": 124.42,
+        "p95": 127.2
       },
       "hybrid": {
-        "num_queries": 0,
+        "num_queries": 2,
         "recall_at_5": {
-          "mean": 0.0,
-          "min": 0.0,
-          "max": 0.0
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
         },
         "mrr": {
-          "mean": 0.0,
-          "min": 0.0,
-          "max": 0.0
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
         },
         "ndcg_at_5": {
-          "mean": 0.0,
-          "min": 0.0,
-          "max": 0.0
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
         },
-        "p50": 0.0,
-        "p95": 0.0
+        "p50": 617.9,
+        "p95": 638.49
       }
     },
     "python": {
-      "num_queries": 0,
+      "num_queries": 2,
       "dense": {
-        "num_queries": 0,
+        "num_queries": 2,
         "recall_at_5": {
-          "mean": 0.0,
-          "min": 0.0,
-          "max": 0.0
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
         },
         "mrr": {
-          "mean": 0.0,
-          "min": 0.0,
-          "max": 0.0
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
         },
         "ndcg_at_5": {
-          "mean": 0.0,
-          "min": 0.0,
-          "max": 0.0
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
         },
-        "p50": 0.0,
-        "p95": 0.0
+        "p50": 131.67,
+        "p95": 139.79
       },
       "hybrid": {
-        "num_queries": 0,
+        "num_queries": 2,
         "recall_at_5": {
-          "mean": 0.0,
-          "min": 0.0,
-          "max": 0.0
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
         },
         "mrr": {
-          "mean": 0.0,
-          "min": 0.0,
-          "max": 0.0
+          "mean": 0.75,
+          "min": 0.5,
+          "max": 1.0
         },
         "ndcg_at_5": {
-          "mean": 0.0,
-          "min": 0.0,
-          "max": 0.0
+          "mean": 0.8155,
+          "min": 0.6309,
+          "max": 1.0
         },
-        "p50": 0.0,
-        "p95": 0.0
+        "p50": 1128.5,
+        "p95": 1328.24
       }
     },
     "word": {
-      "num_queries": 0,
+      "num_queries": 2,
       "dense": {
-        "num_queries": 0,
+        "num_queries": 2,
         "recall_at_5": {
-          "mean": 0.0,
-          "min": 0.0,
-          "max": 0.0
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
         },
         "mrr": {
-          "mean": 0.0,
-          "min": 0.0,
-          "max": 0.0
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
         },
         "ndcg_at_5": {
-          "mean": 0.0,
-          "min": 0.0,
-          "max": 0.0
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
         },
-        "p50": 0.0,
-        "p95": 0.0
+        "p50": 124.77,
+        "p95": 125.27
       },
       "hybrid": {
-        "num_queries": 0,
+        "num_queries": 2,
         "recall_at_5": {
-          "mean": 0.0,
-          "min": 0.0,
-          "max": 0.0
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
         },
         "mrr": {
-          "mean": 0.0,
-          "min": 0.0,
-          "max": 0.0
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
         },
         "ndcg_at_5": {
-          "mean": 0.0,
-          "min": 0.0,
-          "max": 0.0
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
         },
-        "p50": 0.0,
-        "p95": 0.0
+        "p50": 432.95,
+        "p95": 474.78
       }
     },
     "pdf": {
-      "num_queries": 0,
+      "num_queries": 2,
       "dense": {
-        "num_queries": 0,
+        "num_queries": 2,
         "recall_at_5": {
-          "mean": 0.0,
-          "min": 0.0,
-          "max": 0.0
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
         },
         "mrr": {
-          "mean": 0.0,
-          "min": 0.0,
-          "max": 0.0
+          "mean": 0.75,
+          "min": 0.5,
+          "max": 1.0
         },
         "ndcg_at_5": {
-          "mean": 0.0,
-          "min": 0.0,
-          "max": 0.0
+          "mean": 0.8155,
+          "min": 0.6309,
+          "max": 1.0
         },
-        "p50": 0.0,
-        "p95": 0.0
+        "p50": 125.03,
+        "p95": 125.57
       },
       "hybrid": {
-        "num_queries": 0,
+        "num_queries": 2,
         "recall_at_5": {
-          "mean": 0.0,
-          "min": 0.0,
-          "max": 0.0
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
         },
         "mrr": {
-          "mean": 0.0,
-          "min": 0.0,
-          "max": 0.0
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
         },
         "ndcg_at_5": {
-          "mean": 0.0,
-          "min": 0.0,
-          "max": 0.0
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
         },
-        "p50": 0.0,
-        "p95": 0.0
+        "p50": 750.59,
+        "p95": 777.46
       }
     }
   },
@@ -378,8 +378,8 @@
           "min": 0.5,
           "max": 1.0
         },
-        "p50": 131.31,
-        "p95": 167.39
+        "p50": 125.17,
+        "p95": 158.34
       },
       "hybrid": {
         "num_queries": 18,
@@ -398,99 +398,99 @@
           "min": 0.6309,
           "max": 1.0
         },
-        "p50": 1355.01,
-        "p95": 1505.55
+        "p50": 1351.14,
+        "p95": 1494.01
       }
     },
     "new_12": {
-      "num_queries": 0,
+      "num_queries": 19,
       "dense": {
-        "num_queries": 0,
+        "num_queries": 19,
         "recall_at_5": {
-          "mean": 0.0,
+          "mean": 0.9474,
           "min": 0.0,
-          "max": 0.0
+          "max": 1.0
         },
         "mrr": {
-          "mean": 0.0,
+          "mean": 0.6553,
           "min": 0.0,
-          "max": 0.0
+          "max": 1.0
         },
         "ndcg_at_5": {
-          "mean": 0.0,
+          "mean": 0.7285,
           "min": 0.0,
-          "max": 0.0
+          "max": 1.0
         },
-        "p50": 0.0,
-        "p95": 0.0
+        "p50": 125.98,
+        "p95": 142.09
       },
       "hybrid": {
-        "num_queries": 0,
+        "num_queries": 19,
         "recall_at_5": {
-          "mean": 0.0,
+          "mean": 0.9474,
           "min": 0.0,
-          "max": 0.0
+          "max": 1.0
         },
         "mrr": {
-          "mean": 0.0,
+          "mean": 0.7632,
           "min": 0.0,
-          "max": 0.0
+          "max": 1.0
         },
         "ndcg_at_5": {
-          "mean": 0.0,
+          "mean": 0.8114,
           "min": 0.0,
-          "max": 0.0
+          "max": 1.0
         },
-        "p50": 0.0,
-        "p95": 0.0
+        "p50": 1032.74,
+        "p95": 1419.61
       }
     }
   },
   "baseline_comparison": {
     "001_dense": {
-      "num_queries": 18,
+      "num_queries": 37,
       "recall_at_5": {
-        "mean": 1.0,
-        "min": 1.0,
+        "mean": 0.973,
+        "min": 0.0,
         "max": 1.0
       },
       "mrr": {
-        "mean": 0.6852,
-        "min": 0.3333,
+        "mean": 0.6698,
+        "min": 0.0,
         "max": 1.0
       },
       "ndcg_at_5": {
-        "mean": 0.7672,
-        "min": 0.5,
+        "mean": 0.7473,
+        "min": 0.0,
         "max": 1.0
       },
-      "p50": 131.31,
-      "p95": 167.39
+      "p50": 125.63,
+      "p95": 146.68
     },
     "002_hybrid": {
-      "num_queries": 18,
+      "num_queries": 37,
       "recall_at_5": {
-        "mean": 1.0,
-        "min": 1.0,
+        "mean": 0.973,
+        "min": 0.0,
         "max": 1.0
       },
       "mrr": {
-        "mean": 0.7778,
-        "min": 0.5,
+        "mean": 0.7703,
+        "min": 0.0,
         "max": 1.0
       },
       "ndcg_at_5": {
-        "mean": 0.836,
-        "min": 0.6309,
+        "mean": 0.8233,
+        "min": 0.0,
         "max": 1.0
       },
-      "p50": 1355.01,
-      "p95": 1505.55
+      "p50": 1329.43,
+      "p95": 1463.68
     },
     "deltas": {
       "recall_mean_delta": 0.0,
-      "mrr_mean_delta": 0.092593,
-      "ndcg_mean_delta": 0.068786
+      "mrr_mean_delta": 0.10045,
+      "ndcg_mean_delta": 0.076038
     },
     "001_dense_stored": {
       "num_queries": 11,

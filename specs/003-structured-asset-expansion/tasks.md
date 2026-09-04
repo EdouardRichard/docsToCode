@@ -447,6 +447,6 @@ description: "Task list for 003 Structured Asset Expansion feature implementatio
 ## Phase 10: Convergence
 
 - [X] T054 实现 PDF 多栏（栏感知）阅读顺序保留：用 pdfplumber 的 words/x 坐标检测栏布局并按正确阅读顺序重组文本，栏检测失败时降级线性提取并标注原因 per FR-006 (missing)
-- [ ] T055 用完整 37 条评测集（不带 --limit）重产 eval/format_expansion_report.json，使 6 种新格式各含 ≥2 条非零指标；并发布 openapi 评测语料（当前 scope 352014591405850625 无 published 版本、openapi 查询 MRR=0） per SC-003/T039 (partial)
+- [X] T055 用完整 37 条评测集（不带 --limit）重产 eval/format_expansion_report.json，使 6 种新格式各含 ≥2 条非零指标；并发布 openapi 评测语料（当前 scope 352014591405850625 无 published 版本、openapi 查询 MRR=0） per SC-003/T039 (partial)
 - [ ] T056 产出 eval/reproducibility_report.json（或将 T051 输出路径与报告内嵌 reproducibility 块对齐） per SC-010/T051 (missing)
 - [ ] T057 为 eval/regression_report.json 增加原 18 条 Markdown/Java 相对 001/002 基线的非劣判定 verdict（当前无 gate/no_regression 字段、仅 30 条 hybrid 均值） per SC-002/T040 (partial)

@@ -123,6 +123,26 @@ def _empty_flat_metrics(top_k: int) -> dict[str, Any]:
     }
 
 
+def _format_report_target(
+    format_report_output: str | None,
+    limit: int | None,
+) -> Path:
+    """Resolve the per-format report path for this run scope (T055).
+
+    - An explicit --format-report always wins.
+    - An unlimited run (the 003 full mixed-format scope) targets the declared
+      003 artifact eval/format_expansion_report.json.
+    - A limited run (the 002 fixed 18-query acceptance scope) targets a
+      distinct eval/format_expansion_report_002_limited.json so that
+      re-running the 002 acceptance regression can never truncate the 003
+      per-format artifact back to the original java/markdown subset.
+    """
+    if format_report_output:
+        return Path(format_report_output)
+    if limit is not None and limit > 0:
+        return _REPO_ROOT / "eval" / "format_expansion_report_002_limited.json"
+    return _REPO_ROOT / "eval" / "format_expansion_report.json"
+
 def generate_format_expansion_report(
     dataset: list[dict[str, Any]],
     dense_per_query: list[dict[str, Any]],
@@ -132,6 +152,7 @@ def generate_format_expansion_report(
     top_k: int,
     config: dict[str, Any],
     output_path: str,
+    skip_write_when_limited: bool = False,
 ) -> dict[str, Any]:
     """Generate the per-format comparison report (FR-026 / T039).
 
@@ -237,6 +258,15 @@ def generate_format_expansion_report(
     }
 
     out = Path(output_path)
+    is_declared_003_artifact = out.name == "format_expansion_report.json"
+    if skip_write_when_limited and is_declared_003_artifact:
+        # T055: a limited (002-scoped) run must never truncate the declared
+        # 003 per-format artifact back to the original java/markdown subset;
+        # the report is still returned for logging purposes only.
+        logger.info(
+            "Limited run: skipping write of %s (003 artifact protection)", out,
+        )
+        return report
     out.parent.mkdir(parents=True, exist_ok=True)
     with open(out, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
@@ -625,10 +655,12 @@ async def run_comparison(
         original_subset_gate["baseline_recall_mean"], original_subset_gate["hybrid_recall_mean"],
     )
 
-    # --- Format expansion report (T039 / FR-026) ---
-    _format_report_path = format_report_output or str(
-        _REPO_ROOT / "eval" / "format_expansion_report.json"
-    )
+    # --- Format expansion report (T039 / FR-026, scoped by T055) ---
+    # A limited run (002 fixed scope) writes its side-effect format report
+    # to a distinct 002-scoped path; only an unlimited (full dataset) run
+    # regenerates the declared 003 artifact.
+    _format_report_path = _format_report_target(format_report_output, limit)
+    _is_limited = limit is not None and limit > 0
     generate_format_expansion_report(
         dataset=dataset,
         dense_per_query=dense_per_query,
@@ -637,7 +669,8 @@ async def run_comparison(
         hybrid_metrics=hybrid_metrics,
         top_k=top_k,
         config=report["config"],
-        output_path=_format_report_path,
+        output_path=str(_format_report_path),
+        skip_write_when_limited=_is_limited and not format_report_output,
     )
 
     return 0
