@@ -466,3 +466,7 @@ Phase 1 + Phase 2 + Phase 3（US1 查询规划）即可演示“多跳查询被�
   - [证据] 现报告（generated_at 2026-09-02T19:36:54Z）sc001_relative_mrr_improvement_pct=-5.9701、sc001_relative_ndcg_improvement_pct=-1.7807（阈值 ≥+3%）；受益子集 14 条中排名回退集中于 2 条 conflict 类查询（idx 42/43，期望证据 rank 1→3，Agent 路径将 352016498073534464/471 排至 477 之前）；sc002/sc015/hard_metrics 均已通过；agentic_degraded_queries=2/44；T069 存储证据（-16.4/-12.6、8/44 降级）为旧一轮报告状态，以本条为准
   - [deps] 无
 
+## Phase 10: Convergence
+
+- [ ] T074 在 eval/agentic_comparison_report.json 中标注 reproducibility 延迟为 cache-replay 口径（当前与冷启动真实延迟 p50≈7.9s/p95≈21.3s 相矛盾） per SC-008 (contradicts)
+- [ ] T075 记录最终通过报告状态：Phase 9/T073 证据仍引用 2026-09-02 旧失败报告（-5.97%/-1.78%），现报告 2026-09-03 已 +7.46%/+5.51%、enters_default_path=true per T073 (contradicts)

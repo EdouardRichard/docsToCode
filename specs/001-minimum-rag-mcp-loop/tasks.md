@@ -404,3 +404,9 @@ Every task above modifies ≤ 2 files. Most modify exactly 1 file. The only exce
   - AC: 显式公共 scope 查询解析成功；公共证据携带 knowledge_scope_type='public'、项目证据保持 'project'；未知 ref 仍返回 MISSING_PROJECT_SCOPE 不回退全库
 - [x] T064 [P] 集成测试：公共域管理 API + 解析 + 域身份 + 隔离（test_public_scope.py，10 用例全绿）per FR-002/FR-016 (missing)
   - AC: 创建/列表/重名拒绝/缺参校验；公共 scope 解析与未知拒绝；公共/项目证据域身份各自正确
+
+## Phase 10: Convergence
+
+- [ ] T065 修正 eval/baseline_report.json 的可重复性语义：延迟指标标注环境敏感（non_latency_reproducible），使 reproducible=false 仅反映延迟漂移而非整体不可复现 per SC-009 (partial)
+- [ ] T066 为 mcp/search_knowledge.py 与 mcp/get_evidence.py 的 Tool 注册补 readOnlyHint=true 注解 per T043/FR-022 (missing)
+- [ ] T067 落实或核验 search_knowledge 的 mirrored TextContent（当前仅 docstring 声明，需确认 FastMCP SDK 自动 marshal 或显式实现） per FR-021 (partial)

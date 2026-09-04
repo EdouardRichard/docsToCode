@@ -484,3 +484,7 @@ Task: T010 postgres_graph_store → T011 expansion → T013 fusion
   - [AC] 从仓库根运行 `python -m pytest backend/tests`（MCP 服务器 127.0.0.1:8080 未启动）时该用例 cleanly SKIPPED 而非 ERROR：① `openapi_alias` fixture 改经 `Path(get_settings().data_root)` 写 raw 文件（对齐 graph_ingest_helpers.py / test_capability_isolation.py 约定），消除与 `IngestionService._read_raw_bytes` CWD 相对解析不一致导致的 FileNotFoundError；② MCP 服务器可达性探测前置到 fixture/setup 阶段，不可达先于 ingest 执行 `pytest.skip`；③ fixture 清理其创建的 project/source/向量（或文档化残留可接受）；服务器运行且 CWD 为 backend/ 或仓库根时该用例正常通过
   - [证据] 全套 pytest 结果 "769 passed, 7 warnings, 1 error in 87.91s"（exit 1）；ERROR backend/tests/integration/test_target_host_smoke.py::TestTargetHostSmoke::test_search_and_get_evidence_via_mcp_host——setup 阶段 FileNotFoundError: Raw file not found at data\uploads\<scope>\<source>\openapi.json（fixture 硬编码写入 PROJECT_ROOT/backend/data/uploads，而 ingest 读取相对 CWD 的 settings.data_root='./data/uploads'）；T050 跳过守卫仅覆盖测试体连接/请求阶段，未覆盖 fixture setup
 
+## Phase 11: Convergence
+
+- [ ] T052 将报告可重复性检查的延迟项标注环境敏感并排除出通过闸口（当前 p50/p95 相对 delta 超 1% 容差却 passed=true 且无 env-sensitive 标注） per SC-007 (partial)
+- [ ] T053 核验 Java 调用图在评测语料中是否产生内部调用边：4 条 Java 结构性查询 graph_edge_path_summary 全空、SC-001 收益全部来自 DDL，需确认 US1 收益或记录原因 per US1/FR-023 (partial)

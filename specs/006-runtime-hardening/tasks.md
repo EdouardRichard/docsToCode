@@ -296,4 +296,7 @@
 - [X] T085 使 agentic 检索请求进入运行指标聚合源（请求量/状态分布/延迟/子路径耗时）：agentic 路径仅写 `agentic_retrieval_run`（005）不写 `retrieval_runs`，导致 agentic 形态请求在 `request_totals`/`completion_status_distribution`/`latency`/`subpath_timings_ms` 中缺失 per FR-016/FR-018 (partial)
 - [X] T086 复核并固化 SC-009(1) 的 1% 容差判定语义：`eval/instance_form_smoke_report.json` 中 mrr（0.9545 vs 基线 0.909）与 ndcg（0.966 vs 0.933）`within_tolerance=false`（超出 1% 相对容差、改善方向），当前冒烟以单侧"no_regression"通过、未满足"在 1% 容差内逐条一致"字面口径；要么在同一 001 已发布知识库上复跑使非延迟指标落入 1% 内，要么在 research.md/spec 显式固化为单侧判定口径 per FR-028/SC-009 (partial)
 
+## Phase 10: Convergence
 
+- [ ] T087 用当前代码重产 eval/instance_form_smoke_report.json，补齐 pass 与 tolerance_semantics 闸口字段（当前 JSON 早于 T086 修复、仅含 means/comparison） per SC-009(1)/FR-028 (partial)
+- [ ] T088 消除 ProviderUsageAccumulator.record_llm 死代码或将 agentic LLM 用量经该累加器路由，收敛两条记账路径 per FR-016/T083 (partial)
