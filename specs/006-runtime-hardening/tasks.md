@@ -298,5 +298,5 @@
 
 ## Phase 10: Convergence
 
-- [ ] T087 用当前代码重产 eval/instance_form_smoke_report.json，补齐 pass 与 tolerance_semantics 闸口字段（当前 JSON 早于 T086 修复、仅含 means/comparison） per SC-009(1)/FR-028 (partial)
+- [X] T087 用当前代码重产 eval/instance_form_smoke_report.json，补齐 pass 与 tolerance_semantics 闸口字段（当前 JSON 早于 T086 修复、仅含 means/comparison） per SC-009(1)/FR-028 (partial)
 - [X] T088 消除 ProviderUsageAccumulator.record_llm 死代码或将 agentic LLM 用量经该累加器路由，收敛两条记账路径 per FR-016/T083 (partial)

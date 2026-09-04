@@ -1,10 +1,10 @@
 {
   "report_type": "instance_form_smoke",
-  "generated_at": "2026-09-03T14:45:15.081175+00:00",
+  "generated_at": "2026-09-04T09:20:59.159881+00:00",
   "instance_forms": {
     "writer": {
       "mode": "writer",
-      "generated_at": "2026-09-03T14:45:12.918923+00:00",
+      "generated_at": "2026-09-04T09:20:56.328712+00:00",
       "num_queries": 11,
       "means": {
         "recall_at_k": 1.0,
@@ -167,11 +167,13 @@
           ],
           "status": "complete"
         }
-      ]
+      ],
+      "tolerance_semantics": "non_regression_lower_bound",
+      "pass": true
     },
     "reader": {
       "mode": "reader",
-      "generated_at": "2026-09-03T14:45:15.081175+00:00",
+      "generated_at": "2026-09-04T09:20:59.159881+00:00",
       "num_queries": 11,
       "means": {
         "recall_at_k": 1.0,
@@ -334,7 +336,9 @@
           ],
           "status": "complete"
         }
-      ]
+      ],
+      "tolerance_semantics": "non_regression_lower_bound",
+      "pass": true
     }
   }
 }
