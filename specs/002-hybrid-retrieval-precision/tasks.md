@@ -286,8 +286,8 @@ With multiple developers after Foundational:
 | FR-001 (Sparse 索引构建) | T003, T012, T015 | US1 |
 | FR-002 (Dense+Sparse 并行召回 scope 过滤) | T012, T017 | US1 |
 | FR-003 (RRF/DBSF 融合保留各路分数) | T005, T017, T020 | US1/US2 |
-| FR-004 (Cross-Encoder Rerank bge-reranker) | T007, T020 | US2 |
-| FR-005 (Rerank 只处理有限候选) | T007, T020 | US2 |
+| FR-004 (Cross-Encoder Rerank bge-reranker) | T007, T020, T032, T037 | US2 |
+| FR-005 (Rerank 只处理有限候选) | T007, T020, T032, T037 | US2 |
 | FR-006 (融合保留知识域身份) | T017, T020 | US1/US2 |
 | FR-007 (显式 project_scope 继承) | T016, T017 | US1 |
 | FR-008 (跨项目泄漏为零) | T012, T017, T020 | US1/US2 |
@@ -297,16 +297,16 @@ With multiple developers after Foundational:
 | FR-012 (不可混用) | T026 | US4 |
 | FR-013 (能力门控) | T017, T028 | US1/US4 |
 | FR-014 (可重建派生索引) | T015, T028 | US1/US4 |
-| FR-015 (护栏配置) | T008, T020 | US2 |
+| FR-015 (护栏配置) | T008, T020, T036 | US2 |
 | FR-016 (partial 降级) | T020 | US2 |
 | FR-017 (确定性 tie-breaker) | T005, T007, T020 | US2 |
 | FR-018 (并发隔离) | T017, T019, T020 | US1/US2 |
 | FR-019 (扩充评测集) | T023 | US3 |
-| FR-020 (逐查询可解释分数) | T025 | US3 |
-| FR-021 (可度量收益才进默认路径) | T025 | US3 |
+| FR-020 (逐查询可解释分数) | T025, T034, T037 | US3 |
+| FR-021 (可度量收益才进默认路径) | T025, T035, T037, T039 | US3 |
 | FR-022 (子路径耗时追踪) | T010, T020 | US2 |
 | FR-023 (重建不自动迁移) | T015, T028 | US1/US4 |
-| FR-024 (同会话先 Dense 后 Hybrid) | T025 | US3 |
+| FR-024 (同会话先 Dense 后 Hybrid) | T025, T033, T038 | US3 |
 | FR-025 (CJK 分词) | T003, T023 | US1/US3 |
 ## Phase 8: Convergence
 
@@ -336,4 +336,19 @@ report absent), and FR-015/SC-005 (per-query DB scan performance risk).
 - [X] T036 Cache or persist sparse encoder vocabulary to avoid per-query full DB scan per FR-015/SC-005 (partial)
   **Evidence**: `RetrievalService._build_sparse_encoder` (lines 750–771) executes a full PostgreSQL scan of all published chunk `content_text` and rebuilds `BM25SparseEncoder.fit()` on every hybrid search call; this adds significant latency per query and risks exceeding the 30s total timeout guardrail (SC-005).
   **验收标准**: The sparse encoder vocabulary (or a shared encoder instance) is cached/persisted so that it is built once (at ingestion publish time or on first query, then cached) rather than per query; hybrid search latency P50/P95 is recorded in `subpath_timings` and stays within the 30s total timeout; the cached encoder produces identical term IDs (hash-based) to the ingestion-time encoder so stored and query sparse vectors remain compatible.
+
+## Phase 9: Convergence — 评测链路真实性修复（2026-09-04）
+
+> 收敛评估（$speckit-analyze 全量一致性分析发现）：既有 T032–T036 已勾选，但验收证据存在三处失真——
+> (1) eval 混合臂从未运行 Reranker（run_eval.py:165 以 RRF 分数冒充 rerank 分数）；(2) 对照报告 hard_constraints
+> 为硬编码字面量（run_comparison.py:337-343）而非实测；(3) enters_default_path 门禁以 delta>=0 在全 18 条上
+> 判定（应按原 11 条子集要求严格正增量，宪法原则 X）。本轮修复使验收证据真实化。
+
+- [X] T037 评测混合臂接入 Reranker（对齐生产路径 retrieval_service.py:1340-1396）：run_eval.py hybrid 模式实例化 LocalCPUReranker、按候选预算截取、记录真实 Cross-Encoder 分数并按精排次序重排 per FR-004/FR-005/FR-020/SC-007 (contradicts)
+  - **验收标准**: run_eval.py 混合臂 rerank_score 为真实 Cross-Encoder 分数（不再等于 fused_score）；run_comparison.py 混合臂与可重复性第二跑均传入 Reranker；报告 per_query_comparison 各路分数（dense/sparse/fused/rerank）互不相同
+- [X] T038 对照报告硬指标改为实测：run_eval.py 产出 evidence_items（对齐 mcp-search-output.schema.json 证据结构），run_comparison.py 逐条测量泄漏/Schema 合法率/来源可定位率 per SC-002/SC-003/SC-004 (partial)
+  - **验收标准**: 报告 hard_constraints 三值由 18 条×top_k 条证据逐条实测得出（70 条证据：泄漏 0/Schema 1.0/定位 1.0），非硬编码
+- [X] T039 enters_default_path 门禁改为原 11 条严格判定 + --limit 固定 002 验收集：按原 001 基线 11 条子集计算 MRR/nDCG 严格正增量与 Recall 非降，报告携带 original_subset_gate 明细块 per FR-021/SC-001/宪法 X (contradicts)
+  - **验收标准**: 门禁仅在 dataset 前 11 条上判定且要求 delta>0；报告含 original_subset_gate（契约 schema 已增补可选属性）；--limit 18 使存储记录可复现
+  - **验收记录（2026-09-04 重跑）**: 原 11 条 MRR 0.7576→0.7727（+正增量）、nDCG 0.8203→0.8322（+正增量）、Recall 1.0 持平、validateToken rank 3→2（真实 rerank 分数 0.0379）；18 条全量 delta MRR +0.0926 / nDCG +0.0688；硬指标实测全过。**enters_default_path=false**：原 11 条绝对值未达 research.md §0.2 阈值（MRR≥0.95/nDCG≥0.96）——该阈值为旧环境水位口径，当前环境基线臂绝对值整体下移（0.7576）；阈值口径修订为待用户决策事项（保留绝对阈值则混合路径按宪法 X 不进默认路径，或修订 §0.2 为相对提升口径）
 

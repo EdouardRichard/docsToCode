@@ -1,0 +1,111 @@
+{
+  "report_type": "quickstart_acceptance",
+  "feature": "001-minimum-rag-mcp-loop",
+  "generated_at": "2026-09-04T03:33:15.747389+00:00",
+  "scenarios": [
+    {
+      "id": "VS-001",
+      "title": "项目创建与文件上传",
+      "sc": "SC-001",
+      "evidence": "backend/tests/contract/test_projects_api.py + test_knowledge_sources_api.py",
+      "passed": true
+    },
+    {
+      "id": "VS-002",
+      "title": "凭据值规范化",
+      "sc": "SC-006",
+      "evidence": "backend/tests/integration/test_ingestion/test_credential_safety.py",
+      "passed": true
+    },
+    {
+      "id": "VS-003",
+      "title": "项目作用域隔离",
+      "sc": "SC-002",
+      "evidence": "backend/tests/integration/test_mcp/test_scope_isolation.py",
+      "passed": true
+    },
+    {
+      "id": "VS-004",
+      "title": "缺少项目作用域拒绝",
+      "sc": "FR-014",
+      "evidence": "backend/tests/integration/test_mcp/test_scope_isolation.py",
+      "passed": true
+    },
+    {
+      "id": "VS-005",
+      "title": "跨项目检索",
+      "sc": "FR-015",
+      "evidence": "backend/tests/integration/test_cross_project_isolation.py",
+      "passed": true
+    },
+    {
+      "id": "VS-006",
+      "title": "证据展开与作用域校验",
+      "sc": "US-3",
+      "evidence": "backend/tests/contract/test_mcp_get_evidence.py",
+      "passed": true
+    },
+    {
+      "id": "VS-007",
+      "title": "知识源删除与清空",
+      "sc": "SC-007",
+      "evidence": "backend/tests/integration/test_ingestion/test_deletion.py",
+      "passed": true
+    },
+    {
+      "id": "VS-008",
+      "title": "并发隔离",
+      "sc": "SC-008",
+      "evidence": "backend/tests/integration/test_mcp/test_concurrency.py",
+      "passed": true
+    },
+    {
+      "id": "VS-009",
+      "title": "Schema校验",
+      "sc": "SC-004",
+      "evidence": "backend/tests/contract/test_mcp_schemas.py",
+      "passed": true
+    },
+    {
+      "id": "VS-010",
+      "title": "DeepSeek Harness端到端",
+      "sc": "SC-005",
+      "evidence": "backend/tests/integration/test_deepseek_harness_e2e.py",
+      "passed": true
+    },
+    {
+      "id": "VS-011",
+      "title": "评测基线产出",
+      "sc": "SC-009",
+      "evidence": "eval/baseline_report.json + backend/tests/eval/ (suite green)",
+      "passed": true
+    },
+    {
+      "id": "VS-012",
+      "title": "知识源重处理",
+      "sc": "蓝图 §5",
+      "evidence": "backend/tests/contract/test_knowledge_sources_api.py (reprocess endpoint)",
+      "passed": true
+    },
+    {
+      "id": "VS-013",
+      "title": "四类终态区分",
+      "sc": "SC-010",
+      "evidence": "backend/tests/unit/test_services/test_retrieval_service.py",
+      "passed": true
+    }
+  ],
+  "summary": {
+    "total": 13,
+    "passed": 13,
+    "failed": 0,
+    "management_api_checks": "23/23",
+    "mcp_core_loop": "pass",
+    "target_hosts": {
+      "deepseek_harness": "pass",
+      "chatgpt_app": "compatibility-recorded-not-blocking",
+      "claude_code": "compatibility-recorded-not-blocking"
+    }
+  },
+  "notes": "Scenario outcomes are asserted by the evidence test files listed per scenario; management 23/23 and MCP core loop pass were executed via real DSH MCP calls + management API acceptance (tasks.md T057). ChatGPT App / Claude Code are recorded as compatibility status, not acceptance blockers (SC-005)."
+}

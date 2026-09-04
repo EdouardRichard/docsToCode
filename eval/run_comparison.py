@@ -246,12 +246,34 @@ def generate_format_expansion_report(
     return report
 
 
+def _load_search_output_schema() -> dict[str, Any]:
+    """Load 001's MCP search output contract for evidence-item validation."""
+    path = (
+        _REPO_ROOT / "specs" / "001-minimum-rag-mcp-loop" / "contracts"
+        / "mcp-search-output.schema.json"
+    )
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _validate_evidence_item(item: dict[str, Any], schema: dict[str, Any]) -> bool:
+    """Validate one evidence item against the MCP output evidence schema."""
+    import jsonschema
+
+    try:
+        jsonschema.validate(item, schema)
+        return True
+    except jsonschema.ValidationError:
+        return False
+
+
 async def run_comparison(
     dataset_path: str,
     output_path: str,
     top_k: int = 5,
     qdrant_url: str | None = None,
     format_report_output: str | None = None,
+    limit: int | None = None,
 ) -> int:
     """Run Dense baseline then Hybrid comparison evaluation.
 
@@ -271,6 +293,14 @@ async def run_comparison(
     if not dataset:
         logger.error("Dataset is empty")
         return 1
+
+    # 002 fixed scope: the comparison acceptance set is the original 11 +
+    # the 7 lexical-precision queries added by 002 (first 18). Later
+    # features (003/004) append entries; --limit keeps the stored record
+    # reproducible against the declared 002 set.
+    if limit is not None and limit > 0:
+        dataset = dataset[:limit]
+        logger.info("Limited to first %d queries (002 fixed scope)", len(dataset))
 
     logger.info("Loaded %d queries from %s", len(dataset), ds_path)
 
@@ -318,11 +348,23 @@ async def run_comparison(
         mode="dense", sparse_encoder=None,
     )
 
-    # --- Hybrid run ---
+    # --- Hybrid run (reranker wired to mirror the production default
+    # path; previously the eval hybrid arm never ran the reranker) ---
     logger.info("=== Hybrid Run ===")
+    reranker = None
+    try:
+        from rag_mcp.providers.local_cpu_reranker import LocalCPUReranker
+
+        reranker = LocalCPUReranker()
+        reranker.warmup()
+        logger.info("Reranker loaded: %s", settings.hybrid_retrieval.reranker_model)
+    except Exception as exc:  # noqa: BLE001 — fusion-only fallback stays honest
+        logger.warning("Reranker unavailable, hybrid arm runs fusion-only: %s", exc)
     hybrid_per_query, hybrid_metrics = await run_single_eval(
         dataset, qdrant_store, embedding_provider, hybrid_collection, top_k,
         mode="hybrid", sparse_encoder=sparse_encoder,
+        reranker=reranker,
+        rerank_budget=settings.hybrid_retrieval.rerank_budget,
     )
 
     # --- Compute deltas ---
@@ -334,13 +376,52 @@ async def run_comparison(
         "latency_p95_delta_ms": hybrid_metrics["latency_ms"]["p95"] - dense_metrics["latency_ms"]["p95"],
     }
 
-    # --- Hard constraints (verified by scope filter + schema invariance) ---
+    # --- Hard constraints: MEASURED over the hybrid arm's evidence items
+    # (SC-002/SC-003/SC-004). Previously these values were hardcoded
+    # literals, so the acceptance record carried no measured evidence. ---
+    search_output_schema = _load_search_output_schema()
+    evidence_item_schema = search_output_schema["properties"]["evidence"]["items"]
+    leakage_events = 0
+    locatable = 0
+    schema_valid = 0
+    evidence_total = 0
+    for entry, hybrid_row in zip(dataset, hybrid_per_query):
+        scope_set = {str(s) for s in entry.get("project_scope", [])}
+        for ev in hybrid_row.get("evidence_items", []):
+            evidence_total += 1
+            if str(ev.get("knowledge_scope_id")) not in scope_set:
+                leakage_events += 1
+            if (
+                isinstance(ev.get("source_version"), int)
+                and ev["source_version"] >= 1
+                and ev.get("source_position")
+            ):
+                locatable += 1
+            if _validate_evidence_item(ev, evidence_item_schema):
+                schema_valid += 1
     hard_constraints = {
-        "cross_project_leakage_events": 0,
-        "schema_validity_rate": 1.0,
-        "source_locatability_rate": 1.0,
-        "all_passed": True,
+        "cross_project_leakage_events": leakage_events,
+        "schema_validity_rate": (
+            schema_valid / evidence_total if evidence_total else 0.0
+        ),
+        "source_locatability_rate": (
+            locatable / evidence_total if evidence_total else 0.0
+        ),
+        "all_passed": (
+            evidence_total > 0
+            and leakage_events == 0
+            and schema_valid == evidence_total
+            and locatable == evidence_total
+        ),
     }
+    logger.info(
+        "Hard constraints measured over %d evidence items: leakage=%d "
+        "schema=%.4f locatable=%.4f all_passed=%s",
+        evidence_total, leakage_events,
+        hard_constraints["schema_validity_rate"],
+        hard_constraints["source_locatability_rate"],
+        hard_constraints["all_passed"],
+    )
 
     # --- Per-query comparison ---
     per_query_comparison = []
@@ -370,7 +451,14 @@ async def run_comparison(
         hybrid_details = hybrid_per_query[i].get("candidate_details", [])
 
         baseline_dense_score = baseline_scores[baseline_rank - 1] if baseline_rank and baseline_rank <= len(baseline_scores) else None
-        hybrid_dense_score = hybrid_scores[hybrid_rank - 1] if hybrid_rank and hybrid_rank <= len(hybrid_scores) else None
+        # Genuine per-retriever dense score from candidate_details (FR-020/
+        # SC-007); the top-level hybrid scores are fused scores, so using
+        # them here collapsed dense==fused==rerank in previous reports.
+        hybrid_dense_score = None
+        for detail in hybrid_details:
+            if str(detail.get("chunk_id", "")) in expected_set:
+                hybrid_dense_score = detail.get("dense_score")
+                break
 
         # Find expected evidence in hybrid candidate_details for per-retriever scores
         hybrid_sparse_score = None
@@ -408,19 +496,48 @@ async def run_comparison(
     _, hybrid_metrics_2 = await run_single_eval(
         dataset, qdrant_store, embedding_provider, hybrid_collection, top_k,
         mode="hybrid", sparse_encoder=sparse_encoder,
+        reranker=reranker,
+        rerank_budget=settings.hybrid_retrieval.rerank_budget,
     )
     repro_report = check_reproducibility(hybrid_metrics, hybrid_metrics_2)
 
-    # --- Determine enters_default_path ---
-    # FR-021: MRR >= 0.95 and nDCG >= 0.96 on original 11 queries + hard constraints pass
-    original_11_hybrid_mrr = min(hybrid_metrics["mrr"]["mean"], 1.0)
-    original_11_hybrid_ndcg = min(hybrid_metrics["ndcg_at_k"]["mean"], 1.0)
+    # --- Determine enters_default_path (FR-021 / SC-001 / Constitution X) ---
+    # Gate on the ORIGINAL 001 baseline subset (first 11 queries) and require
+    # STRICT positive MRR/nDCG deltas plus non-decreasing recall; the previous
+    # gate used >= 0 over all queries, which let a zero-gain run enter the
+    # default retrieval path.
+    n_original = min(11, len(dataset))
+    orig_dense_metrics = compute_metrics(dense_per_query[:n_original], top_k)
+    orig_hybrid_metrics = compute_metrics(hybrid_per_query[:n_original], top_k)
+    original_subset_gate = {
+        "num_queries": n_original,
+        "baseline_mrr_mean": round(orig_dense_metrics["mrr"]["mean"], 6),
+        "hybrid_mrr_mean": round(orig_hybrid_metrics["mrr"]["mean"], 6),
+        "baseline_ndcg_mean": round(orig_dense_metrics["ndcg_at_k"]["mean"], 6),
+        "hybrid_ndcg_mean": round(orig_hybrid_metrics["ndcg_at_k"]["mean"], 6),
+        "baseline_recall_mean": round(orig_dense_metrics["recall_at_k"]["mean"], 6),
+        "hybrid_recall_mean": round(orig_hybrid_metrics["recall_at_k"]["mean"], 6),
+        "mrr_threshold": 0.95,
+        "ndcg_threshold": 0.96,
+        "mrr_positive_delta": (
+            orig_hybrid_metrics["mrr"]["mean"] > orig_dense_metrics["mrr"]["mean"]
+        ),
+        "ndcg_positive_delta": (
+            orig_hybrid_metrics["ndcg_at_k"]["mean"]
+            > orig_dense_metrics["ndcg_at_k"]["mean"]
+        ),
+        "recall_non_decreasing": (
+            orig_hybrid_metrics["recall_at_k"]["mean"]
+            >= orig_dense_metrics["recall_at_k"]["mean"]
+        ),
+    }
     enters_default_path = (
-        original_11_hybrid_mrr >= 0.95 and
-        original_11_hybrid_ndcg >= 0.96 and
-        hard_constraints["all_passed"] and
-        deltas["mrr_mean_delta"] >= 0 and
-        deltas["ndcg_mean_delta"] >= 0
+        orig_hybrid_metrics["mrr"]["mean"] >= 0.95
+        and orig_hybrid_metrics["ndcg_at_k"]["mean"] >= 0.96
+        and original_subset_gate["mrr_positive_delta"]
+        and original_subset_gate["ndcg_positive_delta"]
+        and original_subset_gate["recall_non_decreasing"]
+        and hard_constraints["all_passed"]
     )
 
     # --- Build report ---
@@ -475,6 +592,7 @@ async def run_comparison(
             "checks": repro_report.get("checks", []),
         },
         "enters_default_path": enters_default_path,
+        "original_subset_gate": original_subset_gate,
     }
 
     # Write report
@@ -487,6 +605,12 @@ async def run_comparison(
     logger.info("enters_default_path: %s", enters_default_path)
     logger.info("  MRR: %.4f -> %.4f (delta %.4f)", dense_metrics["mrr"]["mean"], hybrid_metrics["mrr"]["mean"], deltas["mrr_mean_delta"])
     logger.info("  nDCG: %.4f -> %.4f (delta %.4f)", dense_metrics["ndcg_at_k"]["mean"], hybrid_metrics["ndcg_at_k"]["mean"], deltas["ndcg_mean_delta"])
+    logger.info(
+        "  Original-11 gate: MRR %.4f -> %.4f | nDCG %.4f -> %.4f | recall %.4f -> %.4f",
+        original_subset_gate["baseline_mrr_mean"], original_subset_gate["hybrid_mrr_mean"],
+        original_subset_gate["baseline_ndcg_mean"], original_subset_gate["hybrid_ndcg_mean"],
+        original_subset_gate["baseline_recall_mean"], original_subset_gate["hybrid_recall_mean"],
+    )
 
     # --- Format expansion report (T039 / FR-026) ---
     _format_report_path = format_report_output or str(
@@ -513,6 +637,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--dataset", "-d", required=True, type=str)
     parser.add_argument("--output", "-o", required=True, type=str)
     parser.add_argument("--top-k", "-k", type=int, default=5)
+    parser.add_argument(
+        "--limit", "-n", type=int, default=None,
+        help="Only evaluate the first N dataset entries (002 fixed scope: 18).",
+    )
     parser.add_argument("--qdrant-url", type=str, default=None)
     parser.add_argument(
         "--format-report", type=str, default=None,
@@ -535,6 +663,7 @@ async def main(argv: list[str] | None = None) -> int:
         top_k=args.top_k,
         qdrant_url=args.qdrant_url,
         format_report_output=args.format_report,
+        limit=args.limit,
     )
 
 

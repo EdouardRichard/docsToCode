@@ -137,6 +137,26 @@
     "enters_default_path": {
       "type": "boolean",
       "description": "是否满足进入默认检索路径条件：MRR/nDCG 可度量收益 + 硬性指标全通过（FR-021 / 宪法原则 X）"
+    },
+    "original_subset_gate": {
+      "type": "object",
+      "description": "FR-021/SC-001 门禁明细：仅在原 001 基线 11 条子集上判定 MRR/nDCG 严格正增量与 Recall 非降（宪法原则 X），使 enters_default_path 判定在报告内可审计。",
+      "properties": {
+        "num_queries": { "type": "integer", "minimum": 1 },
+        "baseline_mrr_mean": { "type": "number" },
+        "hybrid_mrr_mean": { "type": "number" },
+        "baseline_ndcg_mean": { "type": "number" },
+        "hybrid_ndcg_mean": { "type": "number" },
+        "baseline_recall_mean": { "type": "number" },
+        "hybrid_recall_mean": { "type": "number" },
+        "mrr_threshold": { "type": "number" },
+        "ndcg_threshold": { "type": "number" },
+        "mrr_positive_delta": { "type": "boolean" },
+        "ndcg_positive_delta": { "type": "boolean" },
+        "recall_non_decreasing": { "type": "boolean" }
+      },
+      "required": ["num_queries", "baseline_mrr_mean", "hybrid_mrr_mean", "baseline_ndcg_mean", "hybrid_ndcg_mean", "baseline_recall_mean", "hybrid_recall_mean", "mrr_positive_delta", "ndcg_positive_delta", "recall_non_decreasing"],
+      "additionalProperties": false
     }
   },
   "required": ["report_type", "generated_at", "config", "baseline_metrics", "hybrid_metrics", "deltas", "hard_constraints", "per_query_comparison", "enters_default_path"],

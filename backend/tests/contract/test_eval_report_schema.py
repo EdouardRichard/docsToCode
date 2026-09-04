@@ -180,3 +180,69 @@ class TestHardConstraints:
             "enters_default_path": False,
         }
         _validate(report, report_schema)
+
+
+class TestOriginalSubsetGate:
+    """original_subset_gate (002 fix) is optional; when present it must be
+    well-formed so the strict original-11 gate stays auditable in reports."""
+
+    def _report_with_gate(self, gate: dict) -> dict:
+        return {
+            "report_type": "hybrid_retrieval_comparison",
+            "generated_at": "2026-09-10T00:00:00Z",
+            "config": {"embedding_model": "m", "reranker_model": "r",
+                "hybrid_collection": "c", "fusion_algorithm": "rrf",
+                "dataset_path": "p", "num_queries": 1},
+            "baseline_metrics": {
+                "recall_at_k": {"mean": 1, "min": 1, "max": 1},
+                "mrr": {"mean": 1, "min": 1, "max": 1},
+                "ndcg_at_k": {"mean": 1, "min": 1, "max": 1},
+                "latency_ms": {"p50": 1, "p95": 1, "mean": 1},
+            },
+            "hybrid_metrics": {
+                "recall_at_k": {"mean": 1, "min": 1, "max": 1},
+                "mrr": {"mean": 1, "min": 1, "max": 1},
+                "ndcg_at_k": {"mean": 1, "min": 1, "max": 1},
+                "latency_ms": {"p50": 1, "p95": 1, "mean": 1},
+            },
+            "deltas": {"mrr_mean_delta": 0, "ndcg_mean_delta": 0, "recall_mean_delta": 0},
+            "hard_constraints": {"cross_project_leakage_events": 0,
+                "schema_validity_rate": 1.0, "source_locatability_rate": 1.0,
+                "all_passed": True},
+            "per_query_comparison": [],
+            "enters_default_path": False,
+            "original_subset_gate": gate,
+        }
+
+    def test_valid_gate_accepted(self, report_schema):
+        gate = {
+            "num_queries": 11,
+            "baseline_mrr_mean": 0.954545,
+            "hybrid_mrr_mean": 1.0,
+            "baseline_ndcg_mean": 0.966386,
+            "hybrid_ndcg_mean": 1.0,
+            "baseline_recall_mean": 1.0,
+            "hybrid_recall_mean": 1.0,
+            "mrr_threshold": 0.95,
+            "ndcg_threshold": 0.96,
+            "mrr_positive_delta": True,
+            "ndcg_positive_delta": True,
+            "recall_non_decreasing": True,
+        }
+        _validate(self._report_with_gate(gate), report_schema)
+
+    def test_malformed_gate_rejected(self, report_schema):
+        gate = {
+            "num_queries": "11",  # wrong type: must be integer
+            "baseline_mrr_mean": 0.954545,
+            "hybrid_mrr_mean": 1.0,
+            "baseline_ndcg_mean": 0.966386,
+            "hybrid_ndcg_mean": 1.0,
+            "baseline_recall_mean": 1.0,
+            "hybrid_recall_mean": 1.0,
+            "mrr_positive_delta": True,
+            "ndcg_positive_delta": True,
+            "recall_non_decreasing": True,
+        }
+        with pytest.raises(jsonschema.ValidationError):
+            _validate(self._report_with_gate(gate), report_schema)

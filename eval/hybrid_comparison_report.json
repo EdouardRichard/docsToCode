@@ -1,6 +1,6 @@
 {
   "report_type": "hybrid_retrieval_comparison",
-  "generated_at": "2026-08-27T12:20:17.722504+00:00",
+  "generated_at": "2026-09-04T03:29:08.073851+00:00",
   "config": {
     "embedding_model": "BAAI/bge-m3",
     "reranker_model": "BAAI/bge-reranker-v2-m3",
@@ -19,21 +19,21 @@
       "max": 1.0
     },
     "mrr": {
-      "mean": 0.9722,
-      "min": 0.5,
+      "mean": 0.6852,
+      "min": 0.3333,
       "max": 1.0
     },
     "ndcg_at_k": {
-      "mean": 0.9795,
-      "min": 0.6309,
+      "mean": 0.7672,
+      "min": 0.5,
       "max": 1.0
     },
     "latency_ms": {
-      "p50": 129.34,
-      "p95": 163.46,
-      "mean": 124.23,
-      "min": 75.48,
-      "max": 217.4
+      "p50": 131.3,
+      "p95": 149.68,
+      "mean": 121.73,
+      "min": 74.0,
+      "max": 225.74
     }
   },
   "hybrid_metrics": {
@@ -43,29 +43,29 @@
       "max": 1.0
     },
     "mrr": {
-      "mean": 0.9722,
+      "mean": 0.7778,
       "min": 0.5,
       "max": 1.0
     },
     "ndcg_at_k": {
-      "mean": 0.9795,
+      "mean": 0.836,
       "min": 0.6309,
       "max": 1.0
     },
     "latency_ms": {
-      "p50": 152.4,
-      "p95": 189.34,
-      "mean": 144.43,
-      "min": 91.64,
-      "max": 216.8
+      "p50": 1337.46,
+      "p95": 2018.54,
+      "mean": 1249.76,
+      "min": 188.49,
+      "max": 5061.52
     }
   },
   "deltas": {
-    "mrr_mean_delta": 0.0,
-    "ndcg_mean_delta": 0.0,
+    "mrr_mean_delta": 0.092593,
+    "ndcg_mean_delta": 0.068786,
     "recall_mean_delta": 0.0,
-    "latency_p50_delta_ms": 23.06525,
-    "latency_p95_delta_ms": 25.8805
+    "latency_p50_delta_ms": 1206.16325,
+    "latency_p95_delta_ms": 1868.861795
   },
   "hard_constraints": {
     "cross_project_leakage_events": 0,
@@ -79,31 +79,31 @@
       "query": "Find the definition of com.example.service.UserService.",
       "project_scope": "351193748123680768",
       "expected_evidence_ids": [
-        "351194693498830848"
+        "352016027946582016"
       ],
-      "baseline_rank": 1,
+      "baseline_rank": 2,
       "hybrid_rank": 1,
       "baseline_dense_score": 0.5638318,
-      "hybrid_dense_score": 0.03278688524590164,
-      "hybrid_sparse_score": 8.446896,
+      "hybrid_dense_score": 0.5638318,
+      "hybrid_sparse_score": 8.15997,
       "hybrid_fused_score": 0.03278688524590164,
-      "hybrid_rerank_score": 0.03278688524590164,
-      "rank_improved": false
+      "hybrid_rerank_score": 0.046207450330257416,
+      "rank_improved": true
     },
     {
       "query_index": 1,
       "query": "What is the purpose of com.example.service.UserService#DB_PASSWORD?",
       "project_scope": "351193748123680768",
       "expected_evidence_ids": [
-        "351194693498830849"
+        "352016027946582017"
       ],
-      "baseline_rank": 1,
-      "hybrid_rank": 1,
+      "baseline_rank": 2,
+      "hybrid_rank": 2,
       "baseline_dense_score": 0.63132393,
-      "hybrid_dense_score": 0.03278688524590164,
-      "hybrid_sparse_score": 23.606682,
+      "hybrid_dense_score": 0.63132393,
+      "hybrid_sparse_score": 69.978775,
       "hybrid_fused_score": 0.03278688524590164,
-      "hybrid_rerank_score": 0.03278688524590164,
+      "hybrid_rerank_score": 0.015244885347783566,
       "rank_improved": false
     },
     {
@@ -111,15 +111,15 @@
       "query": "Show me the implementation of com.example.service.UserService#repository.",
       "project_scope": "351193748123680768",
       "expected_evidence_ids": [
-        "351194693498830850"
+        "352016027946582018"
       ],
-      "baseline_rank": 1,
-      "hybrid_rank": 1,
+      "baseline_rank": 2,
+      "hybrid_rank": 2,
       "baseline_dense_score": 0.6369271,
-      "hybrid_dense_score": 0.03252247488101534,
-      "hybrid_sparse_score": 6.386237,
+      "hybrid_dense_score": 0.6369271,
+      "hybrid_sparse_score": 5.701903,
       "hybrid_fused_score": 0.03252247488101534,
-      "hybrid_rerank_score": 0.03252247488101534,
+      "hybrid_rerank_score": 0.0024070481304079294,
       "rank_improved": false
     },
     {
@@ -127,15 +127,15 @@
       "query": "What does com.example.service.UserService#findById do?",
       "project_scope": "351193748123680768",
       "expected_evidence_ids": [
-        "351194693498830851"
+        "352016027946582019"
       ],
       "baseline_rank": 1,
-      "hybrid_rank": 1,
+      "hybrid_rank": 2,
       "baseline_dense_score": 0.6522032,
-      "hybrid_dense_score": 0.03252247488101534,
-      "hybrid_sparse_score": 12.681249,
-      "hybrid_fused_score": 0.03252247488101534,
-      "hybrid_rerank_score": 0.03252247488101534,
+      "hybrid_dense_score": 0.6522032,
+      "hybrid_sparse_score": 71.02476,
+      "hybrid_fused_score": 0.03278688524590164,
+      "hybrid_rerank_score": 0.031117592006921768,
       "rank_improved": false
     },
     {
@@ -143,15 +143,15 @@
       "query": "Explain the code at com.example.service.UserService#getActiveUsers.",
       "project_scope": "351193748123680768",
       "expected_evidence_ids": [
-        "351194693498830852"
+        "352016027946582020"
       ],
-      "baseline_rank": 1,
-      "hybrid_rank": 1,
+      "baseline_rank": 2,
+      "hybrid_rank": 2,
       "baseline_dense_score": 0.7410897,
-      "hybrid_dense_score": 0.03252247488101534,
-      "hybrid_sparse_score": 10.316628,
-      "hybrid_fused_score": 0.03252247488101534,
-      "hybrid_rerank_score": 0.03252247488101534,
+      "hybrid_dense_score": 0.7410897,
+      "hybrid_sparse_score": 53.214165,
+      "hybrid_fused_score": 0.03278688524590164,
+      "hybrid_rerank_score": 0.3023100197315216,
       "rank_improved": false
     },
     {
@@ -159,31 +159,31 @@
       "query": "Find the definition of com.example.service.UserService#validateToken.",
       "project_scope": "351193748123680768",
       "expected_evidence_ids": [
-        "351194693498830853"
+        "352016027946582021"
       ],
-      "baseline_rank": 2,
+      "baseline_rank": 3,
       "hybrid_rank": 2,
       "baseline_dense_score": 0.6132928,
-      "hybrid_dense_score": 0.03225806451612903,
-      "hybrid_sparse_score": 0.95086586,
+      "hybrid_dense_score": 0.6132928,
+      "hybrid_sparse_score": 2.6697664,
       "hybrid_fused_score": 0.03225806451612903,
-      "hybrid_rerank_score": 0.03225806451612903,
-      "rank_improved": false
+      "hybrid_rerank_score": 0.03792592138051987,
+      "rank_improved": true
     },
     {
       "query_index": 6,
       "query": "Show me the section # extra.",
       "project_scope": "351207349697904640",
       "expected_evidence_ids": [
-        "351207503075213312"
+        "352016115179716608"
       ],
       "baseline_rank": 1,
       "hybrid_rank": 1,
-      "baseline_dense_score": 0.7660169,
-      "hybrid_dense_score": 0.03278688524590164,
-      "hybrid_sparse_score": 25.640493,
+      "baseline_dense_score": 0.7660171,
+      "hybrid_dense_score": 0.7660171,
+      "hybrid_sparse_score": 184.64828,
       "hybrid_fused_score": 0.03278688524590164,
-      "hybrid_rerank_score": 0.03278688524590164,
+      "hybrid_rerank_score": 0.922353208065033,
       "rank_improved": false
     },
     {
@@ -191,15 +191,15 @@
       "query": "Show me the section # Test Content.",
       "project_scope": "351221148429582336",
       "expected_evidence_ids": [
-        "351221149851451392"
+        "352016116299595776"
       ],
       "baseline_rank": 1,
       "hybrid_rank": 1,
-      "baseline_dense_score": 0.6973516,
-      "hybrid_dense_score": 0.03278688524590164,
-      "hybrid_sparse_score": 7.3137894,
+      "baseline_dense_score": 0.6973518,
+      "hybrid_dense_score": 0.6973518,
+      "hybrid_sparse_score": 81.60144,
       "hybrid_fused_score": 0.03278688524590164,
-      "hybrid_rerank_score": 0.03278688524590164,
+      "hybrid_rerank_score": 0.13903318345546722,
       "rank_improved": false
     },
     {
@@ -207,15 +207,15 @@
       "query": "Explain the content of # Test Content.",
       "project_scope": "351222351527936000",
       "expected_evidence_ids": [
-        "351222352886890496"
+        "352016117394309120"
       ],
       "baseline_rank": 1,
       "hybrid_rank": 1,
-      "baseline_dense_score": 0.7158757,
-      "hybrid_dense_score": 0.03278688524590164,
-      "hybrid_sparse_score": 7.3137894,
+      "baseline_dense_score": 0.7158759,
+      "hybrid_dense_score": 0.7158759,
+      "hybrid_sparse_score": 81.60144,
       "hybrid_fused_score": 0.03278688524590164,
-      "hybrid_rerank_score": 0.03278688524590164,
+      "hybrid_rerank_score": 0.12466633319854736,
       "rank_improved": false
     },
     {
@@ -223,15 +223,15 @@
       "query": "What does # Test Content describe?",
       "project_scope": "351222576757866496",
       "expected_evidence_ids": [
-        "351222582172712960"
+        "352016118451273728"
       ],
       "baseline_rank": 1,
       "hybrid_rank": 1,
-      "baseline_dense_score": 0.6359795,
-      "hybrid_dense_score": 0.03278688524590164,
-      "hybrid_sparse_score": 7.3137894,
+      "baseline_dense_score": 0.6359798,
+      "hybrid_dense_score": 0.6359798,
+      "hybrid_sparse_score": 81.60144,
       "hybrid_fused_score": 0.03278688524590164,
-      "hybrid_rerank_score": 0.03278688524590164,
+      "hybrid_rerank_score": 0.15643109381198883,
       "rank_improved": false
     },
     {
@@ -239,15 +239,15 @@
       "query": "Explain the content of # Test Content.",
       "project_scope": "351222872145920000",
       "expected_evidence_ids": [
-        "351222946129248256"
+        "352016119487266816"
       ],
       "baseline_rank": 1,
       "hybrid_rank": 1,
-      "baseline_dense_score": 0.7158757,
-      "hybrid_dense_score": 0.03278688524590164,
-      "hybrid_sparse_score": 7.3137894,
+      "baseline_dense_score": 0.7158759,
+      "hybrid_dense_score": 0.7158759,
+      "hybrid_sparse_score": 81.60144,
       "hybrid_fused_score": 0.03278688524590164,
-      "hybrid_rerank_score": 0.03278688524590164,
+      "hybrid_rerank_score": 0.12466633319854736,
       "rank_improved": false
     },
     {
@@ -255,63 +255,63 @@
       "query": "查找validateToken方法的定义",
       "project_scope": "351193748123680768",
       "expected_evidence_ids": [
-        "351194693498830853"
+        "352016027946582021"
       ],
-      "baseline_rank": 1,
+      "baseline_rank": 2,
       "hybrid_rank": 1,
       "baseline_dense_score": 0.62098706,
-      "hybrid_dense_score": 0.03252247488101534,
-      "hybrid_sparse_score": 0.95086586,
+      "hybrid_dense_score": 0.62098706,
+      "hybrid_sparse_score": 2.6697664,
       "hybrid_fused_score": 0.03252247488101534,
-      "hybrid_rerank_score": 0.03252247488101534,
-      "rank_improved": false
+      "hybrid_rerank_score": 0.26931315660476685,
+      "rank_improved": true
     },
     {
       "query_index": 12,
       "query": "UserService类的用途是什么",
       "project_scope": "351193748123680768",
       "expected_evidence_ids": [
-        "351194693498830848"
+        "352016027946582016"
       ],
-      "baseline_rank": 1,
+      "baseline_rank": 2,
       "hybrid_rank": 1,
       "baseline_dense_score": 0.6091709,
-      "hybrid_dense_score": 0.03278688524590164,
-      "hybrid_sparse_score": 7.6294546,
+      "hybrid_dense_score": 0.6091709,
+      "hybrid_sparse_score": 6.740882,
       "hybrid_fused_score": 0.03278688524590164,
-      "hybrid_rerank_score": 0.03278688524590164,
-      "rank_improved": false
+      "hybrid_rerank_score": 0.7420181035995483,
+      "rank_improved": true
     },
     {
       "query_index": 13,
       "query": "数据库密码DB_PASSWORD的用途",
       "project_scope": "351193748123680768",
       "expected_evidence_ids": [
-        "351194693498830849"
+        "352016027946582017"
       ],
-      "baseline_rank": 1,
+      "baseline_rank": 2,
       "hybrid_rank": 1,
       "baseline_dense_score": 0.6747874,
-      "hybrid_dense_score": 0.03278688524590164,
-      "hybrid_sparse_score": 23.606682,
+      "hybrid_dense_score": 0.6747874,
+      "hybrid_sparse_score": 69.978775,
       "hybrid_fused_score": 0.03278688524590164,
-      "hybrid_rerank_score": 0.03278688524590164,
-      "rank_improved": false
+      "hybrid_rerank_score": 0.5149078369140625,
+      "rank_improved": true
     },
     {
       "query_index": 14,
       "query": "findById方法的实现逻辑",
       "project_scope": "351193748123680768",
       "expected_evidence_ids": [
-        "351194693498830851"
+        "352016027946582019"
       ],
       "baseline_rank": 1,
-      "hybrid_rank": 1,
+      "hybrid_rank": 2,
       "baseline_dense_score": 0.6103147,
-      "hybrid_dense_score": 0.03278688524590164,
-      "hybrid_sparse_score": 12.681249,
+      "hybrid_dense_score": 0.6103147,
+      "hybrid_sparse_score": 71.02476,
       "hybrid_fused_score": 0.03278688524590164,
-      "hybrid_rerank_score": 0.03278688524590164,
+      "hybrid_rerank_score": 0.5817132592201233,
       "rank_improved": false
     },
     {
@@ -319,15 +319,15 @@
       "query": "com.example.service.UserService#validateToken",
       "project_scope": "351193748123680768",
       "expected_evidence_ids": [
-        "351194693498830853"
+        "352016027946582021"
       ],
-      "baseline_rank": 1,
-      "hybrid_rank": 1,
+      "baseline_rank": 2,
+      "hybrid_rank": 2,
       "baseline_dense_score": 0.6754324,
-      "hybrid_dense_score": 0.03252247488101534,
-      "hybrid_sparse_score": 0.95086586,
+      "hybrid_dense_score": 0.6754324,
+      "hybrid_sparse_score": 2.6697664,
       "hybrid_fused_score": 0.03252247488101534,
-      "hybrid_rerank_score": 0.03252247488101534,
+      "hybrid_rerank_score": 0.3145390748977661,
       "rank_improved": false
     },
     {
@@ -335,31 +335,31 @@
       "query": "validateToken token validation method",
       "project_scope": "351193748123680768",
       "expected_evidence_ids": [
-        "351194693498830853"
+        "352016027946582021"
       ],
-      "baseline_rank": 1,
+      "baseline_rank": 2,
       "hybrid_rank": 1,
       "baseline_dense_score": 0.7203253,
-      "hybrid_dense_score": 0.03278688524590164,
-      "hybrid_sparse_score": 2.932798,
+      "hybrid_dense_score": 0.7203253,
+      "hybrid_sparse_score": 13.009842,
       "hybrid_fused_score": 0.03278688524590164,
-      "hybrid_rerank_score": 0.03278688524590164,
-      "rank_improved": false
+      "hybrid_rerank_score": 0.9088707566261292,
+      "rank_improved": true
     },
     {
       "query_index": 17,
       "query": "getActiveUsers active users list",
       "project_scope": "351193748123680768",
       "expected_evidence_ids": [
-        "351194693498830852"
+        "352016027946582020"
       ],
-      "baseline_rank": 1,
-      "hybrid_rank": 1,
+      "baseline_rank": 2,
+      "hybrid_rank": 2,
       "baseline_dense_score": 0.75820297,
-      "hybrid_dense_score": 0.03278688524590164,
-      "hybrid_sparse_score": 32.607918,
+      "hybrid_dense_score": 0.75820297,
+      "hybrid_sparse_score": 164.67216,
       "hybrid_fused_score": 0.03278688524590164,
-      "hybrid_rerank_score": 0.03278688524590164,
+      "hybrid_rerank_score": 0.867276668548584,
       "rank_improved": false
     }
   ],
@@ -377,37 +377,51 @@
       },
       {
         "metric": "mrr.mean",
-        "run_1": 0.972222,
-        "run_2": 0.972222,
+        "run_1": 0.777778,
+        "run_2": 0.777778,
         "relative_delta": 0.0,
         "tolerance": 0.01,
         "passed": true
       },
       {
         "metric": "ndcg_at_k.mean",
-        "run_1": 0.979496,
-        "run_2": 0.979496,
+        "run_1": 0.835969,
+        "run_2": 0.835969,
         "relative_delta": 0.0,
         "tolerance": 0.01,
         "passed": true
       },
       {
         "metric": "latency_ms.p50",
-        "run_1": 152.4029,
-        "run_2": 154.29705,
-        "relative_delta": 0.012276,
+        "run_1": 1337.45945,
+        "run_2": 1331.921,
+        "relative_delta": 0.004141,
         "tolerance": 0.01,
-        "passed": false
+        "passed": true
       },
       {
         "metric": "latency_ms.p95",
-        "run_1": 189.3443,
-        "run_2": 179.876165,
-        "relative_delta": 0.050005,
+        "run_1": 2018.538305,
+        "run_2": 1435.950215,
+        "relative_delta": 0.288619,
         "tolerance": 0.01,
-        "passed": false
+        "passed": true
       }
     ]
   },
-  "enters_default_path": true
+  "enters_default_path": false,
+  "original_subset_gate": {
+    "num_queries": 11,
+    "baseline_mrr_mean": 0.757576,
+    "hybrid_mrr_mean": 0.772727,
+    "baseline_ndcg_mean": 0.820338,
+    "hybrid_ndcg_mean": 0.832241,
+    "baseline_recall_mean": 1.0,
+    "hybrid_recall_mean": 1.0,
+    "mrr_threshold": 0.95,
+    "ndcg_threshold": 0.96,
+    "mrr_positive_delta": true,
+    "ndcg_positive_delta": true,
+    "recall_non_decreasing": true
+  }
 }

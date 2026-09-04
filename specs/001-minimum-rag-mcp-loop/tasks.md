@@ -263,6 +263,7 @@
 
 - [x] T057 Run quickstart.md full validation suite in `specs/001-minimum-rag-mcp-loop/quickstart.md`
   - AC: All VS-001 through VS-013 pass; all checkboxes checked (verified via real DSH MCP calls + management API acceptance, 23/23 management + MCP core loop pass)
+  - **验收工件**: `eval/quickstart_001_report.json`（VS-001~VS-013 逐条通过 + 23/23 管理面断言 + MCP 核心闭环，由 `backend/tests/integration/test_quickstart_001_report.py` 落盘与校验）
 
 ---
 
@@ -357,7 +358,7 @@ Task T037: SSE hook
 | Phase 5: US3 (P2) | 4 | US3 |
 | Phase 6: US4 (P2) | 4 | US4 |
 | Phase 7: Eval & Polish | 6 | — |
-| **Total** | **57** | |
+| **Total** | **60** | |
 
 ### File Modification Constraint
 
@@ -388,3 +389,18 @@ Every task above modifies ≤ 2 files. Most modify exactly 1 file. The only exce
 
 - [x] T060 [US1] 统一管理面前后端契约：`frontend/src/api/knowledgeSources.ts` 路径对齐后端 `/api/knowledge-sources?scope_id=`，列表响应解包 `{items,total}`，补充 `deleteSource`/`clearScope` 函数并接线 `ProjectDetailPage` per FR-001/US-4 (contradicts)
   - AC: 前端列表/上传/reprocess 请求路径与后端一致且 200；列表正确渲染 `items`；删除按钮调用 DELETE 成功；清空按钮调用 clear 成功
+
+## Phase 9: Convergence — 公共域最小管理（蓝图 §23.4.1 / §25，宪法 I/II）
+
+> 收敛评估（$speckit-analyze 全量一致性分析发现）：FR-002 的公共域半边（MUST）与 FR-016（MAY）此前无任务、
+> 无 API 落点（retrieval_service 证据域身份硬编码 'project'，公共 scope 无解析路径），蓝图 §25 首期条件
+> "公共知识与项目知识能够区分来源"不可演示。本阶段补齐最小管理闭环。
+
+- [x] T061 [US1] Green: 公共域创建/查看 API——POST/GET /api/projects/public-scopes，复用 KnowledgeScope(scope_type='public') 既有数据模型 per FR-002 (missing)
+  - AC: 创建公共域返回稳定 scope_id（scope_type='public'、雪花 ID）；公共域可列出；同名活跃公共域 409 拒绝；缺 name 422
+- [x] T062 [US2] Green: 公共域上传与发布走既有入库管线（上传端点对 scope_id 通用；入库/发布按 knowledge_scope_id 隔离，公共域天然复用）per FR-002 (missing)
+  - AC: 上传至公共域 scope 的 Markdown/Java 走既有 uploaded→processing→published 流程；无新增专用管线
+- [x] T063 [US2] Green: 检索支持公共域——resolve_project_refs 将公共 scope 数值 ID 直达解析（公共域绝不伪装为项目，宪法 I），_build_evidence_items 由 knowledge_scopes 行解析 knowledge_scope_type（替换硬编码 'project'）per FR-016 (missing)
+  - AC: 显式公共 scope 查询解析成功；公共证据携带 knowledge_scope_type='public'、项目证据保持 'project'；未知 ref 仍返回 MISSING_PROJECT_SCOPE 不回退全库
+- [x] T064 [P] 集成测试：公共域管理 API + 解析 + 域身份 + 隔离（test_public_scope.py，10 用例全绿）per FR-002/FR-016 (missing)
+  - AC: 创建/列表/重名拒绝/缺参校验；公共 scope 解析与未知拒绝；公共/项目证据域身份各自正确

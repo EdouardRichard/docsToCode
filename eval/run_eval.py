@@ -44,6 +44,72 @@ logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
+# Chunk metadata access (002 fix: rerank inputs + measured hard constraints)
+# ---------------------------------------------------------------------------
+
+_meta_engine = None
+_meta_session_factory = None
+
+
+def _get_meta_session_factory():
+    """Lazy shared engine for chunk-metadata lookups (eval process lifetime)."""
+    global _meta_engine, _meta_session_factory
+    if _meta_session_factory is None:
+        from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+        from sqlalchemy.orm import sessionmaker
+
+        _meta_engine = create_async_engine(get_settings().database_url)
+        _meta_session_factory = sessionmaker(
+            _meta_engine, class_=AsyncSession, expire_on_commit=False
+        )
+    return _meta_session_factory
+
+
+async def _fetch_chunk_meta(chunk_ids: list[int]) -> dict[int, dict[str, Any]]:
+    """Fetch content_text + evidence metadata for chunks by ID.
+
+    Mirrors the production evidence-assembly inputs
+    (backend/src/rag_mcp/services/retrieval_service.py evidence items):
+    content_text for rerank query+passage pairs; knowledge_scope_id /
+    scope_type, version_number, position_path for the measured
+    hard-constraint check in run_comparison.py.
+    """
+    if not chunk_ids:
+        return {}
+    from sqlalchemy import select as sa_select
+
+    from rag_mcp.models.chunk import Chunk
+    from rag_mcp.models.knowledge_scope import KnowledgeScope
+    from rag_mcp.models.knowledge_version import KnowledgeVersion
+
+    factory = _get_meta_session_factory()
+    async with factory() as session:
+        rows = (await session.execute(
+            sa_select(
+                Chunk.chunk_id,
+                Chunk.content_text,
+                Chunk.position_path,
+                Chunk.knowledge_scope_id,
+                KnowledgeVersion.version_number,
+                KnowledgeScope.scope_type,
+            )
+            .join(KnowledgeVersion, Chunk.version_id == KnowledgeVersion.version_id)
+            .join(KnowledgeScope, Chunk.knowledge_scope_id == KnowledgeScope.scope_id)
+            .where(Chunk.chunk_id.in_(chunk_ids))
+        )).all()
+    return {
+        int(r[0]): {
+            "content_text": r[1],
+            "position_path": r[2],
+            "knowledge_scope_id": int(r[3]),
+            "version_number": int(r[4]),
+            "scope_type": r[5],
+        }
+        for r in rows
+    }
+
+
+# ---------------------------------------------------------------------------
 # Stub embedding provider for eval (uses random vectors as placeholder)
 # ---------------------------------------------------------------------------
 
@@ -117,6 +183,8 @@ async def search_knowledge(
     top_k: int = 5,
     mode: str = "dense",
     sparse_encoder: Any = None,
+    reranker: Any = None,
+    rerank_budget: int = 20,
 ) -> dict[str, Any]:
     """Execute a retrieval query directly via QdrantStore.
 
@@ -149,23 +217,98 @@ async def search_knowledge(
                 cid = str(payload.get("chunk_id", r.get("id", "")))
                 if cid and cid not in result_map:
                     result_map[cid] = r
+
+            # Rerank (FR-004/FR-005): mirror the production hybrid path
+            # (backend/src/rag_mcp/services/retrieval_service.py:1340-1396).
+            # Previously the eval hybrid arm never ran the reranker and
+            # reported the fused score as the rerank score.
+            rerank_scores: dict[str, float] = {}
+            if reranker is not None and fused:
+                rerank_input = fused[:rerank_budget]
+                rerank_meta = await _fetch_chunk_meta(
+                    [int(c.chunk_id) for c in rerank_input]
+                )
+                rerank_candidates = [
+                    {
+                        "chunk_id": str(c.chunk_id),
+                        "content_text": rerank_meta.get(
+                            int(c.chunk_id), {}
+                        ).get("content_text", ""),
+                        "fused_score": c.fused_score,
+                    }
+                    for c in rerank_input
+                ]
+                try:
+                    reranked = await reranker.rerank(
+                        query, rerank_candidates, top_k=top_k,
+                    )
+                    for r in reranked:
+                        if r.get("rerank_score") is not None:
+                            rerank_scores[str(r.get("chunk_id", ""))] = float(
+                                r["rerank_score"]
+                            )
+                    # Deterministic reorder: reranked candidates first (the
+                    # reranker sorts by rerank_score desc, fused_score desc,
+                    # chunk_id asc), unranked candidates keep RRF order.
+                    rerank_order = {
+                        str(r.get("chunk_id", "")): i for i, r in enumerate(reranked)
+                    }
+                    fused = sorted(
+                        fused,
+                        key=lambda c: (
+                            rerank_order.get(str(c.chunk_id), len(rerank_order)),
+                            str(c.chunk_id),
+                        ),
+                    )
+                except Exception as rerank_exc:  # degrade like production
+                    logger.warning(
+                        "Rerank failed, keeping RRF order: %s", rerank_exc
+                    )
+
             results = [
                 {"id": result_map.get(c.chunk_id, {}).get("id"),
                  "score": c.fused_score,
                  "payload": result_map.get(c.chunk_id, {}).get("payload", {})}
                 for c in fused
             ]
-            # Per-candidate detail scores (FR-020/SC-007)
+            # Per-candidate detail scores (FR-020/SC-007): genuine
+            # dense/sparse/fused/rerank values per retriever.
             candidate_details = [
                 {
                     "chunk_id": c.chunk_id,
                     "dense_score": c.dense_score,
                     "sparse_score": c.sparse_score,
                     "fused_score": c.fused_score,
-                    "rerank_score": c.fused_score,  # RRF score as rerank fallback
+                    "rerank_score": rerank_scores.get(str(c.chunk_id)),
                 }
                 for c in fused
             ]
+            # Evidence items shaped like the production MCP output
+            # (mcp-search-output.schema.json) so run_comparison.py can
+            # MEASURE hard constraints instead of hardcoding them
+            # (SC-002/SC-003/SC-004).
+            evidence_meta = await _fetch_chunk_meta(
+                [int(c.chunk_id) for c in fused[:top_k]]
+            )
+            evidence_items: list[dict[str, Any]] = []
+            for c in fused[:top_k]:
+                m = evidence_meta.get(int(c.chunk_id), {})
+                payload = result_map.get(c.chunk_id, {}).get("payload", {}) or {}
+                raw_score = rerank_scores.get(str(c.chunk_id))
+                if raw_score is None:
+                    raw_score = c.fused_score
+                evidence_items.append({
+                    "evidence_id": str(c.chunk_id),
+                    "content_excerpt": (m.get("content_text") or "")[:500],
+                    "source_version": m.get("version_number", 0),
+                    "source_position": m.get("position_path", ""),
+                    "knowledge_scope_id": str(
+                        m.get("knowledge_scope_id")
+                        or payload.get("knowledge_scope_id", "")
+                    ),
+                    "knowledge_scope_type": m.get("scope_type", "project"),
+                    "relevance_score": max(0.0, min(1.0, float(raw_score))),
+                })
         else:
             # Dense-only search
             results = qdrant_store.search(
@@ -188,6 +331,7 @@ async def search_knowledge(
         }
         if mode == "hybrid" and sparse_encoder is not None:
             result["candidate_details"] = candidate_details
+            result["evidence_items"] = evidence_items
         return result
 
     except Exception as exc:
@@ -397,6 +541,8 @@ async def run_single_eval(
     top_k: int,
     mode: str = "dense",
     sparse_encoder: Any = None,
+    reranker: Any = None,
+    rerank_budget: int = 20,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """Run one complete evaluation pass.
 
@@ -422,6 +568,8 @@ async def run_single_eval(
             top_k=top_k,
             mode=mode,
             sparse_encoder=sparse_encoder,
+            reranker=reranker,
+            rerank_budget=rerank_budget,
         )
 
         per_query_result = {
@@ -434,6 +582,7 @@ async def run_single_eval(
             "latency_ms": result["latency_ms"],
             "status": result["status"],
             "candidate_details": result.get("candidate_details", []),
+            "evidence_items": result.get("evidence_items", []),
         }
         per_query_results.append(per_query_result)
 
@@ -536,12 +685,29 @@ async def run_evaluation(
         else:
             logger.warning("No chunk texts found for sparse encoder, falling back to dense")
 
+    # Reranker for hybrid mode (002 fix): mirror the production default
+    # path instead of silently running a fusion-only hybrid arm.
+    reranker: Any = None
+    if mode == "hybrid":
+        try:
+            from rag_mcp.providers.local_cpu_reranker import LocalCPUReranker
+
+            reranker = LocalCPUReranker()
+            reranker.warmup()
+            logger.info(
+                "Reranker loaded: %s", settings.hybrid_retrieval.reranker_model
+            )
+        except Exception as exc:  # noqa: BLE001 — fusion-only fallback stays honest
+            logger.warning("Reranker unavailable, hybrid runs fusion-only: %s", exc)
+
     # --- Run 1 ---
     logger.info("=== Evaluation Run 1 ===")
     run1_start = time.time()
     per_query_1, metrics_1 = await run_single_eval(
         dataset, qdrant_store, embedding_provider, collection_name, top_k,
         mode=mode, sparse_encoder=sparse_encoder,
+        reranker=reranker,
+        rerank_budget=settings.hybrid_retrieval.rerank_budget,
     )
     run1_elapsed = time.time() - run1_start
     logger.info("Run 1 completed in %.2fs", run1_elapsed)
@@ -555,6 +721,8 @@ async def run_evaluation(
         _, metrics_2 = await run_single_eval(
             dataset, qdrant_store, embedding_provider, collection_name, top_k,
             mode=mode, sparse_encoder=sparse_encoder,
+            reranker=reranker,
+            rerank_budget=settings.hybrid_retrieval.rerank_budget,
         )
         run2_elapsed = time.time() - run2_start
         logger.info("Run 2 completed in %.2fs", run2_elapsed)

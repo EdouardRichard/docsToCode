@@ -20,17 +20,44 @@
 | 报告 | Feature | 说明 |
 |------|---------|------|
 | `baseline_report.json` | 001 | Dense-only 确定性基线（11 条） |
-| `hybrid_comparison_report.json` | 002 | Dense+Sparse+RRF+Rerank 混合基线（18 条） |
+| `hybrid_comparison_report.json` | 002 | Dense+Sparse+RRF+Rerank 混合基线（18 条；硬指标实测 + original_subset_gate，见下） |
+| `format_expansion_report.json` | 002/003 | 逐格式对照（由 run_comparison.py 一并产出） |
+| `quickstart_001_report.json` | 001 | quickstart VS-001~VS-013 验收记录（T057 工件，由 test_quickstart_001_report.py 落盘） |
 | `regression_report.json` | 003 | 格式扩展回归 |
 | `graph_enhanced_comparison_report.json` | 004 | 图增强对照评测（37 条，见下） |
+| `agentic_comparison_report.json` | 005 | 三 Agent 编排对照评测（44 条，数据集 `agentic_eval_dataset.json`） |
+| `instance_form_smoke_report.json` | 006 | writer/reader 双形态冒烟对照（各 11 条，单侧非回归判定） |
 
 ## 运行器
 
 | 脚本 | 用途 |
 |------|------|
-| `run_eval.py` | 单路径评测（dense/hybrid），产出指标 + 可重复性检查 |
-| `run_comparison.py` | 002：Dense vs Hybrid 对照 || `run_graph_comparison.py` | 004：混合基线同会话重跑 + 图增强对照（FR-022/023/025） |
+| `run_eval.py` | 单路径评测（dense/hybrid），产出指标 + 可重复性检查；hybrid 模式接入 Reranker（对齐生产路径） |
+| `run_comparison.py` | 002：Dense vs Hybrid 对照（硬指标逐条实测；enters_default_path 按原 11 条子集严格正增量判定，报告含 original_subset_gate 明细） |
+| `run_graph_comparison.py` | 004：混合基线同会话重跑 + 图增强对照（FR-022/023/025） |
+| `run_agentic_comparison.py` | 005：确定性基线 vs 三 Agent 编排对照（独立数据集） |
 | `reindex_eval_qdrant.py` | 004：从 PG 已持久化 Chunk 重建评测语料的 Qdrant 混合向量（派生数据重建，蓝图 §8.4/FR-016）；chunk_id 不变，评测集期望证据 ID 保持有效 |
+
+### 002 固定验收集约定
+
+数据集会随后续 Feature（003/004）追加条目；002 的验收记录固定为**前 18 条**
+（001 原 11 条 + 002 新增 7 条词汇精确查询）。重跑 002 对照报告必须携带
+`--limit 18`：
+
+```bash
+python eval/run_comparison.py \
+    --dataset eval/eval_dataset.json \
+    --output eval/hybrid_comparison_report.json \
+    --limit 18
+```
+
+`enters_default_path` 仅在前 11 条（001 基线子集）上判定：MRR/nDCG 严格正
+增量 + Recall 非降 + 实测硬指标全过 + 绝对阈值（research.md §0.2：原 11 条
+MRR ≥ 0.95、nDCG ≥ 0.96）。2026-09-04 重跑记录：相对增量与硬指标全过
+（MRR 0.7576→0.7727、nDCG 0.8203→0.8322、泄漏 0/Schema 1.0/定位 1.0、
+validateToken rank 3→2），绝对阈值未达（当前环境基线臂水位整体下移），
+故 enters_default_path=false——详见
+`specs/002-hybrid-retrieval-precision/tasks.md` Phase 9 收敛记录。
 
 ### 004 图增强对照评测
 

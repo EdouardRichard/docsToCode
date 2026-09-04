@@ -1,4 +1,4 @@
-# Quickstart 验收验证指南: 001 Minimum RAG MCP Loop
+﻿# Quickstart 验收验证指南: 001 Minimum RAG MCP Loop
 
 **Branch**: `001-minimum-rag-mcp-loop` | **Date**: 2026-08-27
 
@@ -57,10 +57,10 @@ cd frontend && pnpm dev
 5. 观察SSE推送的处理进度
 
 **预期结果**:
-- [ ] 项目创建成功，显示项目ID和知识域ID
-- [ ] 两个文件均显示`uploaded` → `processing` → `published`状态流转
-- [ ] SSE实时推送处理进度事件
-- [ ] 发布成功后，知识版本声明`dense_ready`能力
+- [x] 项目创建成功，显示项目ID和知识域ID
+- [x] 两个文件均显示`uploaded` → `processing` → `published`状态流转
+- [x] SSE实时推送处理进度事件
+- [x] 发布成功后，知识版本声明`dense_ready`能力
 
 ---
 
@@ -80,9 +80,9 @@ cd frontend && pnpm dev
 4. 检查返回的证据内容
 
 **预期结果**:
-- [ ] 证据正文中不包含`MySecret123`、`sk-abc123def456`等原始值
-- [ ] 占位符保留了字段名（password, api_key, bearer_token）
-- [ ] 代码结构和来源位置完整保留
+- [x] 证据正文中不包含`MySecret123`、`sk-abc123def456`等原始值
+- [x] 占位符保留了字段名（password, api_key, bearer_token）
+- [x] 代码结构和来源位置完整保留
 
 ---
 
@@ -97,9 +97,9 @@ cd frontend && pnpm dev
 4. 使用`search_knowledge`，project_scope仅指定项目B，查询"用户登录"
 
 **预期结果**:
-- [ ] 步骤3不返回项目B的任何证据
-- [ ] 步骤4不返回项目A的任何证据
-- [ ] 每条证据的`knowledge_scope_id`与请求的作用域一致
+- [x] 步骤3不返回项目B的任何证据
+- [x] 步骤4不返回项目A的任何证据
+- [x] 每条证据的`knowledge_scope_id`与请求的作用域一致
 
 ---
 
@@ -109,9 +109,9 @@ cd frontend && pnpm dev
 1. 调用`search_knowledge`，不提供`project_scope`参数
 
 **预期结果**:
-- [ ] 系统返回错误响应，说明必须提供项目作用域
-- [ ] 不执行任何检索操作
-- [ ] 错误信息包含可纠正的提示
+- [x] 系统返回错误响应，说明必须提供项目作用域
+- [x] 不执行任何检索操作
+- [x] 错误信息包含可纠正的提示
 
 ---
 
@@ -124,9 +124,9 @@ cd frontend && pnpm dev
 2. 查询一个与两个项目都相关的通用问题
 
 **预期结果**:
-- [ ] 返回的证据仅来自项目A和项目B
-- [ ] 每条证据保留其`knowledge_scope_id`标识
-- [ ] 不返回其他项目的证据
+- [x] 返回的证据仅来自项目A和项目B
+- [x] 每条证据保留其`knowledge_scope_id`标识
+- [x] 不返回其他项目的证据
 
 ---
 
@@ -139,8 +139,8 @@ cd frontend && pnpm dev
 2. 使用错误的project_scope调用`get_evidence`尝试展开同一证据
 
 **预期结果**:
-- [ ] 步骤1返回完整内容和父级上下文
-- [ ] 步骤2返回`scope_mismatch`状态，不返回正文
+- [x] 步骤1返回完整内容和父级上下文
+- [x] 步骤2返回`scope_mismatch`状态，不返回正文
 
 ---
 
@@ -157,10 +157,10 @@ cd frontend && pnpm dev
 6. 查询该项目
 
 **预期结果**:
-- [ ] 步骤3：被删除的知识源不再参与新检索
-- [ ] 步骤4：确认删除完成，派生数据已清理
-- [ ] 步骤6：项目返回无证据状态
-- [ ] 其他项目不受影响
+- [x] 步骤3：被删除的知识源不再参与新检索
+- [x] 步骤4：确认删除完成，派生数据已清理
+- [x] 步骤6：项目返回无证据状态
+- [x] 其他项目不受影响
 
 ---
 
@@ -174,9 +174,9 @@ cd frontend && pnpm dev
 2. 收集所有响应
 
 **预期结果**:
-- [ ] 所有5个请求均正确完成
-- [ ] 每个响应的project_scope与请求一致
-- [ ] 无证据串扰或状态污染
+- [x] 所有5个请求均正确完成
+- [x] 每个响应的project_scope与请求一致
+- [x] 无证据串扰或状态污染
 
 ---
 
@@ -187,8 +187,8 @@ cd frontend && pnpm dev
 2. 使用`contracts/mcp-search-output.schema.json`和`contracts/mcp-get-evidence.schema.json`进行JSON Schema校验
 
 **预期结果**:
-- [ ] 所有响应通过Schema校验
-- [ ] `structuredContent`与TextContent内容一致
+- [x] 所有响应通过Schema校验
+- [x] `structuredContent`与TextContent内容一致
 
 ---
 
@@ -202,9 +202,9 @@ cd frontend && pnpm dev
 3. 让Agent调用`get_evidence`展开某条证据
 
 **预期结果**:
-- [ ] DSH成功发现并调用两个Tool
-- [ ] 返回的证据内容可被Agent正常使用
-- [ ] Schema校验通过
+- [x] DSH成功发现并调用两个Tool
+- [x] 返回的证据内容可被Agent正常使用
+- [x] Schema校验通过
 
 ---
 
@@ -217,9 +217,9 @@ cd frontend && pnpm dev
 2. 查看输出的基线报告
 
 **预期结果**:
-- [ ] 产出Recall@K、MRR、nDCG数值
-- [ ] 产出P50/P95延迟数值
-- [ ] 结果可重复执行且数值稳定
+- [x] 产出Recall@K、MRR、nDCG数值
+- [x] 产出P50/P95延迟数值
+- [x] 结果可重复执行且数值稳定
 
 ---
 
@@ -234,11 +234,11 @@ cd frontend && pnpm dev
 4. 等待处理完成
 
 **预期结果**:
-- [ ] 创建新的ProcessingRun（run_type=retry）
-- [ ] 生成新的KnowledgeVersion（version_number递增）
-- [ ] 旧版本保持可检索直到新版本发布成功
-- [ ] 新版本发布后，旧版本状态变为superseded
-- [ ] Chunk内容与原始文件一致（派生数据可从知识源重建）
+- [x] 创建新的ProcessingRun（run_type=retry）
+- [x] 生成新的KnowledgeVersion（version_number递增）
+- [x] 旧版本保持可检索直到新版本发布成功
+- [x] 新版本发布后，旧版本状态变为superseded
+- [x] Chunk内容与原始文件一致（派生数据可从知识源重建）
 
 ---
 
@@ -252,12 +252,12 @@ cd frontend && pnpm dev
 5. 使用模糊项目引用 → 验证`AMBIGUOUS_PROJECT_REF` + candidates
 
 **预期结果**:
-- [ ] 四种状态的`completion_status`字段值正确
-- [ ] `partial`状态携带非空gaps数组
-- [ ] `no_evidence`状态evidence数组为空，无error
-- [ ] `failed`状态携带error对象
-- [ ] 模糊引用返回候选项目列表
-- [ ] 不以生成内容填补缺口
+- [x] 四种状态的`completion_status`字段值正确
+- [x] `partial`状态携带非空gaps数组
+- [x] `no_evidence`状态evidence数组为空，无error
+- [x] `failed`状态携带error对象
+- [x] 模糊引用返回候选项目列表
+- [x] 不以生成内容填补缺口
 
 ## 验收判定
 

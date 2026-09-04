@@ -62,6 +62,47 @@ class ProjectService:
         await self._session.flush()
         return project
 
+    async def create_public_scope(self, name: str) -> KnowledgeScope:
+        """Create a public knowledge scope (001 Phase 9, FR-002 minimal
+        public-domain management; blueprint §23.4.1 / §25).
+
+        Constitution I: public knowledge uses a distinct public scope with
+        a stable Snowflake ID; it never masquerades as a project.
+
+        Raises:
+            ValueError: If an active public scope with the same name exists.
+        """
+        now = datetime.now(timezone.utc)
+        existing = await self._session.execute(
+            select(KnowledgeScope).where(
+                KnowledgeScope.scope_type == "public",
+                KnowledgeScope.name == name,
+                KnowledgeScope.status == "active",
+            )
+        )
+        if existing.scalar_one_or_none() is not None:
+            raise ValueError(f"Public scope with name '{name}' already exists")
+        scope = KnowledgeScope(
+            scope_id=generate_id(),
+            scope_type="public",
+            name=name,
+            status="active",
+            created_at=now,
+            updated_at=now,
+        )
+        self._session.add(scope)
+        await self._session.flush()
+        return scope
+
+    async def list_public_scopes(self) -> list[KnowledgeScope]:
+        """List all public knowledge scopes (active and archived)."""
+        result = await self._session.execute(
+            select(KnowledgeScope)
+            .where(KnowledgeScope.scope_type == "public")
+            .order_by(KnowledgeScope.created_at.desc())
+        )
+        return list(result.scalars().all())
+
     async def list_projects(self) -> list[Project]:
         """List all projects.
 

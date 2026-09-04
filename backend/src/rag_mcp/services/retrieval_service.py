@@ -25,6 +25,7 @@ from rag_mcp.fusion.rrf import rrf_fuse
 from rag_mcp.indexing.qdrant_client import QdrantStore
 from rag_mcp.indexing.sparse_encoder import BM25SparseEncoder
 from rag_mcp.models.chunk import Chunk
+from rag_mcp.models.knowledge_scope import KnowledgeScope
 from rag_mcp.models.knowledge_version import KnowledgeVersion
 from rag_mcp.models.project import Project
 from rag_mcp.models.retrieval_run import RetrievalRun
@@ -400,6 +401,10 @@ class RetrievalService:
         - A numeric project_id (string representation of Snowflake ID)
         - An alias string
         - A repo_path string
+        - A numeric public knowledge scope ID (001 Phase 9, FR-016:
+          public knowledge MUST use a distinct public scope and MUST NOT
+          masquerade as a project; public scope IDs resolve directly to
+          themselves without a Project row)
 
         Args:
             refs: List of project reference strings.
@@ -416,6 +421,28 @@ class RetrievalService:
             ref_stripped = ref.strip()
             if not ref_stripped:
                 continue
+
+            # Public knowledge scope: a numeric ref matching an active
+            # public scope resolves directly (Constitution I; public scope
+            # is never managed through projects). Project refs fall
+            # through unchanged.
+            try:
+                numeric_ref = int(ref_stripped)
+            except ValueError:
+                numeric_ref = None
+            if numeric_ref is not None:
+                pub_result = await self._session.execute(
+                    select(KnowledgeScope.scope_id).where(
+                        KnowledgeScope.scope_id == numeric_ref,
+                        KnowledgeScope.scope_type == "public",
+                        KnowledgeScope.status == "active",
+                    )
+                )
+                pub_scope_id = pub_result.scalar_one_or_none()
+                if pub_scope_id is not None:
+                    if pub_scope_id not in resolved_scope_ids:
+                        resolved_scope_ids.append(pub_scope_id)
+                    continue
 
             projects = await self._find_projects_by_ref(ref_stripped)
 
@@ -762,6 +789,28 @@ class RetrievalService:
                 except (ValueError, TypeError):
                     pass
 
+        # Fetch scope types so evidence carries its true knowledge-domain
+        # identity (001 Phase 9, FR-016 / Constitution I & II: public
+        # evidence MUST retain knowledge_scope_type='public'; previously
+        # hardcoded to 'project').
+        scope_ids: set[int] = set()
+        for r in results:
+            sid = r.get("payload", {}).get("knowledge_scope_id")
+            if sid is not None:
+                try:
+                    scope_ids.add(int(sid))
+                except (ValueError, TypeError):
+                    pass
+        scope_type_map: dict[int, str] = {}
+        if scope_ids:
+            sresult = await self._session.execute(
+                select(
+                    KnowledgeScope.scope_id, KnowledgeScope.scope_type
+                ).where(KnowledgeScope.scope_id.in_(scope_ids))
+            )
+            for sid, stype in sresult.all():
+                scope_type_map[sid] = stype
+
         version_number_map: dict[int, int] = {}
         if version_ids:
             vresult = await self._session.execute(
@@ -783,9 +832,13 @@ class RetrievalService:
             version_id = int(payload.get("version_id", 0))
             source_version = version_number_map.get(version_id, 0)
 
-            # Determine scope type from payload; default to 'project' for 001
-            # (public knowledge domain is not fully implemented in 001)
-            scope_type = "project"
+            # Determine scope type from the knowledge_scopes row;
+            # default to 'project' only when the row is unavailable.
+            try:
+                scope_sid = int(payload.get("knowledge_scope_id", 0))
+            except (ValueError, TypeError):
+                scope_sid = 0
+            scope_type = scope_type_map.get(scope_sid, "project")
 
             content_excerpt = ""
             if chunk:
