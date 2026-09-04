@@ -102,7 +102,7 @@ description: "Task list for 002 Hybrid Retrieval Precision feature implementatio
 
 **Goal**: RRF 融合 + Cross-Encoder Rerank 使 MRR/nDCG 可度量优于 001 Dense 基线，Recall@K 不下降，partial 降级可区分，单次调用在超时护栏内。
 
-**Independent Test**: 在固定评测集上运行完整混合路径，MRR ≥ 0.95、nDCG ≥ 0.96（原 11 条），Recall@K ≥ 1.0，P95 ≤ 30s，partial 在 sparse/rerank 失败时正确返回。
+**Independent Test**: 在固定评测集上运行完整混合路径，原 11 条子集 MRR/nDCG 相对同会话 Dense 基线严格正增量（相对口径，2026-09-04 修订，见 research.md §0.6 末注），Recall@K ≥ 1.0，P95 ≤ 30s，partial 在 sparse/rerank 失败时正确返回。
 
 ### TDD: Tests First
 
@@ -330,8 +330,8 @@ report absent), and FR-015/SC-005 (per-query DB scan performance risk).
   **验收标准**: `run_eval.py` `search_knowledge()` hybrid path optionally applies rerank (using `LocalCPUReranker` or a configurable reranker) after RRF fusion; `run_comparison.py` per_query_comparison entries carry actual `hybrid_sparse_score`, `hybrid_fused_score`, and `hybrid_rerank_score` values (not None) for each query; the comparison report schema validates against `eval-comparison-report.schema.json`.
 
 - [X] T035 Run hybrid comparison evaluation and generate eval/hybrid_comparison_report.json verifying SC-001 thresholds per FR-021/SC-001 (missing)
-  **依赖**: T033, T034 | **Evidence**: `eval/hybrid_comparison_report.json` does not exist; the plan lists it as "新增：002 对照报告产物"; FR-021 requires proof of measurable benefit (MRR ≥ 0.95, nDCG ≥ 0.96 on original 11) with hard constraints all passing before entering the default retrieval path.
-  **验收标准**: Run `python eval/run_comparison.py --dataset eval/eval_dataset.json --output eval/hybrid_comparison_report.json` against a running system with ingested lexical_ready knowledge; report exists with `enters_default_path=true`; MRR mean ≥ 0.95 and nDCG mean ≥ 0.96 on original 11 queries; `hard_constraints.all_passed=true` (zero cross-project leakage, schema 100%, source-locatability 100%); reproducibility check passes within 1% tolerance for non-latency metrics.
+  **依赖**: T033, T034 | **Evidence**: `eval/hybrid_comparison_report.json` does not exist; the plan lists it as "新增：002 对照报告产物"; FR-021 requires proof of measurable benefit (原 11 条严格正增量，相对口径 2026-09-04 修订，见 Phase 9 T039；旧绝对阈值 MRR ≥ 0.95 / nDCG ≥ 0.96 已废止) with hard constraints all passing before entering the default retrieval path.
+  **验收标准**: Run `python eval/run_comparison.py --dataset eval/eval_dataset.json --output eval/hybrid_comparison_report.json --limit 18` against a running system with ingested lexical_ready knowledge; report exists with `enters_default_path=true`; original-11 subset shows strict positive MRR/nDCG deltas vs the same-session Dense baseline with non-decreasing recall (relative criterion, research.md §0.6 末注); `hard_constraints.all_passed=true` (zero cross-project leakage, schema 100%, source-locatability 100%, measured); reproducibility check passes within 1% tolerance for non-latency metrics.
 
 - [X] T036 Cache or persist sparse encoder vocabulary to avoid per-query full DB scan per FR-015/SC-005 (partial)
   **Evidence**: `RetrievalService._build_sparse_encoder` (lines 750–771) executes a full PostgreSQL scan of all published chunk `content_text` and rebuilds `BM25SparseEncoder.fit()` on every hybrid search call; this adds significant latency per query and risks exceeding the 30s total timeout guardrail (SC-005).
@@ -351,4 +351,5 @@ report absent), and FR-015/SC-005 (per-query DB scan performance risk).
 - [X] T039 enters_default_path 门禁改为原 11 条严格判定 + --limit 固定 002 验收集：按原 001 基线 11 条子集计算 MRR/nDCG 严格正增量与 Recall 非降，报告携带 original_subset_gate 明细块 per FR-021/SC-001/宪法 X (contradicts)
   - **验收标准**: 门禁仅在 dataset 前 11 条上判定且要求 delta>0；报告含 original_subset_gate（契约 schema 已增补可选属性）；--limit 18 使存储记录可复现
   - **验收记录（2026-09-04 重跑）**: 原 11 条 MRR 0.7576→0.7727（+正增量）、nDCG 0.8203→0.8322（+正增量）、Recall 1.0 持平、validateToken rank 3→2（真实 rerank 分数 0.0379）；18 条全量 delta MRR +0.0926 / nDCG +0.0688；硬指标实测全过。**enters_default_path=false**：原 11 条绝对值未达 research.md §0.2 阈值（MRR≥0.95/nDCG≥0.96）——该阈值为旧环境水位口径，当前环境基线臂绝对值整体下移（0.7576）；阈值口径修订为待用户决策事项（保留绝对阈值则混合路径按宪法 X 不进默认路径，或修订 §0.2 为相对提升口径）
+  - **口径决议（2026-09-04，用户选 B）**: research.md §0.2/§0.6 已修订为相对增量口径（宪法 X 判定语义为"可度量收益"，绝对阈值系旧环境水位操作化、跨环境不可迁移）；spec.md SC-001、plan.md 评测目标、quickstart 预期、本文件 US2/T035 同步；门禁改造（移除绝对阈值子句，报告改记 mrr/ndcg_relative_improvement_pct，契约 schema 与测试同步）。**报告终态重产（enters_default_path=true）**：原 11 条 MRR +2.0% / nDCG +1.45% 相对提升（0.7576→0.7727、0.8203→0.8322）、Recall 1.0 持平、硬指标实测全过（泄漏=0 / Schema=1.0 / 定位=1.0，70 条证据逐条测量）、非延迟可重复通过、真实报告通过 eval-comparison-report.schema.json 校验——混合检索进入默认检索路径，SC-001/FR-021 达成
 

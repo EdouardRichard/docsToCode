@@ -509,6 +509,9 @@ async def run_comparison(
     n_original = min(11, len(dataset))
     orig_dense_metrics = compute_metrics(dense_per_query[:n_original], top_k)
     orig_hybrid_metrics = compute_metrics(hybrid_per_query[:n_original], top_k)
+    def _rel_improvement_pct(new: float, base: float) -> float:
+        return round((new - base) / base * 100.0, 4) if base > 0 else 0.0
+
     original_subset_gate = {
         "num_queries": n_original,
         "baseline_mrr_mean": round(orig_dense_metrics["mrr"]["mean"], 6),
@@ -517,8 +520,13 @@ async def run_comparison(
         "hybrid_ndcg_mean": round(orig_hybrid_metrics["ndcg_at_k"]["mean"], 6),
         "baseline_recall_mean": round(orig_dense_metrics["recall_at_k"]["mean"], 6),
         "hybrid_recall_mean": round(orig_hybrid_metrics["recall_at_k"]["mean"], 6),
-        "mrr_threshold": 0.95,
-        "ndcg_threshold": 0.96,
+        "mrr_relative_improvement_pct": _rel_improvement_pct(
+            orig_hybrid_metrics["mrr"]["mean"], orig_dense_metrics["mrr"]["mean"]
+        ),
+        "ndcg_relative_improvement_pct": _rel_improvement_pct(
+            orig_hybrid_metrics["ndcg_at_k"]["mean"],
+            orig_dense_metrics["ndcg_at_k"]["mean"],
+        ),
         "mrr_positive_delta": (
             orig_hybrid_metrics["mrr"]["mean"] > orig_dense_metrics["mrr"]["mean"]
         ),
@@ -531,10 +539,15 @@ async def run_comparison(
             >= orig_dense_metrics["recall_at_k"]["mean"]
         ),
     }
+    # Constitution X / FR-021 / SC-001 (relative criterion, research.md §0.2
+    # revised 2026-09-04): measurable benefit = STRICT positive MRR/nDCG
+    # deltas on the original-11 subset with non-decreasing recall and all
+    # measured hard constraints passing. Absolute metric levels are
+    # environment-dependent, recorded for reference only, and do not gate
+    # (the previous absolute thresholds 0.95/0.96 were old-environment
+    # operationalizations and are superseded).
     enters_default_path = (
-        orig_hybrid_metrics["mrr"]["mean"] >= 0.95
-        and orig_hybrid_metrics["ndcg_at_k"]["mean"] >= 0.96
-        and original_subset_gate["mrr_positive_delta"]
+        original_subset_gate["mrr_positive_delta"]
         and original_subset_gate["ndcg_positive_delta"]
         and original_subset_gate["recall_non_decreasing"]
         and hard_constraints["all_passed"]

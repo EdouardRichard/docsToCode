@@ -8,7 +8,7 @@
 
 ## Summary
 
-在 001 Dense-only 闭环之上，引入 Qdrant 命名稀疏向量（BM25/jieba CJK 分词）与 Dense 召回并行，经 RRF 融合后对有限候选执行 bge-reranker-v2-m3 Cross-Encoder 精排，使精确符号/关键词查询的排名可度量提升（MRR ≥ 0.95、nDCG ≥ 0.96，原 11 条）。知识版本能力清单扩展 `lexical_ready`，查询规划按声明能力门控。混合检索路径在 `RetrievalService` 内部接入，不改对外 MCP 契约（FR-009 / 宪法原则 VII）。对照评测在同会话先重跑 Dense 基线再跑混合，产出逐查询可解释对照报告，硬性指标（零串库/Schema 100%/来源 100% 全通过）后才进入默认路径。
+在 001 Dense-only 闭环之上，引入 Qdrant 命名稀疏向量（BM25/jieba CJK 分词）与 Dense 召回并行，经 RRF 融合后对有限候选执行 bge-reranker-v2-m3 Cross-Encoder 精排，使精确符号/关键词查询的排名可度量提升（原 11 条子集相对同会话 Dense 基线严格正增量，相对口径 2026-09-04 修订）。知识版本能力清单扩展 `lexical_ready`，查询规划按声明能力门控。混合检索路径在 `RetrievalService` 内部接入，不改对外 MCP 契约（FR-009 / 宪法原则 VII）。对照评测在同会话先重跑 Dense 基线再跑混合，产出逐查询可解释对照报告，硬性指标（零串库/Schema 100%/来源 100% 全通过）后才进入默认路径。
 
 ## Technical Context
 
@@ -150,7 +150,7 @@ eval/
 | 评测框架 | 扩展 run_eval 双模式 + run_comparison 对照 | 复用 001 指标计算 + 逐查询可解释 |
 | 对外契约 | 不变，内部路径增强 | FR-009 / 宪法原则 VII |
 
-**评测目标（相对 001 基线，进入默认路径阈值）**：Recall@K ≥ 1.0（不下降）；MRR ≥ 0.95；nDCG ≥ 0.96；P50/P95 记录对照且 ≤ 30s 总超时；硬性指标全通过。
+**评测目标（相对 001 基线，进入默认路径阈值；相对口径 2026-09-04 修订）**：原 11 条子集 MRR/nDCG 相对同会话 Dense 基线严格正增量；Recall@K ≥ 1.0（不下降）；P50/P95 记录对照且 ≤ 30s 总超时；硬性指标全通过（旧绝对阈值 MRR ≥ 0.95 / nDCG ≥ 0.96 为旧环境水位操作化，已废止，见 research.md §0.6 末注）。
 
 ## Phase 1: Design Artifacts
 

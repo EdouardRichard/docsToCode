@@ -1,6 +1,6 @@
 {
   "report_type": "hybrid_retrieval_comparison",
-  "generated_at": "2026-09-04T03:29:08.073851+00:00",
+  "generated_at": "2026-09-04T03:47:08.257302+00:00",
   "config": {
     "embedding_model": "BAAI/bge-m3",
     "reranker_model": "BAAI/bge-reranker-v2-m3",
@@ -29,11 +29,11 @@
       "max": 1.0
     },
     "latency_ms": {
-      "p50": 131.3,
-      "p95": 149.68,
-      "mean": 121.73,
-      "min": 74.0,
-      "max": 225.74
+      "p50": 131.31,
+      "p95": 167.39,
+      "mean": 124.97,
+      "min": 73.18,
+      "max": 231.44
     }
   },
   "hybrid_metrics": {
@@ -53,19 +53,19 @@
       "max": 1.0
     },
     "latency_ms": {
-      "p50": 1337.46,
-      "p95": 2018.54,
-      "mean": 1249.76,
-      "min": 188.49,
-      "max": 5061.52
+      "p50": 1355.01,
+      "p95": 1505.55,
+      "mean": 1074.96,
+      "min": 195.78,
+      "max": 1616.23
     }
   },
   "deltas": {
     "mrr_mean_delta": 0.092593,
     "ndcg_mean_delta": 0.068786,
     "recall_mean_delta": 0.0,
-    "latency_p50_delta_ms": 1206.16325,
-    "latency_p95_delta_ms": 1868.861795
+    "latency_p50_delta_ms": 1223.69955,
+    "latency_p95_delta_ms": 1338.159795
   },
   "hard_constraints": {
     "cross_project_leakage_events": 0,
@@ -85,7 +85,7 @@
       "hybrid_rank": 1,
       "baseline_dense_score": 0.5638318,
       "hybrid_dense_score": 0.5638318,
-      "hybrid_sparse_score": 8.15997,
+      "hybrid_sparse_score": 8.16843,
       "hybrid_fused_score": 0.03278688524590164,
       "hybrid_rerank_score": 0.046207450330257416,
       "rank_improved": true
@@ -101,7 +101,7 @@
       "hybrid_rank": 2,
       "baseline_dense_score": 0.63132393,
       "hybrid_dense_score": 0.63132393,
-      "hybrid_sparse_score": 69.978775,
+      "hybrid_sparse_score": 70.05059,
       "hybrid_fused_score": 0.03278688524590164,
       "hybrid_rerank_score": 0.015244885347783566,
       "rank_improved": false
@@ -117,7 +117,7 @@
       "hybrid_rank": 2,
       "baseline_dense_score": 0.6369271,
       "hybrid_dense_score": 0.6369271,
-      "hybrid_sparse_score": 5.701903,
+      "hybrid_sparse_score": 5.6274385,
       "hybrid_fused_score": 0.03252247488101534,
       "hybrid_rerank_score": 0.0024070481304079294,
       "rank_improved": false
@@ -133,7 +133,7 @@
       "hybrid_rank": 2,
       "baseline_dense_score": 0.6522032,
       "hybrid_dense_score": 0.6522032,
-      "hybrid_sparse_score": 71.02476,
+      "hybrid_sparse_score": 71.08142,
       "hybrid_fused_score": 0.03278688524590164,
       "hybrid_rerank_score": 0.031117592006921768,
       "rank_improved": false
@@ -149,7 +149,7 @@
       "hybrid_rank": 2,
       "baseline_dense_score": 0.7410897,
       "hybrid_dense_score": 0.7410897,
-      "hybrid_sparse_score": 53.214165,
+      "hybrid_sparse_score": 53.25662,
       "hybrid_fused_score": 0.03278688524590164,
       "hybrid_rerank_score": 0.3023100197315216,
       "rank_improved": false
@@ -165,7 +165,7 @@
       "hybrid_rank": 2,
       "baseline_dense_score": 0.6132928,
       "hybrid_dense_score": 0.6132928,
-      "hybrid_sparse_score": 2.6697664,
+      "hybrid_sparse_score": 2.6750948,
       "hybrid_fused_score": 0.03225806451612903,
       "hybrid_rerank_score": 0.03792592138051987,
       "rank_improved": true
@@ -181,7 +181,7 @@
       "hybrid_rank": 1,
       "baseline_dense_score": 0.7660171,
       "hybrid_dense_score": 0.7660171,
-      "hybrid_sparse_score": 184.64828,
+      "hybrid_sparse_score": 184.7494,
       "hybrid_fused_score": 0.03278688524590164,
       "hybrid_rerank_score": 0.922353208065033,
       "rank_improved": false
@@ -197,7 +197,7 @@
       "hybrid_rank": 1,
       "baseline_dense_score": 0.6973518,
       "hybrid_dense_score": 0.6973518,
-      "hybrid_sparse_score": 81.60144,
+      "hybrid_sparse_score": 81.650826,
       "hybrid_fused_score": 0.03278688524590164,
       "hybrid_rerank_score": 0.13903318345546722,
       "rank_improved": false
@@ -213,7 +213,7 @@
       "hybrid_rank": 1,
       "baseline_dense_score": 0.7158759,
       "hybrid_dense_score": 0.7158759,
-      "hybrid_sparse_score": 81.60144,
+      "hybrid_sparse_score": 81.650826,
       "hybrid_fused_score": 0.03278688524590164,
       "hybrid_rerank_score": 0.12466633319854736,
       "rank_improved": false
@@ -229,7 +229,7 @@
       "hybrid_rank": 1,
       "baseline_dense_score": 0.6359798,
       "hybrid_dense_score": 0.6359798,
-      "hybrid_sparse_score": 81.60144,
+      "hybrid_sparse_score": 81.650826,
       "hybrid_fused_score": 0.03278688524590164,
       "hybrid_rerank_score": 0.15643109381198883,
       "rank_improved": false
@@ -245,7 +245,7 @@
       "hybrid_rank": 1,
       "baseline_dense_score": 0.7158759,
       "hybrid_dense_score": 0.7158759,
-      "hybrid_sparse_score": 81.60144,
+      "hybrid_sparse_score": 81.650826,
       "hybrid_fused_score": 0.03278688524590164,
       "hybrid_rerank_score": 0.12466633319854736,
       "rank_improved": false
@@ -261,7 +261,7 @@
       "hybrid_rank": 1,
       "baseline_dense_score": 0.62098706,
       "hybrid_dense_score": 0.62098706,
-      "hybrid_sparse_score": 2.6697664,
+      "hybrid_sparse_score": 2.6750948,
       "hybrid_fused_score": 0.03252247488101534,
       "hybrid_rerank_score": 0.26931315660476685,
       "rank_improved": true
@@ -277,7 +277,7 @@
       "hybrid_rank": 1,
       "baseline_dense_score": 0.6091709,
       "hybrid_dense_score": 0.6091709,
-      "hybrid_sparse_score": 6.740882,
+      "hybrid_sparse_score": 6.7483444,
       "hybrid_fused_score": 0.03278688524590164,
       "hybrid_rerank_score": 0.7420181035995483,
       "rank_improved": true
@@ -293,7 +293,7 @@
       "hybrid_rank": 1,
       "baseline_dense_score": 0.6747874,
       "hybrid_dense_score": 0.6747874,
-      "hybrid_sparse_score": 69.978775,
+      "hybrid_sparse_score": 70.05059,
       "hybrid_fused_score": 0.03278688524590164,
       "hybrid_rerank_score": 0.5149078369140625,
       "rank_improved": true
@@ -309,7 +309,7 @@
       "hybrid_rank": 2,
       "baseline_dense_score": 0.6103147,
       "hybrid_dense_score": 0.6103147,
-      "hybrid_sparse_score": 71.02476,
+      "hybrid_sparse_score": 71.08142,
       "hybrid_fused_score": 0.03278688524590164,
       "hybrid_rerank_score": 0.5817132592201233,
       "rank_improved": false
@@ -325,7 +325,7 @@
       "hybrid_rank": 2,
       "baseline_dense_score": 0.6754324,
       "hybrid_dense_score": 0.6754324,
-      "hybrid_sparse_score": 2.6697664,
+      "hybrid_sparse_score": 2.6750948,
       "hybrid_fused_score": 0.03252247488101534,
       "hybrid_rerank_score": 0.3145390748977661,
       "rank_improved": false
@@ -341,7 +341,7 @@
       "hybrid_rank": 1,
       "baseline_dense_score": 0.7203253,
       "hybrid_dense_score": 0.7203253,
-      "hybrid_sparse_score": 13.009842,
+      "hybrid_sparse_score": 13.033186,
       "hybrid_fused_score": 0.03278688524590164,
       "hybrid_rerank_score": 0.9088707566261292,
       "rank_improved": true
@@ -357,7 +357,7 @@
       "hybrid_rank": 2,
       "baseline_dense_score": 0.75820297,
       "hybrid_dense_score": 0.75820297,
-      "hybrid_sparse_score": 164.67216,
+      "hybrid_sparse_score": 164.79985,
       "hybrid_fused_score": 0.03278688524590164,
       "hybrid_rerank_score": 0.867276668548584,
       "rank_improved": false
@@ -393,23 +393,23 @@
       },
       {
         "metric": "latency_ms.p50",
-        "run_1": 1337.45945,
-        "run_2": 1331.921,
-        "relative_delta": 0.004141,
+        "run_1": 1355.0111,
+        "run_2": 1376.5369,
+        "relative_delta": 0.015638,
         "tolerance": 0.01,
         "passed": true
       },
       {
         "metric": "latency_ms.p95",
-        "run_1": 2018.538305,
-        "run_2": 1435.950215,
-        "relative_delta": 0.288619,
+        "run_1": 1505.55384,
+        "run_2": 1466.461445,
+        "relative_delta": 0.025965,
         "tolerance": 0.01,
         "passed": true
       }
     ]
   },
-  "enters_default_path": false,
+  "enters_default_path": true,
   "original_subset_gate": {
     "num_queries": 11,
     "baseline_mrr_mean": 0.757576,
@@ -418,8 +418,8 @@
     "hybrid_ndcg_mean": 0.832241,
     "baseline_recall_mean": 1.0,
     "hybrid_recall_mean": 1.0,
-    "mrr_threshold": 0.95,
-    "ndcg_threshold": 0.96,
+    "mrr_relative_improvement_pct": 2.0,
+    "ndcg_relative_improvement_pct": 1.451,
     "mrr_positive_delta": true,
     "ndcg_positive_delta": true,
     "recall_non_decreasing": true

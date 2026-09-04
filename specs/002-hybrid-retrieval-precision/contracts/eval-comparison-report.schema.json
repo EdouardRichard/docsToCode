@@ -149,8 +149,8 @@
         "hybrid_ndcg_mean": { "type": "number" },
         "baseline_recall_mean": { "type": "number" },
         "hybrid_recall_mean": { "type": "number" },
-        "mrr_threshold": { "type": "number" },
-        "ndcg_threshold": { "type": "number" },
+        "mrr_relative_improvement_pct": { "type": "number", "description": "原 11 条子集 MRR 相对同会话 Dense 基线的相对提升百分比（相对口径，2026-09-04 修订）" },
+        "ndcg_relative_improvement_pct": { "type": "number", "description": "原 11 条子集 nDCG 相对同会话 Dense 基线的相对提升百分比" },
         "mrr_positive_delta": { "type": "boolean" },
         "ndcg_positive_delta": { "type": "boolean" },
         "recall_non_decreasing": { "type": "boolean" }

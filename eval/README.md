@@ -51,13 +51,15 @@ python eval/run_comparison.py \
     --limit 18
 ```
 
-`enters_default_path` 仅在前 11 条（001 基线子集）上判定：MRR/nDCG 严格正
-增量 + Recall 非降 + 实测硬指标全过 + 绝对阈值（research.md §0.2：原 11 条
-MRR ≥ 0.95、nDCG ≥ 0.96）。2026-09-04 重跑记录：相对增量与硬指标全过
-（MRR 0.7576→0.7727、nDCG 0.8203→0.8322、泄漏 0/Schema 1.0/定位 1.0、
-validateToken rank 3→2），绝对阈值未达（当前环境基线臂水位整体下移），
-故 enters_default_path=false——详见
-`specs/002-hybrid-retrieval-precision/tasks.md` Phase 9 收敛记录。
+`enters_default_path` 仅在前 11 条（001 基线子集）上判定（**相对口径**，
+research.md §0.2/§0.6 2026-09-04 修订）：MRR/nDCG 相对同会话 Dense 基线
+严格正增量 + Recall 非降 + 实测硬指标全过；绝对水位仅作参考记录、不作门禁。
+2026-09-04 重跑终态：原 11 条 MRR +2.0% / nDCG +1.45% 相对提升
+（0.7576→0.7727、0.8203→0.8322）、Recall 1.0 持平、硬指标实测全过
+（泄漏=0 / Schema=1.0 / 定位=1.0，70 条证据逐条测量）、validateToken
+rank 3→2、非延迟可重复通过，**enters_default_path=true**——混合检索进入
+默认检索路径（SC-001/FR-021 达成）。报告含 `original_subset_gate` 审计明细
+（含相对提升百分比），并通过契约 schema 校验。
 
 ### 004 图增强对照评测
 

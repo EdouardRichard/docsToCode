@@ -49,11 +49,11 @@
 **命令**：
 ```bash
 python eval/run_comparison.py --dataset eval/eval_dataset.json \
-  --output eval/hybrid_comparison_report.json
+  --output eval/hybrid_comparison_report.json --limit 18
 ```
 
-**预期**（research.md §0.2 进入默认路径阈值）：
-- 原 11 条 MRR ≥ 0.95（基线 0.9091）；nDCG ≥ 0.96（基线 0.9329）；Recall@K ≥ 1.0（不下降）。
+**预期**（research.md §0.2 进入默认路径阈值，相对口径 2026-09-04 修订）：
+- 原 11 条子集 MRR/nDCG 相对**同会话 Dense 基线**严格正增量；Recall@K ≥ 基线（不下降）；绝对水位仅参考不作门禁。
 - 报告 `deltas.mrr_mean_delta > 0` 且 `deltas.ndcg_mean_delta > 0`。
 - 报告符合 [eval-comparison-report.schema.json](./contracts/eval-comparison-report.schema.json)。
 

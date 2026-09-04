@@ -161,7 +161,7 @@
 
 ### Measurable Outcomes
 
-- **SC-001**: 在固定评测集上，混合检索（Dense+Sparse 融合 + Rerank）的 MRR 与 nDCG 均值相对 001 Dense 基线有可度量提升（原 11 条 MRR ≥ 0.95、nDCG ≥ 0.96，详见 research.md §0.2）；Recall@K 不低于基线（不要求提升，因基线已达 1.0，要求不下降）。
+- **SC-001**: 在固定评测集上，混合检索（Dense+Sparse 融合 + Rerank）的 MRR 与 nDCG 均值相对 001 Dense 基线有可度量提升（原 11 条子集上相对**同会话 Dense 基线**严格正增量，相对口径详见 research.md §0.2/§0.6，2026-09-04 修订）；Recall@K 不低于基线（不要求提升，因基线已达 1.0，要求不下降）。
 - **SC-002**: 验收测试集中混合检索的跨项目泄漏事件数为零。
 - **SC-003**: 验收测试集中所有混合检索 Tool 成功响应 100% 通过 `search_knowledge` 输出 Schema 校验。
 - **SC-004**: 验收测试集中所有混合检索返回的证据 100% 可定位到确定的知识源版本与内容位置（Markdown 章节路径或 Java 全限定符号路径）。
