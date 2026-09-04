@@ -28,21 +28,11 @@ class ProviderUsageAccumulator:
     def record_rerank(self, count: int = 1) -> None:
         self.rerank_calls += max(0, count)
 
-    def record_llm(
-        self,
-        *,
-        calls: int = 1,
-        prompt_chars: int = 0,
-        completion_chars: int = 0,
-        cache_hit: bool = False,
-    ) -> None:
-        # Cache hits are replayed without any HTTP call: they contribute no
-        # real usage (005 SC-007/SC-008 cost contract).
-        if cache_hit:
-            return
-        self.llm_calls += max(0, calls)
-        self.llm_prompt_chars += max(0, prompt_chars)
-        self.llm_completion_chars += max(0, completion_chars)
+    # LLM usage is not accumulated here: the deterministic path makes no LLM
+    # calls, and the 005 agentic path records its LLM usage via
+    # AgenticStateMachine.get_llm_usage() -> get_provider_usage() (real-call
+    # only, cache hits excluded). The llm_* fields below remain for the
+    # provider_usage schema and stay 0 for the deterministic path (T088).
 
     def to_dict(self) -> dict[str, int]:
         return {

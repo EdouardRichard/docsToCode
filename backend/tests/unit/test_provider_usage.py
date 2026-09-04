@@ -1,8 +1,10 @@
 """Unit tests for provider_usage recording (T055, RED first).
 
-FR-016: provider_usage accumulates embedding / rerank / llm call counts and
-character volumes over the request, matching the 005 real-call accounting —
-LLM cache hits are NOT counted (SC-007).
+FR-016: provider_usage accumulates embedding / rerank call counts over the
+request. LLM usage is recorded by the 005 agentic path via its own
+get_llm_usage() accounting (real-call only, cache hits excluded) and the
+llm_* fields here stay 0 for the deterministic path (T088 removed the
+dead record_llm method).
 """
 
 from __future__ import annotations
@@ -21,37 +23,27 @@ def test_defaults_all_zero() -> None:
     }
 
 
-def test_accumulate_calls_and_chars() -> None:
+def test_accumulate_embedding_and_rerank() -> None:
     a = ProviderUsageAccumulator()
     a.record_embedding(2)
     a.record_rerank(1)
-    a.record_llm(calls=1, prompt_chars=10, completion_chars=5)
     d = a.to_dict()
     assert d["embedding_calls"] == 2
     assert d["rerank_calls"] == 1
-    assert d["llm_calls"] == 1
-    assert d["llm_prompt_chars"] == 10
-    assert d["llm_completion_chars"] == 5
-
-
-def test_llm_cache_hit_not_counted() -> None:
-    """LLM cache hits never count toward usage (005 SC-007/SC-008)."""
-    a = ProviderUsageAccumulator()
-    a.record_llm(calls=1, prompt_chars=99, completion_chars=88, cache_hit=True)
-    d = a.to_dict()
+    # llm fields remain 0: deterministic path makes no LLM calls
     assert d["llm_calls"] == 0
-    assert d["llm_prompt_chars"] == 0
-    assert d["llm_completion_chars"] == 0
 
 
-def test_cumulative_across_multiple_records() -> None:
+def test_cumulative_embedding_records() -> None:
     a = ProviderUsageAccumulator()
     a.record_embedding(1)
     a.record_embedding(3)
-    a.record_llm(calls=1, prompt_chars=4, completion_chars=2)
-    a.record_llm(calls=1, prompt_chars=6, completion_chars=3)
+    a.record_rerank(2)
     d = a.to_dict()
     assert d["embedding_calls"] == 4
-    assert d["llm_calls"] == 2
-    assert d["llm_prompt_chars"] == 10
-    assert d["llm_completion_chars"] == 5
+    assert d["rerank_calls"] == 2
+
+
+def test_llm_usage_removed_from_accumulator() -> None:
+    """T088: record_llm was dead code; the accumulator must not expose it."""
+    assert not hasattr(ProviderUsageAccumulator(), "record_llm")
