@@ -13,6 +13,7 @@ import logging
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
+from mcp.types import ToolAnnotations
 
 from rag_mcp.services.evidence_service import EvidenceService
 
@@ -38,6 +39,7 @@ def register_get_evidence_tool(
             "its complete text, including parent context when available. "
             "Requires explicit project scope(s) for access control."
         ),
+        annotations=ToolAnnotations(readOnlyHint=True),
     )
     async def get_evidence(
         evidence_id: str,

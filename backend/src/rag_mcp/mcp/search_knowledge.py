@@ -21,6 +21,7 @@ import logging
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
+from mcp.types import ToolAnnotations
 
 from rag_mcp.config import get_settings
 from rag_mcp.indexing.qdrant_client import QdrantStore
@@ -137,6 +138,7 @@ def register_search_knowledge_tool(
             "Returns structured evidence items with relevance scores, source positions, "
             "and completion status indicating coverage quality."
         ),
+        annotations=ToolAnnotations(readOnlyHint=True),
     )
     async def search_knowledge(
         query: str,
