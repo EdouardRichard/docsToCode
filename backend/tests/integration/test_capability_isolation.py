@@ -160,11 +160,11 @@ public class DenseService {
         "versions": all_versions,
     }
 
-    # Cleanup hybrid collection
+    # Cleanup this test scope's points only, preserving the shared eval corpus (T089)
     index_version = _derive_index_version(settings.embedding_model)
     hybrid_col = f"chunks_hybrid_{index_version}"
     if store.collection_exists(hybrid_col):
-        store._client.delete_collection(hybrid_col)
+        store.delete_points_by_scope(hybrid_col, scope_id)
 
 
 class TestCapabilityGating:

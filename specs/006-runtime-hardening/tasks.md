@@ -300,3 +300,9 @@
 
 - [X] T087 用当前代码重产 eval/instance_form_smoke_report.json，补齐 pass 与 tolerance_semantics 闸口字段（当前 JSON 早于 T086 修复、仅含 means/comparison） per SC-009(1)/FR-028 (partial)
 - [X] T088 消除 ProviderUsageAccumulator.record_llm 死代码或将 agentic LLM 用量经该累加器路由，收敛两条记账路径 per FR-016/T083 (partial)
+
+## Phase 11: Convergence
+
+> 收敛评估（/speckit-converge，总收敛 001~006，2026-09-04）：逐一复核 001~006 的对照评测报告齐全且收益已验证（001 baseline + quickstart、002 hybrid enters_default_path=true、003 format/regression、004 graph three_gate 全过、005 agentic enters_default_path=true、006 instance_form no_regression=true）；pytest 全绿（1509 passed / 1 skipped）；eval 可复现性经 reindex 后复跑通过（Reproducibility PASSED、non-inferiority no_regression=true、Recall@5 0.9730 / MRR 0.7703 / nDCG@5 0.8233 与既有 reproducibility_report.json 一致）。本轮唯一残留项为评测语料被集成测试擦除的测试隔离缺陷（跨 002/003/004/005 评测可复现性，MEDIUM，无 Constitution 硬约束违规）。
+
+- [X] T089 隔离集成测试的 Qdrant 混合集合：`backend/tests/integration/test_capability_isolation.py:164-167` 与 `backend/tests/integration/test_rebuild_sparse.py:98-100` 的 fixture teardown 删除共享 `chunks_hybrid_{index_version}`（= `chunks_hybrid_bge-m3_v1`）集合，导致全量 pytest 后评测语料向量被擦除、`eval/run_eval.py --mode hybrid` 报 "collection does not exist"，必须 `eval/reindex_eval_qdrant.py` 重建（75 points）方可复现评测；应改用测试作用域集合名（或测试作用域 index_version），使 "pytest → eval" 回归序列原子可复现、共享评测语料不被全量回归擦除 per 002 SC-006/003 SC-010/004 SC-007/005 SC-008/Constitution X (contradicts)
