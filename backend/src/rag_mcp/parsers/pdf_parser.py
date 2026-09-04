@@ -8,7 +8,10 @@ MAX_CHUNK_TOKENS = 1024
 def _estimate_tokens(text):
     return max(1, math.ceil(len(text) / 4))
 
-PAGE_MARKER_RE = re.compile(r'^=== PAGE (\d+) ===$')
+# Optional '(linear-fallback: ...)' annotation after the page number is
+# emitted by the column-aware extractor on degraded pages (FR-006 edge case);
+# the annotation is tolerated here so those markers still split pages.
+PAGE_MARKER_RE = re.compile(r'^=== PAGE (\d+)(?: \(([^)]*)\))? ===$')
 HEADING_RE = re.compile(r'^(\d+(?:\.\d+)*)\s+(.+)$')
 
 class PDFParser:
