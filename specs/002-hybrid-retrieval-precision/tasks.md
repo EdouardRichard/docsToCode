@@ -355,5 +355,5 @@ report absent), and FR-015/SC-005 (per-query DB scan performance risk).
 
 ## Phase 10: Convergence
 
-- [ ] T040 将 HybridRetrievalConfig 的 rrf_k/fusion_algorithm/sparse_query_timeout_ms 与总超时护栏接入确定性检索路径（当前仅 rerank_budget 被读取、rrf_k 硬编码 60、sparse 超时未强制） per FR-015 (partial)
-- [ ] T041 将 Sparse 子路径失败/超时降级为 partial 并保留 Dense 可靠证据、写入 failed_paths（当前 query_hybrid 原子调用、sparse 异常未捕获），并新增注入真实 sparse 错误的测试 per FR-016/SC-009 (missing)
+- [X] T040 将 HybridRetrievalConfig 的 rrf_k/fusion_algorithm/sparse_query_timeout_ms 与总超时护栏接入确定性检索路径（当前仅 rerank_budget 被读取、rrf_k 硬编码 60、sparse 超时未强制） per FR-015 (partial)
+- [X] T041 将 Sparse 子路径失败/超时降级为 partial 并保留 Dense 可靠证据、写入 failed_paths（当前 query_hybrid 原子调用、sparse 异常未捕获），并新增注入真实 sparse 错误的测试 per FR-016/SC-009 (missing)

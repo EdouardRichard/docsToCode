@@ -152,7 +152,44 @@ class RetrievalService:
 
         Returns:
             Dict conforming to mcp-search-output.schema.json.
+
+        The deterministic whole-call guardrail (RetrievalConfig.total_timeout_ms,
+        SC-005 / blueprint section 19) is enforced here: a search exceeding the
+        total budget degrades to a failed SEARCH_TIMEOUT response rather than
+        hanging (T040).
         """
+        retrieval_cfg = self._settings.retrieval
+        try:
+            return await asyncio.wait_for(
+                self._search_impl(query, project_scopes, top_k, task_context),
+                timeout=retrieval_cfg.total_timeout_ms / 1000.0,
+            )
+        except asyncio.TimeoutError:
+            logger.warning(
+                "Search exceeded the %dms total-timeout guardrail",
+                retrieval_cfg.total_timeout_ms,
+            )
+            return {
+                "completion_status": "failed",
+                "evidence": [],
+                "error": {
+                    "code": "SEARCH_TIMEOUT",
+                    "message": (
+                        f"Search exceeded the {retrieval_cfg.total_timeout_ms}ms "
+                        "total-timeout guardrail."
+                    ),
+                },
+                "request_id": str(uuid.uuid4()),
+            }
+
+    async def _search_impl(
+        self,
+        query: str,
+        project_scopes: list[str],
+        top_k: int = 5,
+        task_context: dict | None = None,
+    ) -> dict[str, Any]:
+        """Body of search(); see the public method for the contract."""
         request_id = str(uuid.uuid4())
         start_time = time.monotonic()
 
@@ -1277,19 +1314,47 @@ class RetrievalService:
             logger.debug("Query has no in-vocab sparse terms, falling back to dense")
             return None
 
-        # Dense + Sparse parallel recall (FR-002, both enforce scope filter FR-008)
+        # Dense + Sparse recall (FR-002, both enforce scope filter FR-008).
+        # Dense is the always-on deterministic recall; Sparse is an independent
+        # sub-path that may fail/timeout and degrades to dense-only with a
+        # recorded failed path (partial, FR-016/SC-009) without dropping Dense
+        # evidence (T040/T041).
+        hybrid_cfg = self._settings.hybrid_retrieval
         t_recall_start = time.monotonic()
-        dense_results, sparse_results = self._qdrant_store.query_hybrid(
+        dense_results = self._qdrant_store.search_dense_named(
             collection=collection_name,
-            dense_vector=query_vector,
-            sparse_vector=sparse_query,
+            vector=query_vector,
             scope_ids=scope_ids,
             version_id=None,
             limit=limit,
         )
-        recall_elapsed = (time.monotonic() - t_recall_start) * 1000
-
         failed_paths: list[str] = []
+        try:
+            sparse_results = await asyncio.wait_for(
+                asyncio.to_thread(
+                    self._qdrant_store.search_sparse,
+                    collection_name,
+                    sparse_query,
+                    scope_ids,
+                    None,
+                    limit,
+                ),
+                timeout=hybrid_cfg.sparse_query_timeout_ms / 1000.0,
+            )
+        except asyncio.TimeoutError:
+            logger.warning(
+                "Sparse recall timed out after %dms; degrading to dense-only",
+                hybrid_cfg.sparse_query_timeout_ms,
+            )
+            failed_paths.append("sparse_timeout")
+            sparse_results = []
+        except Exception as sparse_exc:  # noqa: BLE001 - degrade, keep dense
+            logger.warning(
+                "Sparse recall failed: %s; degrading to dense-only", sparse_exc,
+            )
+            failed_paths.append("sparse_failed")
+            sparse_results = []
+        recall_elapsed = (time.monotonic() - t_recall_start) * 1000
 
         # Graph recall (004, FR-006/FR-007): the 3rd retriever input, behind
         # the GRAPH_ENHANCED_RETRIEVAL_ENABLED switch (FR-024). Guarded by the
@@ -1336,8 +1401,18 @@ class RetrievalService:
 
         # RRF fusion (FR-003, deterministic tie-breaker FR-017); graph joins
         # the same fusion pool as the 3rd ranked list (FR-006).
+        # rrf_k and fusion_algorithm come from HybridRetrievalConfig (T040).
+        # Only 'rrf' is implemented (research.md §1.2 reserves DBSF); an
+        # unsupported value is recorded and falls back deterministically.
+        fusion_algorithm = hybrid_cfg.fusion_algorithm
+        if fusion_algorithm != "rrf":
+            logger.warning(
+                "fusion_algorithm=%r is not implemented (only 'rrf'); "
+                "falling back to RRF",
+                fusion_algorithm,
+            )
         t_fusion_start = time.monotonic()
-        fused = rrf_fuse(dense_results, sparse_results, k=60,
+        fused = rrf_fuse(dense_results, sparse_results, k=hybrid_cfg.rrf_k,
                          graph_results=graph_results or None)
         fusion_elapsed = (time.monotonic() - t_fusion_start) * 1000
 
