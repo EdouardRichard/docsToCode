@@ -1023,8 +1023,7 @@
         "passed": true,
         "env_sensitive": true
       }
-    ],
-    "latency_env_sensitive": true
+    ]
   },
   "enters_default_path": true
 }

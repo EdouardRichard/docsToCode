@@ -144,6 +144,14 @@ class _SoftMockQdrant:
                      scope_ids, version_id, limit):
         return list(self._hits), list(self._hits)
 
+    def search_dense_named(self, collection, vector, scope_ids=None,
+                           version_id=None, limit=5):
+        return list(self._hits)
+
+    def search_sparse(self, collection, sparse_vector, scope_ids=None,
+                      version_id=None, limit=5):
+        return list(self._hits)
+
     def search(self, collection, vector, scope_ids, limit):
         return list(self._hits)
 
